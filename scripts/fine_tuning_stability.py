@@ -105,7 +105,7 @@ def create_dolly_dataset(local_path: Path, session_factory, samples: int) -> int
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--local-path", type=Path, default=Path("E:/DashAI-smoke-finetuning")
+        "--local-path", type=Path, default=Path("E:/DashAI/projects/smoke-finetuning")
     )
     parser.add_argument("--max-steps", type=int, default=15)
     args = parser.parse_args()

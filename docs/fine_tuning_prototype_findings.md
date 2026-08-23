@@ -16,7 +16,7 @@ Esta rama implementa un primer flujo completo de fine-tuning eficiente de LLMs d
 
 El flujo anterior fue ejecutado de extremo a extremo con QLoRA, Qwen2.5-0.5B-Instruct, 32 ejemplos de Databricks Dolly 15k y una NVIDIA GTX 1080 de 8 GB. Por lo tanto, la integración técnica central es viable. La prueba no constituye todavía una validación de calidad del modelo: se observaron normas de gradiente no finitas y solo se ejecutaron tres pasos.
 
-El prototipo fue consolidado como línea base en el commit `21f093ccb` (rama `memoria/fine-tuning-inferencia`, publicada en el fork personal) y la productización continúa en la rama `memoria/glm-weekend-productization`. Los datos de la prueba están aislados en `E:\DashAI-smoke-finetuning`; no se utilizó ni modificó `E:\DashAI-data`.
+El prototipo fue consolidado como línea base en el commit `21f093ccb` (rama `memoria/fine-tuning-inferencia`, publicada en el fork personal) y la productización continúa en la rama `memoria/glm-weekend-productization`. Los datos de la prueba están aislados en `E:\DashAI\projects\smoke-finetuning`; no se utilizó ni modificó `E:\DashAI\data`.
 
 ## Arquitectura implementada
 
@@ -102,10 +102,10 @@ yarn build
 Prueba real aislada:
 
 ```powershell
-.venv\Scripts\python.exe scripts/fine_tuning_smoke.py --local-path E:\DashAI-smoke-finetuning
+.venv\Scripts\python.exe scripts/fine_tuning_smoke.py --local-path E:\DashAI\projects\smoke-finetuning
 ```
 
-El script importa una muestra reproducible de Dolly, usa las API de DashAI, ejecuta Huey en modo inmediato, reinicia la aplicación y genera una respuesta mediante `GenerativeJob`. El resultado estructurado queda en `E:\DashAI-smoke-finetuning\smoke_result.json`.
+El script importa una muestra reproducible de Dolly, usa las API de DashAI, ejecuta Huey en modo inmediato, reinicia la aplicación y genera una respuesta mediante `GenerativeJob`. El resultado estructurado queda en `E:\DashAI\projects\smoke-finetuning\smoke_result.json`.
 
 La verificación final obtuvo 33 pruebas backend y 5 pruebas frontend exitosas, además de compilación Python, Ruff sobre los archivos afectados, migración upgrade/downgrade y build frontend de producción. El lint global del frontend no es actualmente una señal utilizable: la configuración del repositorio intenta analizar TypeScript sin el parser correspondiente y tampoco carga `react-hooks`, por lo que reporta errores equivalentes en decenas de archivos existentes. Este problema de configuración no se corrigió porque está fuera del alcance del prototipo; las pruebas y el compilador sí procesaron los archivos nuevos correctamente.
 
@@ -203,7 +203,7 @@ El callback de entrenamiento registra por paso: pérdida, norma de gradiente, le
 
 #### Prueba real de estabilidad (15 pasos, QLoRA, GTX 1080)
 
-`scripts/fine_tuning_stability.py` ejecutó 15 pasos con 64 ejemplos de Dolly (seed 42) contra `E:\DashAI-smoke-finetuning`, reutilizando el modelo ya descargado. Resultado en `stability_result.json`: estado `completed`, 2081 s en total, 136,6 s/paso de media, pérdida finita y decreciente (último valor registrado 1,58; `train_loss` final 2,74), pico de VRAM 1,70 GB, 336 parámetros entrenables en FP32, learning rate con calendario lineal visible en `last_logged`.
+`scripts/fine_tuning_stability.py` ejecutó 15 pasos con 64 ejemplos de Dolly (seed 42) contra `E:\DashAI\projects\smoke-finetuning`, reutilizando el modelo ya descargado. Resultado en `stability_result.json`: estado `completed`, 2081 s en total, 136,6 s/paso de media, pérdida finita y decreciente (último valor registrado 1,58; `train_loss` final 2,74), pico de VRAM 1,70 GB, 336 parámetros entrenables en FP32, learning rate con calendario lineal visible en `last_logged`.
 
 **Hallazgo principal**: `grad_norm` fue `NaN` solo en los pasos 1–4; del paso 5 al 15 fue finito (3,02 en el último). El NaN del smoke de 3 pasos es, por tanto, transitorio y autolimitado en esta configuración, no una inestabilidad persistente. La instrumentación nueva lo reporta exactamente como cuatro advertencias estructuradas sin fallar el run (la pérdida siempre fue finita), que es el comportamiento especificado. No se ejecutaron las dos configuraciones adicionales permitidas: la evidencia caracteriza el fenómeno y el presupuesto de GPU se reserva para el resto de la sesión. Tiempo de GPU consumido hasta ahora: ~35 minutos.
 
@@ -220,7 +220,7 @@ Los backends estándar (Transformers y Unsloth) ahora entrenan en un **proceso h
 ### Validación de la cancelación fuerte
 
 - Pruebas reales de subproceso en Windows (4): hijo que completa (artefacto y métricas persistidos por el hijo), cancelación cooperativa dentro de la gracia (hilo externo marca la bandera cuando el hijo reporta progreso), terminación forzosa de un hijo que ignora la bandera (el retorno solo ocurre tras `wait()`: sin procesos huérfanos) y fallo del hijo reportado con su mensaje. Además, una integración a nivel de job valida la ruta completa por API con adquisición y liberación del lock.
-- **Ejecución real en GPU**: un run QLoRA de 3 pasos (run 5, `E:\DashAI-smoke-finetuning`, `stability_result.json`) entrenó íntegramente por la ruta aislada: el padre mantuvo `gpu.lock` y el hijo entrenó (pasos de 115–137 s, pico 1,66 GB, advertencias NaN en los 3 pasos, coherente con el patrón temprano documentado) y persistió progreso, métricas y estado final por la base de datos.
+- **Ejecución real en GPU**: un run QLoRA de 3 pasos (run 5, `E:\DashAI\projects\smoke-finetuning`, `stability_result.json`) entrenó íntegramente por la ruta aislada: el padre mantuvo `gpu.lock` y el hijo entrenó (pasos de 115–137 s, pico 1,66 GB, advertencias NaN en los 3 pasos, coherente con el patrón temprano documentado) y persistió progreso, métricas y estado final por la base de datos.
 - Batería focalizada completa: 65 pruebas backend pasando.
 
 ## Administración e inferencia local (Hito 2)

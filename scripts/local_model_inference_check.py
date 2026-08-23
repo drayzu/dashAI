@@ -23,7 +23,7 @@ def check(response, phase: str):
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--local-path", type=Path, default=Path("E:/DashAI-smoke-finetuning")
+        "--local-path", type=Path, default=Path("E:/DashAI/projects/smoke-finetuning")
     )
     args = parser.parse_args()
     local_path = args.local_path.resolve()

@@ -209,3 +209,7 @@ docs/node_modules/
 tests/**/csv/default-*/
 tests/**/json/default-*/
 tests/**/tests_back_models_*.lock
+
+# Estado y proyectos locales consolidados fuera del código versionado
+/data/
+/projects/
