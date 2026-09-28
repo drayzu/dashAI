@@ -7,9 +7,10 @@ from kink import di
 from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.generative_session_params import (
+    GenerativeSessionBulkDeleteParams,
     GenerativeSessionParams,
 )
-from DashAI.back.core.enums.status import DatafileStatus
+from DashAI.back.core.enums.status import DatafileStatus, FineTuningStatus
 from DashAI.back.dependencies.database.models import (
     FineTuningRun,
     GenerativeProcess,
@@ -19,6 +20,14 @@ from DashAI.back.dependencies.database.models import (
     ProcessData,
 )
 from DashAI.back.dependencies.downloads.nested import missing_downloads
+from DashAI.back.models.base_generative_model import BaseGenerativeModel
+from DashAI.back.models.RAG.exceptions.base import RAGWorkflowError
+from DashAI.back.services.RAG.cleanup_service import CleanupService
+from DashAI.back.services.RAG.session_validation_service import (
+    SessionValidationService,
+)
+from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
+from DashAI.back.tasks.RAG_task import RAGTask
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -37,29 +46,26 @@ async def upload_generative_session(
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Create a new generative session and log the initial parameters in the history."""
-    from DashAI.back.models.base_generative_model import BaseGenerativeModel
-    from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
     with session_factory() as db:
         try:
             # Check if the model is registered
             try:
                 model_class = component_registry[params.model_name]["class"]
-            except KeyError as e:
+            except KeyError as error:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Model {params.model_name} is not registered.",
-                ) from e
+                ) from error
 
-            fine_tuning_run = None
             if params.fine_tuning_run_id is not None:
                 fine_tuning_run = db.get(FineTuningRun, params.fine_tuning_run_id)
-                if not fine_tuning_run:
+                if fine_tuning_run is None:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="Fine-tuning run does not exist.",
                     )
-                if fine_tuning_run.status.value != "completed":
+                if fine_tuning_run.status != FineTuningStatus.COMPLETED:
                     raise HTTPException(
                         status_code=status.HTTP_409_CONFLICT,
                         detail="Fine-tuning run has not completed.",
@@ -87,7 +93,7 @@ async def upload_generative_session(
                         ),
                     )
                 local_model = db.get(ManagedLocalModel, params.local_model_id)
-                if not local_model:
+                if local_model is None:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="Managed local model does not exist.",
@@ -139,22 +145,34 @@ async def upload_generative_session(
                     f"generative model.",
                 )
 
-            # Validate the model parameters
+            # Check if the task is registered
+            try:
+                task_class = component_registry[params.task_name]["class"]
+            except KeyError as error:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Task {params.task_name} is not registered.",
+                ) from error
+
+            # RAG: validate and normalise RAG-specific parameters
+            if task_class == RAGTask:
+                try:
+                    params.parameters = SessionValidationService(
+                        db, component_registry
+                    ).prepare_RAG_params(params.parameters)
+                except (ValueError, RAGWorkflowError) as e:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=str(e),
+                    ) from e
+
+            # Validate schema
             try:
                 model_class.SCHEMA.model_validate(params.parameters)
             except ValueError as e:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Invalid parameters for model {params.model_name}: {e}",
-                ) from e
-
-            # Check if the task is registered
-            try:
-                task_class = component_registry[params.task_name]["class"]
-            except KeyError as e:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Task {params.task_name} is not registered.",
                 ) from e
 
             # Check if the task is a subclass of BaseGenerativeTask
@@ -164,6 +182,7 @@ async def upload_generative_session(
                     detail=f"Task {params.task_name} is not a valid generative task.",
                 )
 
+            now = datetime.now()
             session = GenerativeSession(
                 model_name=params.model_name,
                 task_name=params.task_name,
@@ -172,6 +191,8 @@ async def upload_generative_session(
                 description=params.description,
                 fine_tuning_run_id=params.fine_tuning_run_id,
                 local_model_id=params.local_model_id,
+                created=now,
+                last_modified=now,
             )
             db.add(session)
             try:
@@ -317,6 +338,85 @@ async def get_all_generative_sessions(
         return session_list
 
 
+@router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_generative_sessions(
+    params: GenerativeSessionBulkDeleteParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Delete multiple generative sessions, in a single transaction.
+
+    Parameters
+    ----------
+    params : GenerativeSessionBulkDeleteParams
+        The IDs of the generative sessions to delete. IDs that do not match
+        an existing session are silently skipped rather than failing the
+        whole request.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Raises
+    ------
+    HTTPException
+        If there's an internal database error.
+    """
+
+    with session_factory() as db:
+        try:
+            for session_id in params.ids:
+                session = db.get(GenerativeSession, session_id)
+                if not session:
+                    continue
+
+                # Delete all the processes associated with the session
+                processes = (
+                    db.query(GenerativeProcess)
+                    .filter(GenerativeProcess.session_id == session_id)
+                    .all()
+                )
+                # Delete all the process data associated with the processes
+                for process in processes:
+                    process_data = (
+                        db.query(ProcessData)
+                        .filter(ProcessData.process_id == process.id)
+                        .all()
+                    )
+                    for data in process_data:
+                        db.delete(data)
+                # Delete the processes
+                for process in processes:
+                    db.delete(process)
+
+                # Delete the session parameter history entries
+                parameters_history = (
+                    db.query(GenerativeSessionParameterHistory)
+                    .filter(GenerativeSessionParameterHistory.session_id == session_id)
+                    .all()
+                )
+                for entry in parameters_history:
+                    db.delete(entry)
+
+                # Finally, delete the session itself
+                db.delete(session)
+
+            db.commit()
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+        except Exception as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal server error",
+            ) from e
+        finally:
+            db.rollback()
+            db.close()
+
+
 @router.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_generative_session(
     session_id: int,
@@ -348,6 +448,8 @@ async def delete_generative_session(
                     detail=f"Generative session {session_id} does not exist in DB.",
                 )
 
+            old_parameters = dict(session.parameters or {})
+
             # Delete all the processes associated with the session
             processes = (
                 db.query(GenerativeProcess)
@@ -377,7 +479,11 @@ async def delete_generative_session(
                 db.delete(entry)
             # Finally, delete the session itself
             db.delete(session)
+
+            CleanupService(db).cleanup_orphaned_resources(session_id, old_parameters)
             db.commit()
+        except HTTPException:
+            raise
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
@@ -391,7 +497,6 @@ async def delete_generative_session(
                 detail="Internal server error",
             ) from e
         finally:
-            db.rollback()
             db.close()
 
 
@@ -479,20 +584,15 @@ async def update_generative_session(
             # selected even when it is not downloaded yet; the chat blocks input
             # and offers a download until the weights become available.
             if model_name is not None and model_name != session.model_name:
-                if model_name == "PeftAdapterTextGenerationModel":
+                if model_name in {
+                    "PeftAdapterTextGenerationModel",
+                    "LocalManagedTextGenerationModel",
+                }:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail=(
-                            "Open an adapter from Fine-tuning to create an "
-                            "adapter-backed session."
-                        ),
-                    )
-                if model_name == "LocalManagedTextGenerationModel":
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=(
-                            "Open a managed local model from Fine-tuning to "
-                            "create a base-model session."
+                            "Open adapters and managed local models from the "
+                            "Fine-tuning page to create a linked session."
                         ),
                     )
                 try:
@@ -530,6 +630,7 @@ async def update_generative_session(
 
                 session.model_name = model_name
                 session.fine_tuning_run_id = None
+                session.local_model_id = None
                 session.parameters = new_parameters
                 db.add(
                     GenerativeSessionParameterHistory(
@@ -572,30 +673,8 @@ async def update_generative_session_params(
     session_id: int,
     new_params: dict,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
-    """Update the parameters of a generative session and log the change.
-
-    Parameters
-    ----------
-    session_id : int
-        The ID of the generative session to update.
-    new_params : dict
-        The new parameters to set for the generative session.
-    session_factory : Callable[..., ContextManager[Session]]
-        A factory that creates a context manager that handles a SQLAlchemy session.
-
-    Returns
-    -------
-    dict
-        A dictionary with the updated generative session.
-
-    Raises
-    ------
-    HTTPException
-        If the generative session does not exist or if there's an internal
-        database error.
-    """
-
     with session_factory() as db:
         try:
             session = db.get(GenerativeSession, session_id)
@@ -605,8 +684,41 @@ async def update_generative_session_params(
                     detail=f"Generative session {session_id} does not exist in DB.",
                 )
 
-            updated_parameters = {**session.parameters, **new_params}
+            old_parameters = dict(session.parameters or {})
+            try:
+                task_class = component_registry[session.task_name]["class"]
+            except KeyError as e:
+                raise HTTPException(
+                    status_code=404,
+                    detail=(
+                        f"Task '{session.task_name}' is not registered"
+                        " in the component registry."
+                    ),
+                ) from e
 
+            # ── RAG-specific validation of new_params ──
+            if task_class is not None and task_class == RAGTask:
+                try:
+                    normalized = SessionValidationService(
+                        db, component_registry
+                    ).validate_update_payload(new_params)
+                except (ValueError, RAGWorkflowError) as e:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+                    ) from e
+
+                # Merge validated new params into old params
+                updated_parameters = {**old_parameters, **normalized}
+
+                # Cleanup orphaned RAG resources
+                CleanupService(db).cleanup_orphaned_resources(
+                    session_id, old_parameters, updated_parameters
+                )
+            else:
+                # Non-RAG update: simple merge without RAG validation
+                updated_parameters = {**old_parameters, **new_params}
+
+            # ── Persist ──
             session_params_entry = GenerativeSessionParameterHistory(
                 session_id=session.id,
                 parameters=updated_parameters,
@@ -617,12 +729,14 @@ async def update_generative_session_params(
 
             session.parameters = updated_parameters
             session.last_modified = datetime.now()
-
             db.commit()
             db.refresh(session)
 
             return {"id": session.id, "parameters": session.parameters}
+        except HTTPException:
+            raise
         except exc.SQLAlchemyError as e:
+            db.rollback()
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -674,16 +788,18 @@ async def get_generative_session_parameters_history(
                 .all()
             )
 
-            # Convert the objects to dictionaries
-            return [
-                {
-                    "id": entry.id,
-                    "session_id": entry.session_id,
-                    "parameters": entry.parameters,
-                    "modified_at": entry.modified_at,
-                }
-                for entry in parameters_history
-            ]
+            # Convert the objects to dictionaries (explicit loop for clarity)
+            history_list = []
+            for entry in parameters_history:
+                history_list.append(
+                    {
+                        "id": entry.id,
+                        "session_id": entry.session_id,
+                        "parameters": entry.parameters,
+                        "modified_at": entry.modified_at,
+                    }
+                )
+            return history_list
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(

@@ -30,7 +30,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import StopIcon from "@mui/icons-material/Stop";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import FormSchemaLayout from "../../components/shared/FormSchemaLayout";
 import { getDatasets, getDatasetSample } from "../../api/datasets";
@@ -62,10 +62,13 @@ const quickParameters = {
   lora_dropout: 0.05,
   target_modules: "all-linear",
   seed: 42,
+  warmup_steps: 0,
   logging_steps: 1,
   save_steps: 1,
   eval_steps: 1,
 };
+
+const DRAFT_STORAGE_KEY = "dashai:fine-tuning:draft";
 
 const emptyDraft = {
   name: `Fine-tuning ${new Date().toLocaleDateString()}`,
@@ -84,7 +87,15 @@ const emptyDraft = {
 };
 
 function errorMessage(error) {
-  return error?.response?.data?.detail || error?.message || String(error);
+  const detail = error?.response?.data?.detail;
+  if (typeof detail === "string") return detail;
+  if (detail?.message) {
+    const blockers = (detail.blockers || [])
+      .map((item) => item.message)
+      .join(" ");
+    return `${detail.message}${blockers ? ` ${blockers}` : ""}`;
+  }
+  return error?.message || String(error);
 }
 
 function bytes(value) {
@@ -96,6 +107,7 @@ function bytes(value) {
 
 export default function FineTuning() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation(["generative", "common"]);
   const [tab, setTab] = useState(0);
   const [step, setStep] = useState(0);
@@ -131,6 +143,44 @@ export default function FineTuning() {
   }, [refresh]);
 
   useEffect(() => {
+    const datasetId = new URLSearchParams(location.search).get("datasetId");
+    if (!datasetId) return;
+    let restored = emptyDraft;
+    try {
+      restored =
+        JSON.parse(sessionStorage.getItem(DRAFT_STORAGE_KEY)) || emptyDraft;
+    } catch {
+      restored = emptyDraft;
+    }
+    setDraft({ ...restored, dataset_id: datasetId });
+    setCreating(true);
+    setStep(1);
+    sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+    navigate("/app/generative/fine-tuning", { replace: true });
+  }, [location.search, navigate]);
+
+  const selectedDataset = useMemo(
+    () => datasets.find((item) => Number(item.id) === Number(draft.dataset_id)),
+    [datasets, draft.dataset_id],
+  );
+  const datasetProcessing = Boolean(
+    selectedDataset &&
+    selectedDataset.status !== undefined &&
+    ![3, 4].includes(selectedDataset.status),
+  );
+  const datasetFailed = selectedDataset?.status === 4;
+
+  useEffect(() => {
+    if (!datasetProcessing) return;
+    const timer = window.setInterval(() => {
+      getDatasets()
+        .then(setDatasets)
+        .catch(() => {});
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, [datasetProcessing]);
+
+  useEffect(() => {
     const busyRuns = runs.some((run) =>
       ["queued", "running"].includes(run.status),
     );
@@ -149,6 +199,7 @@ export default function FineTuning() {
       setColumns([]);
       return;
     }
+    if (datasetProcessing || datasetFailed) return;
     getDatasetSample(Number(draft.dataset_id))
       .then((sample) => {
         const nextColumns = Object.keys(sample);
@@ -169,12 +220,23 @@ export default function FineTuning() {
         }));
       })
       .catch((nextError) => setError(errorMessage(nextError)));
-  }, [draft.dataset_id]);
+  }, [draft.dataset_id, datasetProcessing, datasetFailed]);
 
   const payload = useMemo(
     () => ({ ...draft, dataset_id: Number(draft.dataset_id) }),
     [draft],
   );
+
+  const payloadSignature = useMemo(() => JSON.stringify(payload), [payload]);
+
+  useEffect(() => {
+    setReport(null);
+  }, [payloadSignature]);
+
+  const uploadDataset = () => {
+    sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    navigate("/app/data/datasets/new?returnTo=fine-tuning");
+  };
 
   const setMapping = (field, value) =>
     setDraft((current) => ({
@@ -213,7 +275,9 @@ export default function FineTuning() {
     setBusy(true);
     setError("");
     try {
-      const checked = report || (await preflightFineTuning(payload));
+      // Always validate the exact payload being persisted. This also protects
+      // against changes made after an earlier preflight report.
+      const checked = await preflightFineTuning(payload);
       setReport(checked);
       if (!checked.ready) return;
       const created = await createFineTuningRun(payload);
@@ -454,6 +518,19 @@ export default function FineTuning() {
                 ))}
               </Select>
             </FormControl>
+            <Button variant="outlined" onClick={uploadDataset}>
+              {t("generative:fineTuning.button.uploadDataset")}
+            </Button>
+            {datasetProcessing && (
+              <Alert severity="info">
+                {t("generative:fineTuning.message.datasetProcessing")}
+              </Alert>
+            )}
+            {datasetFailed && (
+              <Alert severity="error">
+                {t("generative:fineTuning.message.datasetFailed")}
+              </Alert>
+            )}
             <FormControl fullWidth>
               <InputLabel>{t("generative:fineTuning.label.format")}</InputLabel>
               <Select
@@ -526,6 +603,10 @@ export default function FineTuning() {
                     "lora_r",
                     t("generative:fineTuning.label.loraRank"),
                   )}
+                  {numberField(
+                    "warmup_steps",
+                    t("generative:fineTuning.label.warmupSteps"),
+                  )}
                 </Stack>
               </Collapse>
             </Stack>
@@ -575,7 +656,12 @@ export default function FineTuning() {
               <Button
                 variant="contained"
                 onClick={createAndStart}
-                disabled={busy || (report && !report.ready)}
+                disabled={
+                  busy ||
+                  datasetProcessing ||
+                  datasetFailed ||
+                  (report && !report.ready)
+                }
               >
                 {t("generative:fineTuning.button.createAndStart")}
               </Button>
@@ -593,7 +679,10 @@ export default function FineTuning() {
         {step < 3 && (
           <Button
             variant="contained"
-            disabled={step === 1 && !draft.dataset_id}
+            disabled={
+              step === 1 &&
+              (!draft.dataset_id || datasetProcessing || datasetFailed)
+            }
             onClick={() => setStep((current) => current + 1)}
           >
             {t("common:next")}
@@ -655,9 +744,32 @@ export default function FineTuning() {
               </Alert>
             ) : null}
             {run.metrics && (
-              <Typography component="pre" variant="caption">
-                {JSON.stringify(run.metrics, null, 2)}
-              </Typography>
+              <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ mt: 2 }}>
+                {(run.metrics.train_loss ?? run.metrics.last_logged?.loss) ? (
+                  <Typography variant="body2">
+                    Loss:{" "}
+                    {Number(
+                      run.metrics.train_loss ?? run.metrics.last_logged.loss,
+                    ).toFixed(4)}
+                  </Typography>
+                ) : null}
+                {run.metrics.eval_loss !== undefined ? (
+                  <Typography variant="body2">
+                    Eval loss: {Number(run.metrics.eval_loss).toFixed(4)}
+                  </Typography>
+                ) : null}
+                {run.runtime_metadata?.duration_seconds !== undefined ? (
+                  <Typography variant="body2">
+                    Duration:{" "}
+                    {Number(run.runtime_metadata.duration_seconds).toFixed(1)} s
+                  </Typography>
+                ) : null}
+                {run.runtime_metadata?.peak_vram_bytes ? (
+                  <Typography variant="body2">
+                    Peak VRAM: {bytes(run.runtime_metadata.peak_vram_bytes)}
+                  </Typography>
+                ) : null}
+              </Stack>
             )}
           </CardContent>
           <CardActions>
@@ -674,9 +786,18 @@ export default function FineTuning() {
                 color="warning"
                 startIcon={<StopIcon />}
                 onClick={async () => {
-                  await cancelFineTuningRun(run.id);
-                  await refresh();
+                  setBusy(true);
+                  setError("");
+                  try {
+                    await cancelFineTuningRun(run.id);
+                    await refresh();
+                  } catch (nextError) {
+                    setError(errorMessage(nextError));
+                  } finally {
+                    setBusy(false);
+                  }
                 }}
+                disabled={busy || run.cancellation_requested}
               >
                 {t("common:cancel")}
               </Button>

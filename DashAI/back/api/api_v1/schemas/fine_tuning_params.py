@@ -56,6 +56,7 @@ class TrainingParameters(BaseModel):
     lora_dropout: float = Field(default=0.05, ge=0.0, lt=1.0)
     target_modules: str = "all-linear"
     seed: int = 42
+    warmup_steps: int = Field(default=0, ge=0)
     logging_steps: int = Field(default=1, ge=1)
     save_steps: int = Field(default=1, ge=1)
     eval_steps: int = Field(default=1, ge=1)
@@ -121,6 +122,9 @@ class PreflightReport(BaseModel):
     model_downloaded: bool = False
     resolved_model_revision: Optional[str] = None
     hardware: dict[str, Any]
+    accelerator: Literal["cuda", "mps", "cpu"] = "cpu"
+    supported_methods: list[FineTuningMethod] = Field(default_factory=list)
+    backend_availability: dict[str, dict[str, Any]] = Field(default_factory=dict)
     dependencies: dict[str, Optional[str]]
     estimated_vram_gb: Optional[float] = None
 

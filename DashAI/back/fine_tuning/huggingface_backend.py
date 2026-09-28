@@ -83,7 +83,11 @@ def _training_text_row(example: dict[str, Any], tokenizer) -> dict[str, str]:
 
 
 def _sft_config_kwargs(
-    parameters, output_path: Path, has_validation: bool, use_fp16: bool
+    parameters,
+    output_path: Path,
+    has_validation: bool,
+    use_fp16: bool,
+    use_bf16: bool = False,
 ) -> dict:
     from trl import SFTConfig
 
@@ -100,8 +104,9 @@ def _sft_config_kwargs(
         "save_steps": parameters.save_steps,
         "eval_steps": parameters.eval_steps,
         "seed": parameters.seed,
+        "warmup_steps": parameters.warmup_steps,
         "fp16": use_fp16,
-        "bf16": False,
+        "bf16": use_bf16,
         "optim": "adamw_torch",
         "gradient_checkpointing": not is_quick_test,
         "report_to": "none",
@@ -110,7 +115,7 @@ def _sft_config_kwargs(
         "max_length": parameters.max_length,
         "packing": False,
         "save_strategy": "no" if is_quick_test else "steps",
-        "eval_strategy": ("steps" if has_validation and not is_quick_test else "no"),
+        "eval_strategy": ("steps" if has_validation else "no"),
     }
     if "max_length" not in signature and "max_seq_length" in signature:
         values["max_seq_length"] = values.pop("max_length")
@@ -359,6 +364,11 @@ class HuggingFaceFineTuningBackend(FineTuningBackend):
                 shutil.rmtree(temporary)
                 raise TrainingCanceledError
 
+            final_evaluation: dict[str, Any] = {}
+            if validation_dataset is not None and hasattr(trainer, "evaluate"):
+                progress(0.90, "Running final evaluation", callback.logs)
+                final_evaluation = _json_safe(trainer.evaluate())
+
             progress(0.92, "Saving adapter and manifest", {})
             adapter_path = temporary / "adapter"
             trainer.model.save_pretrained(adapter_path)
@@ -371,6 +381,7 @@ class HuggingFaceFineTuningBackend(FineTuningBackend):
                 )
 
             metrics = _json_safe(train_output.metrics)
+            metrics.update(final_evaluation)
             metrics["health_warnings"] = callback.health_warnings
             metrics["last_logged"] = callback.logs
             peak_vram = 0

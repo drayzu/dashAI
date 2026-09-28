@@ -4,7 +4,7 @@
 
 Esta rama implementa un primer flujo completo de fine-tuning eficiente de LLMs dentro de DashAI. El camino validado es:
 
-1. seleccionar un dataset ya registrado en DashAI;
+1. seleccionar un dataset ya registrado en DashAI o cargar uno mediante el flujo oficial de Datos;
 2. mapearlo como `text`, `prompt_completion` o `messages`;
 3. ejecutar un preflight de dependencias, hardware, datos y modelo;
 4. crear y encolar un `FineTuningRun` persistente con Huey;
@@ -45,9 +45,9 @@ Los formatos admitidos son:
 - `prompt_completion`: columnas separadas de instrucción y respuesta;
 - `messages`: lista o JSON serializado con roles `system`, `user` y `assistant`.
 
-La preparación rechaza columnas ausentes, ejemplos vacíos, JSON inválido y roles desconocidos. Además aplica límite de muestras, división de validación reproducible, preview y fingerprint sobre los datos ya mapeados.
+La preparación rechaza columnas ausentes, ejemplos vacíos, JSON inválido y roles desconocidos. Antes de aplicar el límite realiza un muestreo reproducible sobre todo el dataset, y luego calcula división de validación, preview y fingerprint sobre los datos ya mapeados.
 
-QLoRA carga el modelo en NF4 con doble cuantización y cómputo FP16, y PEFT usa `target_modules="all-linear"`. LoRA usa precisión FP16 en CUDA para estos modelos pequeños. El preset `quick_test` desactiva evaluación, checkpoints intermedios y gradient checkpointing para que tres pasos sean una prueba de integración razonable en Pascal; los presets de trabajo conservan configuraciones más representativas.
+QLoRA carga el modelo en NF4 con doble cuantización y cómputo FP16, y PEFT usa `target_modules="all-linear"`. LoRA usa precisión FP16 en CUDA para estos modelos pequeños. El preset `quick_test` desactiva checkpoints intermedios y gradient checkpointing para que tres pasos sean una prueba de integración razonable en Pascal, pero conserva evaluación final cuando existe una partición de validación. Todos los presets admiten `warmup_steps`.
 
 ### Jobs, API e inferencia
 
@@ -77,6 +77,12 @@ Desde la raíz del repositorio, las dependencias opcionales declaradas son:
 
 ```powershell
 uv sync --extra finetuning
+```
+
+El extra anterior instala la base LoRA (`TRL` y `PEFT`) y funciona con CUDA, MPS o CPU según el PyTorch instalado. QLoRA se instala de manera separada para no obligar a macOS/CPU a resolver `bitsandbytes`:
+
+```powershell
+uv sync --extra finetuning --extra finetuning-qlora
 ```
 
 Para esta prueba se conservaron explícitamente los binarios CUDA existentes de PyTorch 2.11.0 y se instalaron solo las dependencias nuevas:
@@ -275,7 +281,22 @@ La migración fue verificada con upgrade, downgrade al head anterior y un nuevo 
 
 ### Alcance deliberadamente limitado
 
-No se implementaron Unsloth, GGUF, publicación a Hugging Face Hub, entrenamiento distribuido, checkpoints reanudables, búsqueda remota ni modelos arbitrarios. El inventario es únicamente local. Estas exclusiones mantienen el prototipo centrado en la brecha principal: dataset DashAI → ajuste persistente → inferencia Generative.
+Unsloth se implementó como backend opcional y diagnosticable, pero no se validó sobre esta GTX 1080 porque instalarlo reemplazaría el stack PyTorch funcional. No se implementaron exportación GGUF del adaptador, publicación a Hugging Face Hub, entrenamiento distribuido, checkpoints reanudables, búsqueda remota ni modelos arbitrarios. El inventario es únicamente local. Estas exclusiones mantienen el prototipo centrado en la brecha principal: dataset DashAI → ajuste persistente → inferencia Generative.
+
+## Integración final con DashAI develop
+
+La rama de memoria fue integrada con `upstream/develop` conservando el repositorio oficial como remoto de solo lectura. El módulo usa ahora el cargador existente en `/app/data/datasets/new`: el wizard guarda el borrador en `sessionStorage`, envía únicamente el destino interno `returnTo=fine-tuning` y vuelve con `datasetId`; no acepta URLs de retorno arbitrarias. Si el job del dataset continúa activo, la página consulta su estado y deshabilita preflight e inicio hasta que termine.
+
+El catálogo entrenable se declara en los componentes Qwen del `ComponentRegistry` mediante metadata `fine_tuning`, por lo que nuevos componentes pueden añadir checkpoints Transformers y métodos sin duplicar otro registro de archivos. Los modelos GGUF continúan siendo la ruta normal de inferencia; el entrenamiento usa el checkpoint Transformers original y el resultado PEFT se abre desde Generative.
+
+| Plataforma/dispositivo | LoRA | QLoRA | Estado |
+| --- | --- | --- | --- |
+| Windows/Linux + NVIDIA CC ≥ 6.0 | Sí, CUDA | Sí, NF4 | GTX 1080 validada |
+| Windows/Linux sin CUDA | Sí, CPU (lento) | No | fallback automatizado |
+| macOS Apple Silicon | Sí, MPS; CPU fallback | No | código y preflight; smoke MPS pendiente |
+| Unsloth | Si supera importación/versiones/dispositivo | Si supera las mismas comprobaciones | opcional, no instalado en el entorno principal |
+
+La ejecución vuelve a hacer preflight al iniciar el run persistido, evitando utilizar un reporte anterior después de cambiar dataset, método o parámetros. Entrenamiento e inferencia local comparten un lock de acelerador; las descargas guardan su `huey_id` y al reiniciar pasan a error reintentable si la tarea desapareció. El progreso interno usa siempre fracciones 0–1 y la interfaz presenta pérdida, evaluación, duración y VRAM sin volcar JSON técnico.
 
 ## Preguntas para la reunión con Felipe
 
@@ -298,4 +319,4 @@ No se implementaron Unsloth, GGUF, publicación a Hugging Face Hub, entrenamient
 
 ## Siguientes pasos técnicos recomendados
 
-Estado tras la productización: la reconciliación al arrancar, la programación exclusiva de GPU, la instrumentación de estabilidad (con la prueba real de 15 pasos), la internacionalización completa, el inventario local con descargas y sesión desde modelo base, la cancelación fuerte por aislamiento en proceso y una primera comparación cualitativa base vs adaptador ya están implementados y validados. Lo pendiente, en orden de impacto: un protocolo de evaluación de calidad base vs adaptado con métricas y conjunto de evaluación; una prueba de estabilidad más larga (40–50 pasos) y con warmup explícito para caracterizar el NaN temprano de `grad_norm` (añadir `warmup_steps` a `TrainingParameters`); latencia de cancelación observada en UI (hoy: gracia cooperativa de 30 s + kill); y la decisión con el profesor sobre plugins, artefactos (fusión/GGUF) y modelos soportados antes de ampliar el catálogo. Unsloth queda habilitable cuando exista hardware con compute capability ≥ 7.0 o una ventana para re-pin del stack.
+Estado tras la productización: la reconciliación al arrancar, la programación exclusiva del acelerador, el warmup configurable, la evaluación final, la instrumentación de estabilidad (con la prueba real de 15 pasos), la internacionalización, el inventario local, la carga-retorno de datasets, la cancelación fuerte por aislamiento en proceso y una primera comparación cualitativa base vs adaptador ya están implementados. Lo pendiente es un protocolo cuantitativo de calidad base vs adaptado, el smoke en Apple Silicon real y la decisión con el profesor sobre plugins, artefactos (fusión/GGUF) y modelos adicionales. Unsloth queda habilitable cuando exista hardware compatible o un worker aislado que no reemplace el stack principal.

@@ -31,7 +31,12 @@ class ManagedModelDownloadJob(BaseJob):
     def set_status_as_delivered(
         self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
-        """No-op: model downloads don't use the delivered state."""
+        """Record the queue task so interrupted downloads can be reconciled."""
+        with session_factory() as db:
+            row = db.get(ManagedLocalModel, self.kwargs["managed_model_id"])
+            if row is not None:
+                row.huey_id = self.kwargs.get("huey_id")
+                db.commit()
 
     @inject
     def set_status_as_error(
@@ -68,7 +73,7 @@ class ManagedModelDownloadJob(BaseJob):
                 revision = row.base_model_revision
 
             def report(fraction: float, message: str) -> None:
-                self.report_progress(10 + fraction * 85, message)
+                self.report_progress(0.10 + fraction * 0.85, message)
 
             destination, resolved_revision = ensure_model(
                 Path(config["LLM_MODELS_PATH"]),
@@ -85,13 +90,14 @@ class ManagedModelDownloadJob(BaseJob):
                 row.resolved_revision = resolved_revision
                 row.size_bytes = directory_size(destination)
                 row.error_message = None
+                row.huey_id = None
                 try:
                     db.commit()
                 except exc.SQLAlchemyError as e:
                     log.exception(e)
                     raise JobError("DB error saving model download.") from e
 
-            self.report_progress(100, "Model ready")
+            self.report_progress(1.0, "Model ready")
             log.debug("Managed model download job %d completed.", managed_model_id)
 
         except Exception as e:

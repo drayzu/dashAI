@@ -99,6 +99,11 @@ def prepare_dataset(
     if limit < 2:
         raise ValueError("At least two non-empty examples are required.")
 
+    # Do not always train on the prefix of an ordered dataset.  Select a
+    # deterministic sample first so repeated runs remain reproducible while
+    # every source row has a chance of being used.
+    if limit < source_rows:
+        source = source.shuffle(seed=parameters.seed).select(range(limit))
     rows = [map_row(source[index], mapping, index) for index in range(limit)]
     payload = json.dumps(rows, sort_keys=True, ensure_ascii=False).encode("utf-8")
     fingerprint = hashlib.sha256(payload).hexdigest()

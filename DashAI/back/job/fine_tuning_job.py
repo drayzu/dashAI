@@ -80,12 +80,12 @@ class FineTuningJob(BaseJob):
             return f"Fine-tuning #{run_id}"
 
     def _report_run_progress(self, session_factory, run_id: int) -> None:
-        """Forward the child's DB progress to the job queue (0-100 scale)."""
+        """Forward the child's DB progress to the job queue (0-1 scale)."""
         try:
             with session_factory() as db:
                 run = db.get(FineTuningRun, run_id)
                 if run:
-                    self.report_progress(run.progress * 100, run.progress_message)
+                    self.report_progress(run.progress, run.progress_message)
         except Exception:
             logger.debug("Could not forward fine-tuning progress.", exc_info=True)
 

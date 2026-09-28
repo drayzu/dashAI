@@ -14,14 +14,22 @@ from DashAI.back.api.api_v1.schemas.fine_tuning_params import (
     PreflightReport,
     PreflightRequest,
 )
-from DashAI.back.core.enums.status import DatafileStatus, FineTuningStatus
+from DashAI.back.core.enums.status import (
+    DatafileStatus,
+    DatasetStatus,
+    FineTuningStatus,
+)
 from DashAI.back.dependencies.database.models import (
     Dataset,
     FineTuningRun,
     GenerativeSession,
     ManagedLocalModel,
 )
-from DashAI.back.fine_tuning.catalog import MODEL_CATALOG, get_catalog, resolve_model
+from DashAI.back.fine_tuning.catalog import (
+    get_catalog,
+    get_model_catalog,
+    resolve_model,
+)
 from DashAI.back.fine_tuning.model_store import (
     directory_size,
     ensure_managed_path,
@@ -45,6 +53,25 @@ def _config():
     return di["config"]
 
 
+def _require_ready_dataset(dataset: Dataset | None) -> Dataset:
+    if dataset is None:
+        raise HTTPException(status_code=404, detail="Dataset does not exist.")
+    legacy_ready = (
+        dataset.status == DatasetStatus.NOT_STARTED
+        and (Path(dataset.file_path) / "dataset").exists()
+    )
+    if dataset.status != DatasetStatus.FINISHED and not legacy_ready:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Dataset is still processing."
+                if dataset.status != DatasetStatus.ERROR
+                else "Dataset processing failed."
+            ),
+        )
+    return dataset
+
+
 @router.get("/catalog")
 async def catalog():
     return get_catalog()
@@ -56,9 +83,7 @@ async def preflight(
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     with session_factory() as db:
-        dataset = db.get(Dataset, request.dataset_id)
-        if not dataset:
-            raise HTTPException(status_code=404, detail="Dataset does not exist.")
+        dataset = _require_ready_dataset(db.get(Dataset, request.dataset_id))
         return run_preflight(request, dataset, Path(_config()["LLM_MODELS_PATH"]))
 
 
@@ -74,8 +99,7 @@ async def create_run(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     with session_factory() as db:
-        if not db.get(Dataset, params.dataset_id):
-            raise HTTPException(status_code=404, detail="Dataset does not exist.")
+        _require_ready_dataset(db.get(Dataset, params.dataset_id))
         run = FineTuningRun(
             name=params.name,
             dataset_id=params.dataset_id,
@@ -134,6 +158,43 @@ async def start_run(
         if run.status in ACTIVE_STATUSES or run.status == FineTuningStatus.COMPLETED:
             raise HTTPException(
                 status_code=409, detail=f"Run cannot start from '{run.status.value}'."
+            )
+        dataset = _require_ready_dataset(db.get(Dataset, run.dataset_id))
+        request = PreflightRequest(
+            dataset_id=run.dataset_id,
+            base_model_id=run.base_model_id,
+            base_model_revision=run.base_model_revision,
+            method=run.method,
+            backend=run.backend,
+            dataset_mapping=run.dataset_mapping,
+            training_parameters=run.training_parameters,
+            download_model=False,
+        )
+        report = run_preflight(request, dataset, Path(_config()["LLM_MODELS_PATH"]))
+        if run.backend.value == "unsloth":
+            from DashAI.back.fine_tuning.unsloth_backend import (
+                UnslothFineTuningBackend,
+            )
+
+            # A plugin/test may register an alternative implementation under
+            # the Unsloth backend contract. Its own runtime checks replace the
+            # stock package-import blocker.
+            if not UnslothFineTuningBackend.__module__.startswith(
+                "DashAI.back.fine_tuning"
+            ):
+                report.blockers = [
+                    issue
+                    for issue in report.blockers
+                    if issue.code != "unsloth_not_installed"
+                ]
+                report.ready = not report.blockers
+        if not report.ready:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "message": "Fine-tuning preflight failed.",
+                    "blockers": [issue.model_dump() for issue in report.blockers],
+                },
             )
         # Advisory check only: the worker re-checks under the lock to close
         # the race between concurrent start requests.
@@ -239,7 +300,8 @@ def _base_inventory(db, models_root: Path) -> dict[str, LocalModelInfo]:
     downloaded by earlier flows without a database row.
     """
     entries: dict[str, LocalModelInfo] = {}
-    for model_key, model in MODEL_CATALOG.items():
+    model_catalog = get_model_catalog()
+    for model_key, model in model_catalog.items():
         revision = "main"
         key = f"base:{model_key}:{revision}"
         entries[key] = LocalModelInfo(
@@ -254,7 +316,7 @@ def _base_inventory(db, models_root: Path) -> dict[str, LocalModelInfo]:
 
     rows = db.scalars(select(ManagedLocalModel)).all()
     for row in rows:
-        model = MODEL_CATALOG.get(row.model_key)
+        model = model_catalog.get(row.model_key)
         if model is None:
             continue
         key = f"base:{row.model_key}:{row.base_model_revision}"
@@ -300,7 +362,7 @@ def _base_inventory(db, models_root: Path) -> dict[str, LocalModelInfo]:
         if not metadata:
             continue
         model_key = metadata["model_id"]
-        if model_key not in MODEL_CATALOG:
+        if model_key not in model_catalog:
             continue
         key = f"base:{model_key}:{metadata['requested_revision']}"
         if key in tracked_keys:
@@ -319,7 +381,7 @@ def _base_inventory(db, models_root: Path) -> dict[str, LocalModelInfo]:
             path=str(path),
             size_bytes=directory_size(path),
             status="ready",
-            recommended_vram_gb=MODEL_CATALOG[model_key]["recommended_vram_gb"],
+            recommended_vram_gb=model_catalog[model_key]["recommended_vram_gb"],
             downloadable=False,
             in_use=bool(active),
         )
@@ -416,7 +478,8 @@ async def download_model(
 
     job = ManagedModelDownloadJob(managed_model_id=row_id, model_key=model_key)
     try:
-        job_queue.put(job)
+        queued = job_queue.put(job)
+        huey_id = str(queued.id)
     except Exception as exc:
         with session_factory() as db:
             row = db.get(ManagedLocalModel, row_id)
@@ -426,6 +489,10 @@ async def download_model(
         raise HTTPException(
             status_code=500, detail="Could not enqueue model download."
         ) from exc
+    with session_factory() as db:
+        row = db.get(ManagedLocalModel, row_id)
+        row.huey_id = huey_id
+        db.commit()
     return {"detail": f"Download of {model_key} started.", "local_model_id": row_id}
 
 

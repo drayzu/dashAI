@@ -1,22 +1,34 @@
 from copy import deepcopy
 from typing import Any
 
+from DashAI.back.models.hugging_face.qwen_model import (
+    Qwen25_05BInstruct,
+    Qwen25_15BInstruct,
+)
+
+BUILTIN_FINE_TUNING_MODELS = (Qwen25_05BInstruct, Qwen25_15BInstruct)
 MODEL_CATALOG: dict[str, dict[str, Any]] = {
-    "qwen2.5-0.5b-instruct": {
-        "key": "qwen2.5-0.5b-instruct",
-        "name": "Qwen2.5 0.5B Instruct",
-        "repository": "Qwen/Qwen2.5-0.5B-Instruct",
-        "parameter_count_billions": 0.5,
-        "recommended_vram_gb": 6,
-    },
-    "qwen2.5-1.5b-instruct": {
-        "key": "qwen2.5-1.5b-instruct",
-        "name": "Qwen2.5 1.5B Instruct",
-        "repository": "Qwen/Qwen2.5-1.5B-Instruct",
-        "parameter_count_billions": 1.5,
-        "recommended_vram_gb": 8,
-    },
+    component.FINE_TUNING["key"]: deepcopy(component.FINE_TUNING)
+    for component in BUILTIN_FINE_TUNING_MODELS
 }
+
+
+def get_model_catalog() -> dict[str, dict[str, Any]]:
+    """Return trainable models declared by registered DashAI components."""
+    result = deepcopy(MODEL_CATALOG)
+    try:
+        from kink import di
+
+        registry = di["component_registry"]
+        components = registry.get_components_by_types(select=["GenerativeModel"])
+    except Exception:
+        return result
+    for component in components:
+        declaration = (component.get("metadata") or {}).get("fine_tuning")
+        if declaration and declaration.get("key"):
+            result[declaration["key"]] = deepcopy(declaration)
+    return result
+
 
 PRESET_CATALOG: dict[str, dict[str, Any]] = {
     "quick_test": {
@@ -36,6 +48,7 @@ PRESET_CATALOG: dict[str, dict[str, Any]] = {
             "lora_dropout": 0.05,
             "target_modules": "all-linear",
             "seed": 42,
+            "warmup_steps": 0,
             "logging_steps": 1,
             "save_steps": 1,
             "eval_steps": 1,
@@ -58,6 +71,7 @@ PRESET_CATALOG: dict[str, dict[str, Any]] = {
             "lora_dropout": 0.05,
             "target_modules": "all-linear",
             "seed": 42,
+            "warmup_steps": 5,
             "logging_steps": 1,
             "save_steps": 25,
             "eval_steps": 25,
@@ -80,6 +94,7 @@ PRESET_CATALOG: dict[str, dict[str, Any]] = {
             "lora_dropout": 0.05,
             "target_modules": "all-linear",
             "seed": 42,
+            "warmup_steps": 5,
             "logging_steps": 1,
             "save_steps": 25,
             "eval_steps": 25,
@@ -91,7 +106,7 @@ PRESET_CATALOG: dict[str, dict[str, Any]] = {
 def resolve_model(model_id: str) -> dict[str, Any]:
     """Resolve a curated catalog key without accepting arbitrary repositories."""
     try:
-        return deepcopy(MODEL_CATALOG[model_id])
+        return deepcopy(get_model_catalog()[model_id])
     except KeyError as exc:
         raise ValueError(f"Unsupported base model: {model_id}") from exc
 
@@ -103,7 +118,7 @@ def get_catalog() -> dict[str, Any]:
 
     unsloth = unsloth_capabilities()
     return {
-        "models": deepcopy(list(MODEL_CATALOG.values())),
+        "models": deepcopy(list(get_model_catalog().values())),
         "presets": deepcopy(PRESET_CATALOG),
         "capabilities": {
             "methods": ["lora", "qlora"],

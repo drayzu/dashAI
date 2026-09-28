@@ -19,6 +19,7 @@ from DashAI.back.fine_tuning.model_store import (
 )
 from DashAI.back.fine_tuning.unsloth_backend import (
     NOT_INSTALLED_MESSAGE,
+    unsloth_capabilities,
     unsloth_installed,
 )
 
@@ -38,8 +39,11 @@ def dependency_versions() -> dict[str, str | None]:
 def hardware_info() -> dict[str, Any]:
     import torch
 
+    mps_backend = getattr(torch.backends, "mps", None)
+    mps_available = bool(mps_backend and mps_backend.is_available())
     hardware: dict[str, Any] = {
         "cuda_available": torch.cuda.is_available(),
+        "mps_available": mps_available,
         "torch_version": torch.__version__,
     }
     if torch.cuda.is_available():
@@ -50,10 +54,19 @@ def hardware_info() -> dict[str, Any]:
                 "vram_gb": round(properties.total_memory / 1024**3, 2),
                 "compute_capability": list(torch.cuda.get_device_capability(0)),
                 "cuda_version": torch.version.cuda,
+                "accelerator": "cuda",
+            }
+        )
+    elif mps_available:
+        hardware.update(
+            {
+                "device": "Apple Metal (MPS)",
+                "vram_gb": 0.0,
+                "accelerator": "mps",
             }
         )
     else:
-        hardware.update({"device": "cpu", "vram_gb": 0.0})
+        hardware.update({"device": "cpu", "vram_gb": 0.0, "accelerator": "cpu"})
     return hardware
 
 
@@ -112,12 +125,24 @@ def run_preflight(
                         ),
                     )
                 )
+    accelerator = hardware.get(
+        "accelerator", "cuda" if hardware.get("cuda_available") else "cpu"
+    )
+    supported_methods = [FineTuningMethod.LORA]
+    if hardware["cuda_available"] and tuple(
+        hardware.get("compute_capability", (0, 0))
+    ) >= (6, 0):
+        supported_methods.append(FineTuningMethod.QLORA)
+
     if request.method == FineTuningMethod.QLORA:
         if not hardware["cuda_available"]:
             blockers.append(
                 PreflightIssue(
                     code="qlora_requires_cuda",
-                    message="QLoRA requires a CUDA-capable NVIDIA GPU.",
+                    message=(
+                        "QLoRA requires a CUDA-capable NVIDIA GPU in this "
+                        "DashAI version. Choose LoRA for MPS or CPU."
+                    ),
                 )
             )
         elif tuple(hardware.get("compute_capability", (0, 0))) < (6, 0):
@@ -127,6 +152,16 @@ def run_preflight(
                     message="NF4 requires NVIDIA compute capability 6.0 or newer.",
                 )
             )
+    elif accelerator == "mps":
+        warnings.append(
+            PreflightIssue(
+                code="mps_training",
+                message=(
+                    "LoRA will use Apple Metal (MPS). QLoRA remains disabled "
+                    "until the quantization backend is validated on this device."
+                ),
+            )
+        )
     elif not hardware["cuda_available"]:
         warnings.append(
             PreflightIssue(
@@ -195,6 +230,7 @@ def run_preflight(
                 )
             )
 
+    unsloth = unsloth_capabilities()
     return PreflightReport(
         ready=not blockers,
         blockers=blockers,
@@ -208,6 +244,12 @@ def run_preflight(
         model_downloaded=downloaded,
         resolved_model_revision=resolved_revision,
         hardware=hardware,
+        accelerator=accelerator,
+        supported_methods=supported_methods,
+        backend_availability={
+            "transformers": {"available": True, "reason": None},
+            "unsloth": unsloth,
+        },
         dependencies=versions,
         estimated_vram_gb=(model["recommended_vram_gb"] if model else None),
     )

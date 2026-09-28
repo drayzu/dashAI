@@ -26,8 +26,8 @@ from typing import Any
 
 from sqlalchemy import select
 
-from DashAI.back.core.enums.status import FineTuningStatus
-from DashAI.back.dependencies.database.models import FineTuningRun
+from DashAI.back.core.enums.status import DatafileStatus, FineTuningStatus
+from DashAI.back.dependencies.database.models import FineTuningRun, ManagedLocalModel
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +41,10 @@ INTERRUPTED_RUNNING_MESSAGE = (
 MISSING_TASK_MESSAGE = (
     "The queued training task no longer exists after a DashAI restart. "
     "Start the run again to retry it."
+)
+MISSING_DOWNLOAD_TASK_MESSAGE = (
+    "The model download was interrupted because its queued task no longer "
+    "exists. Start the download again to retry it."
 )
 
 
@@ -86,6 +90,30 @@ def reconcile_fine_tuning_runs(session_factory: Any, job_queue: Any) -> dict[str
         logger.warning("Fine-tuning run %s was running during a restart.", run_id)
     for run_id in summary["failed_without_task"]:
         logger.warning("Fine-tuning run %s lost its queued task.", run_id)
+    return summary
+
+
+def reconcile_managed_model_downloads(
+    session_factory: Any, job_queue: Any
+) -> dict[str, list[int]]:
+    """Fail downloads that cannot resume after an application restart."""
+    summary: dict[str, list[int]] = {"failed_downloads": [], "kept_downloads": []}
+    with session_factory() as db:
+        rows = db.scalars(
+            select(ManagedLocalModel).where(
+                ManagedLocalModel.status == DatafileStatus.DOWNLOADING
+            )
+        ).all()
+        for row in rows:
+            snapshot = _task_snapshot(job_queue, row.huey_id)
+            if snapshot is not None and snapshot.get("pending"):
+                summary["kept_downloads"].append(row.id)
+                continue
+            row.status = DatafileStatus.ERROR
+            row.error_message = MISSING_DOWNLOAD_TASK_MESSAGE
+            row.huey_id = None
+            summary["failed_downloads"].append(row.id)
+        db.commit()
     return summary
 
 
@@ -140,10 +168,12 @@ def reconcile_fine_tuning(
 ) -> dict[str, list | bool]:
     """Run every fine-tuning reconciliation step and return a summary."""
     runs_summary = reconcile_fine_tuning_runs(session_factory, job_queue)
+    downloads_summary = reconcile_managed_model_downloads(session_factory, job_queue)
     quarantined = quarantine_orphan_temp_dirs(Path(config["FINE_TUNING_PATH"]))
     lock_cleared = clear_stale_gpu_lock(config)
     return {
         **runs_summary,
+        **downloads_summary,
         "quarantined_dirs": quarantined,
         "lock_cleared": lock_cleared,
     }

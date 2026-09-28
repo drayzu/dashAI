@@ -87,7 +87,7 @@ class PeftAdapterTextGenerationSchema(BaseSchema):
         alias=MultilingualString(en="Context window", es="Ventana de contexto"),
     )  # type: ignore
     device: schema_field(
-        enum_field(["auto", "cuda", "cpu"]),
+        enum_field(["auto", "cuda", "mps", "cpu"]),
         placeholder="auto",
         description=MultilingualString(
             en="Hardware used to load the base model and adapter.",
@@ -132,9 +132,14 @@ class PeftAdapterTextGenerationModel(TextToTextGenerationTaskModel):
         self.repetition_penalty = values.get("repetition_penalty", 1.05)
         self.context_window = values.get("context_window", 2048)
         requested_device = values.get("device", "auto")
-        use_cuda = torch.cuda.is_available() and requested_device != "cpu"
+        mps_backend = getattr(torch.backends, "mps", None)
+        mps_available = bool(mps_backend and mps_backend.is_available())
+        use_cuda = torch.cuda.is_available() and requested_device in {"auto", "cuda"}
+        use_mps = mps_available and requested_device in {"auto", "mps"} and not use_cuda
         if requested_device == "cuda" and not torch.cuda.is_available():
             raise RuntimeError("CUDA was requested but is not available.")
+        if requested_device == "mps" and not mps_available:
+            raise RuntimeError("MPS was requested but is not available.")
 
         self.tokenizer = AutoTokenizer.from_pretrained(
             adapter_path, local_files_only=True, trust_remote_code=False
@@ -164,6 +169,8 @@ class PeftAdapterTextGenerationModel(TextToTextGenerationTaskModel):
         base_model = AutoModelForCausalLM.from_pretrained(
             base_model_path, **model_kwargs
         )
+        if use_mps:
+            base_model = base_model.to("mps")
         self.model = PeftModel.from_pretrained(
             base_model, adapter_path, local_files_only=True
         )

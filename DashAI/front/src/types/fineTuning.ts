@@ -26,6 +26,7 @@ export interface TrainingParameters {
   lora_dropout: number;
   target_modules: string;
   seed: number;
+  warmup_steps: number;
   logging_steps: number;
   save_steps: number;
   eval_steps: number;
@@ -80,6 +81,12 @@ export interface PreflightReport {
   validation_rows: number;
   model_downloaded: boolean;
   hardware: Record<string, any>;
+  accelerator: "cuda" | "mps" | "cpu";
+  supported_methods: Array<"lora" | "qlora">;
+  backend_availability: Record<
+    string,
+    { available: boolean; reason?: string | null }
+  >;
   dependencies: Record<string, string | null>;
 }
 

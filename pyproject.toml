@@ -48,6 +48,7 @@ dependencies = [
     "torch",
     "torchvision",
     "transformers",
+    "sentence-transformers",
     "controlnet_aux",
     "sacrebleu",
     "sentencepiece",
@@ -77,6 +78,9 @@ dependencies = [
     "grad-cam>=1.5.5",
     "dice-ml>=0.12",
     "lime>=0.2.0.1",
+    "statsmodels>=0.14.6",
+    "pypdf",
+    "pymupdf",
 ]
 
 [project.optional-dependencies]
@@ -95,8 +99,8 @@ cuda = ["torch", "torchvision", "llama-cpp-python"]
 finetuning = [
     "trl==1.10.0",
     "peft==0.20.0",
-    "bitsandbytes==0.50.1",
 ]
+finetuning-qlora = ["bitsandbytes==0.50.1"]
 
 [project.urls]
 Homepage = "https://github.com/DashAISoftware/DashAI"

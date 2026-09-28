@@ -28,6 +28,9 @@ class BaseGenerativeModel(ConfigObject, metaclass=ABCMeta):
         metadata: Dict[str, Any] = {}
         metadata["requires_download"] = bool(getattr(cls, "REQUIRES_DOWNLOAD", False))
         metadata["download_size_bytes"] = getattr(cls, "DOWNLOAD_SIZE_BYTES", None)
+        fine_tuning = getattr(cls, "FINE_TUNING", None)
+        if fine_tuning:
+            metadata["fine_tuning"] = dict(fine_tuning)
         return metadata
 
     @abstractmethod

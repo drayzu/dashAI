@@ -10,7 +10,7 @@ export default function CreateSessionLanding() {
   const { t } = useTranslation(["generative", "common"]);
   const tourContext = useTourContext();
 
-  const handleCreateSession = () => {
+  const handleOption = () => {
     if (tourContext?.run) {
       tourContext.nextStep();
     }
@@ -23,7 +23,7 @@ export default function CreateSessionLanding() {
 
   return (
     <SelectOptionMenu
-      goToNextStep={handleCreateSession}
+      goToNextStep={handleOption}
       title={t("generative:label.generativeModule")}
       subtitle={t("generative:label.createNewSessionDescription")}
       options={[

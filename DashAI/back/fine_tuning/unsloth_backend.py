@@ -170,11 +170,13 @@ class UnslothFineTuningBackend(FineTuningBackend):
             shutil.rmtree(temporary)
         temporary.mkdir(parents=True)
 
+        bf16_supported = unsloth_bf16_supported()
         config_kwargs = _sft_config_kwargs(
             request.parameters,
             temporary / "trainer",
             validation_dataset is not None,
-            unsloth_bf16_supported(),
+            use_fp16=not bf16_supported,
+            use_bf16=bf16_supported,
         )
         trainer = SFTTrainer(
             model=model,

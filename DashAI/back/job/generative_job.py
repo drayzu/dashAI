@@ -4,20 +4,23 @@ from typing import TYPE_CHECKING, Any
 from kink import inject
 from sqlalchemy import exc
 
+from DashAI.back.core.enums.status import RunStatus
 from DashAI.back.dependencies.database.models import (
     FineTuningRun,
     GenerativeProcess,
     GenerativeSession,
+    ManagedLocalModel,
     ProcessData,
 )
 from DashAI.back.job.base_job import BaseJob, JobError
+from DashAI.back.job.RAG_job import RAGJob
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
+from DashAI.back.tasks.RAG_task import RAGTask
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
@@ -112,9 +115,24 @@ class GenerativeJob(BaseJob):
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
         config = di["config"]
-        # (Lazy imports removed to avoid duplicate and unused imports warnings)
+
+        with session_factory() as db:
+            process = db.get(
+                GenerativeProcess, self.kwargs.get("generative_process_id")
+            )
+            if process is not None:
+                session = db.get(GenerativeSession, process.session_id)
+                if session is not None:
+                    task_class = component_registry[session.task_name]["class"]
+                    if issubclass(task_class, RAGTask):
+                        RAG_job = RAGJob(**self.kwargs)
+                        RAG_job.run()
+                        return
+
         model = None
         generative_process = None
+        gpu_lock = None
+        gpu_lock_owner = None
         with session_factory() as db:
             try:
                 generative_process_id: int = self.kwargs["generative_process_id"]
@@ -169,22 +187,12 @@ class GenerativeJob(BaseJob):
                             ensure_managed_path,
                             model_directory,
                         )
-                        from DashAI.back.fine_tuning.resource_lock import (
-                            training_lock,
-                        )
-
-                        # Adapter inference loads the same GPU a fine-tuning
-                        # job may be training on: fail fast with an
-                        # actionable error instead of risking an OOM.
-                        gpu_lock = training_lock(config)
-                        if gpu_lock.is_locked():
-                            raise JobError(gpu_lock.busy_message())
 
                         fine_tuning_run = db.get(
                             FineTuningRun, generative_session.fine_tuning_run_id
                         )
                         if (
-                            not fine_tuning_run
+                            fine_tuning_run is None
                             or fine_tuning_run.status != FineTuningStatus.COMPLETED
                             or not fine_tuning_run.artifact_path
                         ):
@@ -212,34 +220,18 @@ class GenerativeJob(BaseJob):
                         from pathlib import Path
 
                         from DashAI.back.core.enums.status import DatafileStatus
-                        from DashAI.back.dependencies.database.models import (
-                            ManagedLocalModel,
-                        )
-                        from DashAI.back.fine_tuning.model_store import (
-                            model_directory,
-                        )
-                        from DashAI.back.fine_tuning.resource_lock import (
-                            training_lock,
-                        )
-
-                        # Managed local inference shares the GPU with
-                        # fine-tuning: fail fast with an actionable error
-                        # instead of risking an OOM.
-                        gpu_lock = training_lock(config)
-                        if gpu_lock.is_locked():
-                            raise JobError(gpu_lock.busy_message())
+                        from DashAI.back.fine_tuning.model_store import model_directory
 
                         managed_model = db.get(
                             ManagedLocalModel, generative_session.local_model_id
                         )
                         if (
-                            not managed_model
+                            managed_model is None
                             or managed_model.status != DatafileStatus.READY
                         ):
                             raise JobError(
-                                "The managed local model is not ready. "
-                                "Download it again from the fine-tuning "
-                                "inventory."
+                                "The managed local model is not ready. Download it "
+                                "again from the fine-tuning inventory."
                             )
                         base_model_path = model_directory(
                             Path(config["LLM_MODELS_PATH"]),
@@ -248,13 +240,34 @@ class GenerativeJob(BaseJob):
                         )
                         if not base_model_path.exists():
                             raise JobError(
-                                "The managed local model was removed. Download "
-                                "it again before inference."
+                                "The managed local model was removed. Download it "
+                                "again before inference."
                             )
-                        params = {
-                            **params,
-                            "_base_model_path": str(base_model_path),
-                        }
+                        params = {**params, "_base_model_path": str(base_model_path)}
+
+                    linked_local_model = (
+                        generative_session.fine_tuning_run_id is not None
+                        or generative_session.local_model_id is not None
+                    )
+                    requested_device = str(params.get("device", "auto")).lower()
+                    mps_backend = getattr(torch.backends, "mps", None)
+                    accelerator_available = torch.cuda.is_available() or bool(
+                        mps_backend and mps_backend.is_available()
+                    )
+                    if (
+                        linked_local_model
+                        and accelerator_available
+                        and requested_device != "cpu"
+                    ):
+                        from DashAI.back.fine_tuning.resource_lock import training_lock
+
+                        gpu_lock = training_lock(config)
+                        gpu_lock_owner = f"generative_process_{generative_process_id}"
+                        try:
+                            gpu_lock.acquire(gpu_lock_owner)
+                        except Exception as lock_error:
+                            raise JobError(gpu_lock.busy_message()) from lock_error
+
                     model: BaseGenerativeModel = model_class(**params)
                 except JobError:
                     generative_process.set_status_as_error()
@@ -297,7 +310,7 @@ class GenerativeJob(BaseJob):
                             .filter(
                                 GenerativeProcess.session_id == generative_session.id
                             )
-                            .filter(GenerativeProcess.status == "FINISHED")
+                            .filter(GenerativeProcess.status == RunStatus.FINISHED)
                             .all()
                         ]
                         input_data = task.prepare_for_task(
@@ -382,3 +395,5 @@ class GenerativeJob(BaseJob):
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
                 gc.collect()
+                if gpu_lock is not None:
+                    gpu_lock.release(gpu_lock_owner)

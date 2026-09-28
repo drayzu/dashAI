@@ -24,6 +24,14 @@ class Qwen25_05BInstruct(GGUFTextGenerationModel):  # noqa: N801
     REPO_ID = "Qwen/Qwen2.5-0.5B-Instruct-GGUF"
     GGUF_PATTERN = "*8_0.gguf"
     DOWNLOAD_SIZE_BYTES = 675710816
+    FINE_TUNING = {
+        "key": "qwen2.5-0.5b-instruct",
+        "name": "Qwen2.5 0.5B Instruct",
+        "repository": "Qwen/Qwen2.5-0.5B-Instruct",
+        "parameter_count_billions": 0.5,
+        "recommended_vram_gb": 6,
+        "supported_methods": ["lora", "qlora"],
+    }
     SCHEMA = GGUFTextGenerationSchema
     COLOR: str = "#2e7d32"
     DISPLAY_NAME = MultilingualString(
@@ -89,6 +97,14 @@ class Qwen25_15BInstruct(GGUFTextGenerationModel):  # noqa: N801
     REPO_ID = "Qwen/Qwen2.5-1.5B-Instruct-GGUF"
     GGUF_PATTERN = "*8_0.gguf"
     DOWNLOAD_SIZE_BYTES = 1894532128
+    FINE_TUNING = {
+        "key": "qwen2.5-1.5b-instruct",
+        "name": "Qwen2.5 1.5B Instruct",
+        "repository": "Qwen/Qwen2.5-1.5B-Instruct",
+        "parameter_count_billions": 1.5,
+        "recommended_vram_gb": 8,
+        "supported_methods": ["lora", "qlora"],
+    }
     SCHEMA = GGUFTextGenerationSchema
     COLOR: str = "#2e7d32"
     DISPLAY_NAME = MultilingualString(

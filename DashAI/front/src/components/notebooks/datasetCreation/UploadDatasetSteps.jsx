@@ -23,6 +23,7 @@ export default function UploadDatasetSteps({ backHome }) {
   } = useDatasetsAndNotebooks();
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { dataloaderName } = useParams();
   const step = dataloaderName ? 1 : 0;
 
@@ -75,7 +76,9 @@ export default function UploadDatasetSteps({ backHome }) {
   }, [dataloaderName, loadingDataloaders, dataloaders, navigate]);
 
   const goToNextStep = () => {
-    navigate(`${UPLOAD_BASE_PATH}/${selectedDataloader.name}`);
+    navigate(
+      `${UPLOAD_BASE_PATH}/${selectedDataloader.name}${location.search}`,
+    );
   };
 
   const goToPrevStep = () => {
@@ -83,7 +86,7 @@ export default function UploadDatasetSteps({ backHome }) {
       backHome();
       return;
     }
-    navigate(UPLOAD_BASE_PATH);
+    navigate(`${UPLOAD_BASE_PATH}${location.search}`);
   };
 
   const getTitle = () => {
@@ -151,7 +154,12 @@ export default function UploadDatasetSteps({ backHome }) {
     addDatasetOptimistically(newDataset);
     setRightBarContent(null);
     startDatasetPolling(newDataset, datasetJob);
-    navigate(`/app/data/datasets/${newDataset.id}`);
+    const returnTarget = new URLSearchParams(location.search).get("returnTo");
+    if (returnTarget === "fine-tuning") {
+      navigate(`/app/generative/fine-tuning?datasetId=${newDataset.id}`);
+    } else {
+      navigate(`/app/data/datasets/${newDataset.id}`);
+    }
 
     if (tourContext?.run) {
       tourContext.stopTour();

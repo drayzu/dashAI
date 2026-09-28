@@ -86,6 +86,7 @@ def create_app(
     _create_path_if_not_exists(config["RUNS_PATH"])
     _create_path_if_not_exists(config["LLM_MODELS_PATH"])
     _create_path_if_not_exists(config["FINE_TUNING_PATH"])
+    _create_path_if_not_exists(config["DOCUMENTS_PATH"])
     _create_path_if_not_exists(config["DATAFILE_PATH"])
 
     logger.debug("3. Creating app container and setting up dependency injection.")
