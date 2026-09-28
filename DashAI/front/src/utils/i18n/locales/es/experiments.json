@@ -28,10 +28,7 @@
     "taskRequirementsNotFound": "No se encontraron requisitos de tarea para {{taskName}}",
     "trainSplitMustBeGreaterThanZero": "La división de entrenamiento debe ser mayor que cero",
     "trainSplitMustHaveAtLeastOneRow": "La división de entrenamiento debe tener al menos una fila",
-    "foldsMustBeGreaterThanOne": "El número de pliegues debe ser mayor que 1",
     "foldsMustBeLessThanDatasetSize": "El número de pliegues debe ser menor o igual al número de muestras en el dataset ({{datasetSize}})",
-    "foldsMustBeAnInteger": "El número de pliegues debe ser un entero",
-    "repeatsMustBeGreaterThanOne": "El número de repeticiones debe ser mayor que 1",
     "groupColumnMustBeSelected": "Debe seleccionarse una columna para agrupar"
   },
   "label": {
@@ -46,9 +43,10 @@
     "currentOptimizerSettings": "Configuración Actual del Optimizador {{optimizer}}",
     "datasetInputColumnRequirements": "<0>Las columnas de entrada deben ser de los tipos</0><1></1><2>, y deben tener una cardinalidad de </2><3>{{cardinality}}.</3>",
     "datasetOutputColumnRequirements": "<0>Las columnas de salida deben ser de los tipos</0><1></1><2>, y deben tener una cardinalidad de </2><3>{{cardinality}}.</3>",
+    "cardinalityAtLeast": "al menos {{min}}",
+    "cardinalityBetween": "{{min}} a {{max}}",
     "duration": "Duración",
     "endTime": "Hora de Finalización",
-    "enterSeedValue": "Ingrese un valor de semilla (predeterminado: 42)",
     "experimentName": "Nombre del Experimento",
     "experimentsModuleTitle": "Módulo de Experimentos",
     "manual": "Manual",
@@ -131,5 +129,21 @@
     "trainingSet": "Conjunto de entrenamiento",
     "validationMetrics": "Métricas de Validación",
     "validationSet": "Conjunto de validación"
+  },
+  "splitPreview": {
+    "title": "Vista previa de la división",
+    "unavailable": "Este divisor aún no declara su forma, así que no hay nada que dibujar.",
+    "wholeDataset": "Conjunto",
+    "reservedTest": "Reservado",
+    "finalFit": "Ajuste final",
+    "fold": "Pliegue {{index}}",
+    "moreFolds": "+{{hidden}} pliegues más",
+    "unused": "Sin usar",
+    "notes": {
+      "foldsHidden": "{{total}} pliegues en total; solo se dibujan los primeros y el último."
+    },
+    "error": {
+      "notEnoughRows": "{{folds}} orígenes con un horizonte de {{horizon}} y un paso de {{step}} no caben en {{rows}} filas. Reduce alguno o reserva menos."
+    }
   }
 }

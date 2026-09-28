@@ -14,6 +14,10 @@ import ResultsGraphsParameters from "../../pages/results/components/ResultsGraph
 import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
 import PlotActions from "../shared/PlotActions";
 import { getTraceColors } from "../../utils/chartColors";
+import { useStrategyMetadata } from "../../hooks/useStrategyKind";
+import { useModels } from "./ModelsContext";
+
+const SPLITS = ["TRAIN", "VALIDATION", "TEST"];
 
 function toFinalValue(value) {
   const resolved = Array.isArray(value)
@@ -145,7 +149,12 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
 
     return () => {
       try {
-        ws.close();
+        if (ws.readyState === WebSocket.CONNECTING) {
+          ws.onerror = null;
+          ws.onopen = () => ws.close();
+        } else {
+          ws.close();
+        }
       } catch (e) {
         console.log("WebSocket already closed");
       }
@@ -307,13 +316,35 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
     setLevel(newLevel);
   };
 
-  // Save the evaluation strategy from the session
-  const isCV = useMemo(() => {
-    return (
-      modelSessionDetail?.evaluation_strategy ===
-      "CrossValidationEvaluationStrategy"
-    );
+  // Both strategies score a validation split. A session only produces test
+  // metrics when it reserved rows the training never saw, and its configured
+  // metric lists are what say so.
+  const hasTestSplit = useMemo(() => {
+    if (!modelSessionDetail) return true;
+    return (modelSessionDetail.test_metrics ?? []).length > 0;
   }, [modelSessionDetail]);
+
+  const strategyName =
+    useModels()?.selectedSession?.evaluation_strategy ?? null;
+  const strategyMetadata = useStrategyMetadata(strategyName);
+
+  const availableSplits = useMemo(() => {
+    const scored = strategyMetadata?.scored_splits;
+    const offered = Array.isArray(scored)
+      ? SPLITS.filter((name) => scored.includes(name.toLowerCase()))
+      : SPLITS;
+    const withTest = hasTestSplit
+      ? offered
+      : offered.filter((name) => name !== "TEST");
+    return withTest.length > 0 ? withTest : SPLITS;
+  }, [strategyMetadata, hasTestSplit]);
+
+  // Never leave the group pointing at a button that is no longer rendered.
+  useEffect(() => {
+    setSplit((current) =>
+      availableSplits.includes(current) ? current : availableSplits[0],
+    );
+  }, [availableSplits]);
 
   return (
     <Box
@@ -359,17 +390,21 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
             backdropFilter: "blur(8px)",
           }}
         >
-          <ToggleButton value="TRAIN" sx={{ px: 1.5 }}>
-            {t("models:label.train")}
-          </ToggleButton>
-          {isCV && (
+          {availableSplits.includes("TRAIN") && (
+            <ToggleButton value="TRAIN" sx={{ px: 1.5 }}>
+              {t("models:label.train")}
+            </ToggleButton>
+          )}
+          {availableSplits.includes("VALIDATION") && (
             <ToggleButton value="VALIDATION" sx={{ px: 1.5 }}>
               {t("models:label.validation")}
             </ToggleButton>
           )}
-          <ToggleButton value="TEST" sx={{ px: 1.5 }}>
-            {t("models:label.test")}
-          </ToggleButton>
+          {availableSplits.includes("TEST") && (
+            <ToggleButton value="TEST" sx={{ px: 1.5 }}>
+              {t("models:label.test")}
+            </ToggleButton>
+          )}
         </PillToggleButtonGroup>
       </Box>
 

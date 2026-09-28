@@ -5,7 +5,12 @@ from typing import TYPE_CHECKING, List, Tuple
 import numpy as np
 from sklearn.model_selection import RepeatedKFold
 
-from DashAI.back.core.schema_fields import BaseSchema, int_field, schema_field
+from DashAI.back.core.schema_fields import (
+    BaseSchema,
+    float_field,
+    int_field,
+    schema_field,
+)
 from DashAI.back.core.utils import MultilingualString
 
 from .fold_splitter import FoldSplitter
@@ -16,14 +21,14 @@ if TYPE_CHECKING:
 
 class RepeatedKFoldSplitterSchema(BaseSchema):
     n_splits: schema_field(
-        int_field(ge=2),
+        int_field(ge=2, le=20),
         placeholder=5,
         description=MultilingualString(
-            en="Number of folds. Must be an integer greater than or equal to 2.",
-            es="Número de particiones. Debe ser un entero mayor o igual a 2.",
-            pt="Número de partições. Deve ser um inteiro maior ou igual a 2.",
-            de="Anzahl der Folds. Muss eine ganze Zahl größer oder gleich 2 sein.",
-            zh="折数，必须为大于或等于2的整数。",
+            en="Number of folds. Must be an integer between 2 and 20.",
+            es="Número de particiones. Debe ser un entero entre 2 y 20.",
+            pt="Número de partições. Deve ser um inteiro entre 2 e 20.",
+            de="Anzahl der Folds. Muss eine ganze Zahl zwischen 2 und 20 sein.",
+            zh="折数，必须为2到20之间的整数。",
         ),
         alias=MultilingualString(
             en="Number of folds",
@@ -34,26 +39,26 @@ class RepeatedKFoldSplitterSchema(BaseSchema):
         ),
     )  # type: ignore
     n_repeats: schema_field(
-        int_field(ge=2),
+        int_field(ge=2, le=10),
         placeholder=2,
         description=MultilingualString(
             en=(
                 "Number of times the K-Fold procedure is repeated. Must be an "
-                "integer greater than or equal to 2."
+                "integer between 2 and 10."
             ),
             es=(
                 "Número de veces que se repite el procedimiento K-Fold. Debe "
-                "ser un entero mayor o igual a 2."
+                "ser un entero entre 2 y 10."
             ),
             pt=(
                 "Número de vezes que o procedimento K-Fold é repetido. Deve "
-                "ser um inteiro maior ou igual a 2."
+                "ser um inteiro entre 2 e 10."
             ),
             de=(
                 "Anzahl der Wiederholungen des K-Fold-Verfahrens. Muss eine "
-                "ganze Zahl größer oder gleich 2 sein."
+                "ganze Zahl zwischen 2 und 10 sein."
             ),
-            zh="K折过程重复的次数，必须为大于或等于2的整数。",
+            zh="K折过程重复的次数，必须为2到10之间的整数。",
         ),
         alias=MultilingualString(
             en="Number of repeats",
@@ -79,6 +84,64 @@ class RepeatedKFoldSplitterSchema(BaseSchema):
             pt="Estado aleatório",
             de="Zufallszustand",
             zh="随机状态",
+        ),
+    )  # type: ignore
+    test_size: schema_field(
+        float_field(ge=0, le=0.5),
+        placeholder=0.1,
+        description=MultilingualString(
+            en=(
+                "Proportion of the dataset set aside as a test set. No fold and no "
+                "hyperparameter search ever sees those rows, so they are scored once "
+                "by the final model and are the data it can be explained on. Set it to "
+                "0 to cross-validate every row, which leaves the run without a test "
+                "metric and without data to explain, and note that the fold metrics "
+                "are validation estimates that may carry an optimistic bias if they "
+                "are used as the final evaluation of the model."
+            ),
+            es=(
+                "Proporción del dataset que se aparta como conjunto de prueba. Ningún "
+                "pliegue ni búsqueda de hiperparámetros ve esas filas, por lo que el "
+                "modelo final las evalúa una sola vez y son los datos con los que se "
+                "puede explicar. Use 0 para validar de forma cruzada todas las filas, "
+                "lo que deja la ejecución sin métrica de prueba y sin datos que "
+                "explicar, y tenga en cuenta que las métricas de los pliegues son "
+                "estimaciones de validación que pueden presentar un sesgo optimista si "
+                "se utilizan como evaluación final del modelo."
+            ),
+            pt=(
+                "Proporção do dataset reservada como conjunto de teste. Nenhuma dobra "
+                "nem busca de hiperparâmetros vê essas linhas, portanto o modelo final "
+                "as avalia uma única vez e são os dados com os quais ele pode ser "
+                "explicado. Use 0 para validar de forma cruzada todas as linhas, o que "
+                "deixa a execução sem métrica de teste e sem dados para explicar, e "
+                "tenha em conta que as métricas das dobras são estimativas de "
+                "validação que podem apresentar um viés otimista se forem utilizadas "
+                "como avaliação final do modelo."
+            ),
+            de=(
+                "Anteil des Datensatzes, der als Testmenge zurückgehalten wird. Weder "
+                "ein Fold noch die Hyperparametersuche sieht diese Zeilen; das finale "
+                "Modell bewertet sie genau einmal und kann anhand von ihnen erklärt "
+                "werden. Mit 0 werden alle Zeilen kreuzvalidiert, wodurch der Lauf "
+                "weder eine Testmetrik noch Daten zum Erklären hat. Beachten Sie "
+                "zudem, dass die Fold-Metriken Validierungsschätzungen sind und einen "
+                "optimistischen Bias aufweisen können, wenn sie als endgültige "
+                "Bewertung des Modells verwendet werden."
+            ),
+            zh=(
+                "作为测试集保留的数据集比例。任何折和超参数搜索都不会看到这些行，因此最"
+                "终模型只对它们评估一次，并可用于解释该模型。设为 0 时全部行都参与交"
+                "叉验证，该运行将没有测试指标也没有可解释的数据；另请注意各折的指标属于"
+                "验证估计，若将其用作模型的最终评估，可能存在乐观偏差。"
+            ),
+        ),
+        alias=MultilingualString(
+            en="Test set",
+            es="Conjunto de prueba",
+            pt="Conjunto de teste",
+            de="Testmenge",
+            zh="测试集",
         ),
     )  # type: ignore
 
@@ -112,6 +175,51 @@ class RepeatedKFoldSplitter(FoldSplitter):
     )
     COMPATIBLE_INNER_SPLITTERS = ["KFoldSplitter", "StratifiedKFoldSplitter"]
     SCHEMA = RepeatedKFoldSplitterSchema
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Runs the whole k-fold split several times over different "
+            "random cuts and scores every fold. Rows are shuffled before "
+            "each repeat, so no two repeats cut alike. It costs one "
+            "training run per fold per repeat, and in return the average "
+            "depends far less on any single cut. Rows held out of the "
+            "folds are sampled from the whole dataset."
+        ),
+        es=(
+            "Repite el corte k-fold completo varias veces sobre cortes "
+            "aleatorios distintos y evalua cada pliegue. Las filas se "
+            "mezclan antes de cada repeticion, asi que no hay dos "
+            "repeticiones que corten igual. Cuesta un entrenamiento por "
+            "pliegue y repeticion, y a cambio el promedio depende mucho "
+            "menos de un solo corte. Las filas reservadas fuera de los "
+            "pliegues se toman al azar de todo el conjunto."
+        ),
+        pt=(
+            "Repete o corte k-fold inteiro varias vezes sobre cortes "
+            "aleatorios diferentes e avalia cada dobra. As linhas sao "
+            "embaralhadas antes de cada repeticao, entao nao ha duas "
+            "repeticoes que cortem igual. Custa um treino por dobra e "
+            "repeticao, e em troca a media depende bem menos de um unico "
+            "corte. As linhas reservadas fora das dobras sao sorteadas de "
+            "todo o conjunto."
+        ),
+        de=(
+            "Fuehrt die gesamte k-Fold-Teilung mehrfach ueber "
+            "unterschiedliche Zufallsteilungen aus und bewertet jeden "
+            "Fold. Die Zeilen werden vor jeder Wiederholung gemischt, "
+            "keine zwei Wiederholungen teilen also gleich. Das kostet "
+            "einen Trainingslauf je Fold und Wiederholung, dafuer haengt "
+            "der Mittelwert weit weniger von einer einzelnen Teilung ab. "
+            "Die zurueckgelegten Zeilen werden aus dem gesamten Datensatz "
+            "gezogen."
+        ),
+        zh=(
+            "在不同的随机切分上重复整个 k 折切分多次，并对每一折评"
+            "分。每次重复前都会打乱行顺序，因此没有两次重复的切分相同"
+            "。代价是每折每次重复都要训练一次，回报是平均分对单次切分"
+            "的依赖大幅降低。从各折中预留出来的行是从整个数据集中随机"
+            "抽取的。"
+        ),
+    )
 
     def __init__(self, splits_data):
         """Initialize the repeated K-fold splitter.

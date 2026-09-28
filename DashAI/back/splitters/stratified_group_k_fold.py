@@ -8,14 +8,16 @@ from sklearn.model_selection import StratifiedGroupKFold
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
+    float_field,
     int_field,
     none_type,
     schema_field,
     string_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.splitters.rules import SEED_ONLY_MATTERS_WHEN_SHUFFLING
 
-from .fold_splitter import FoldSplitter
+from .fold_splitter import FoldSplitter, sklearn_random_state
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -23,14 +25,14 @@ if TYPE_CHECKING:
 
 class StratifiedGroupKFoldSplitterSchema(BaseSchema):
     n_splits: schema_field(
-        int_field(ge=2),
+        int_field(ge=2, le=20),
         placeholder=5,
         description=MultilingualString(
-            en="Number of folds. Must be an integer greater than or equal to 2.",
-            es="Número de particiones. Debe ser un entero mayor o igual a 2.",
-            pt="Número de partições. Deve ser um inteiro maior ou igual a 2.",
-            de="Anzahl der Folds. Muss eine ganze Zahl größer oder gleich 2 sein.",
-            zh="折数，必须为大于或等于2的整数。",
+            en="Number of folds. Must be an integer between 2 and 20.",
+            es="Número de particiones. Debe ser un entero entre 2 y 20.",
+            pt="Número de partições. Deve ser um inteiro entre 2 e 20.",
+            de="Anzahl der Folds. Muss eine ganze Zahl zwischen 2 und 20 sein.",
+            zh="折数，必须为2到20之间的整数。",
         ),
         alias=MultilingualString(
             en="Number of folds",
@@ -78,10 +80,14 @@ class StratifiedGroupKFoldSplitterSchema(BaseSchema):
         bool_field(),
         placeholder=True,
         description=MultilingualString(
-            en="Whether to shuffle each group's samples before splitting.",
-            es="Si se deben mezclar las muestras de cada grupo antes de dividir.",
-            pt="Se as amostras de cada grupo devem ser embaralhadas antes de dividir.",
-            de="Ob die Proben jeder Gruppe vor der Aufteilung gemischt werden sollen.",
+            en=("Whether to shuffle each group's samples before splitting."),
+            es=("Si se deben mezclar las muestras de cada grupo antes de dividir."),
+            pt=(
+                "Se as amostras de cada grupo devem ser embaralhadas antes de dividir."
+            ),
+            de=(
+                "Ob die Proben jeder Gruppe vor der Aufteilung gemischt werden sollen."
+            ),
             zh="划分前是否打乱每个分组内的样本。",
         ),
         alias=MultilingualString(
@@ -92,20 +98,11 @@ class StratifiedGroupKFoldSplitterSchema(BaseSchema):
         int_field(ge=0),
         placeholder=42,
         description=MultilingualString(
-            en="Seed used to make the split reproducible when shuffle is enabled.",
-            es=(
-                "Semilla utilizada para que la división sea reproducible cuando "
-                "se activa la mezcla."
-            ),
-            pt=(
-                "Semente usada para tornar a divisão reproduzível quando o "
-                "embaralhamento está ativado."
-            ),
-            de=(
-                "Seed, um die Aufteilung reproduzierbar zu machen, wenn Mischen "
-                "aktiviert ist."
-            ),
-            zh="启用打乱时，用于使划分可复现的随机种子。",
+            en=("Seed used to make the split reproducible."),
+            es=("Semilla utilizada para que la división sea reproducible."),
+            pt=("Semente usada para tornar a divisão reproduzível."),
+            de=("Seed, um die Aufteilung reproduzierbar zu machen."),
+            zh="用于使划分可复现的随机种子。",
         ),
         alias=MultilingualString(
             en="Random state",
@@ -115,6 +112,68 @@ class StratifiedGroupKFoldSplitterSchema(BaseSchema):
             zh="随机状态",
         ),
     )  # type: ignore
+    test_size: schema_field(
+        float_field(ge=0, le=0.5),
+        placeholder=0.1,
+        description=MultilingualString(
+            en=(
+                "Proportion of the dataset set aside as a test set. No fold and no "
+                "hyperparameter search ever sees those rows, so they are scored once "
+                "by the final model and are the data it can be explained on. Set it to "
+                "0 to cross-validate every row, which leaves the run without a test "
+                "metric and without data to explain, and note that the fold metrics "
+                "are validation estimates that may carry an optimistic bias if they "
+                "are used as the final evaluation of the model."
+            ),
+            es=(
+                "Proporción del dataset que se aparta como conjunto de prueba. Ningún "
+                "pliegue ni búsqueda de hiperparámetros ve esas filas, por lo que el "
+                "modelo final las evalúa una sola vez y son los datos con los que se "
+                "puede explicar. Use 0 para validar de forma cruzada todas las filas, "
+                "lo que deja la ejecución sin métrica de prueba y sin datos que "
+                "explicar, y tenga en cuenta que las métricas de los pliegues son "
+                "estimaciones de validación que pueden presentar un sesgo optimista si "
+                "se utilizan como evaluación final del modelo."
+            ),
+            pt=(
+                "Proporção do dataset reservada como conjunto de teste. Nenhuma dobra "
+                "nem busca de hiperparâmetros vê essas linhas, portanto o modelo final "
+                "as avalia uma única vez e são os dados com os quais ele pode ser "
+                "explicado. Use 0 para validar de forma cruzada todas as linhas, o que "
+                "deixa a execução sem métrica de teste e sem dados para explicar, e "
+                "tenha em conta que as métricas das dobras são estimativas de "
+                "validação que podem apresentar um viés otimista se forem utilizadas "
+                "como avaliação final do modelo."
+            ),
+            de=(
+                "Anteil des Datensatzes, der als Testmenge zurückgehalten wird. Weder "
+                "ein Fold noch die Hyperparametersuche sieht diese Zeilen; das finale "
+                "Modell bewertet sie genau einmal und kann anhand von ihnen erklärt "
+                "werden. Mit 0 werden alle Zeilen kreuzvalidiert, wodurch der Lauf "
+                "weder eine Testmetrik noch Daten zum Erklären hat. Beachten Sie "
+                "zudem, dass die Fold-Metriken Validierungsschätzungen sind und einen "
+                "optimistischen Bias aufweisen können, wenn sie als endgültige "
+                "Bewertung des Modells verwendet werden."
+            ),
+            zh=(
+                "作为测试集保留的数据集比例。任何折和超参数搜索都不会看到这些行，因此最"
+                "终模型只对它们评估一次，并可用于解释该模型。设为 0 时全部行都参与交"
+                "叉验证，该运行将没有测试指标也没有可解释的数据；另请注意各折的指标属于"
+                "验证估计，若将其用作模型的最终评估，可能存在乐观偏差。"
+            ),
+        ),
+        alias=MultilingualString(
+            en="Test set",
+            es="Conjunto de prueba",
+            pt="Conjunto de teste",
+            de="Testmenge",
+            zh="测试集",
+        ),
+    )  # type: ignore
+
+    # The same dependency as every other splitter that takes a seed, declared
+    # once in splitters/rules.py instead of copied here.
+    rules = [SEED_ONLY_MATTERS_WHEN_SHUFFLING]
 
 
 class StratifiedGroupKFoldSplitter(FoldSplitter):
@@ -131,6 +190,7 @@ class StratifiedGroupKFoldSplitter(FoldSplitter):
     - https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedGroupKFold.html
     """
 
+    TEST_SPLIT_STRATEGY: str = "group"
     COMPATIBLE_COMPONENTS = [
         "TabularClassificationTask",
         "TextClassificationTask",
@@ -145,6 +205,45 @@ class StratifiedGroupKFoldSplitter(FoldSplitter):
     )
     COMPATIBLE_INNER_SPLITTERS = ["GroupKFoldSplitter", "StratifiedGroupKFoldSplitter"]
     SCHEMA = StratifiedGroupKFoldSplitterSchema
+    DESCRIPTION = MultilingualString(
+        en=(
+            "K folds that keep whole groups on one side and still "
+            "approximate the class balance of the full dataset. Use it "
+            "when rows share a subject and a class is also rare. This "
+            "changes which rows land in each fold, not how many, and the "
+            "rows held out of the folds are whole groups."
+        ),
+        es=(
+            "K pliegues que mantienen cada grupo entero de un solo lado y "
+            "aun asi aproximan el balance de clases del conjunto "
+            "completo. Usalo cuando las filas comparten sujeto y ademas "
+            "hay una clase poco frecuente. Esto cambia que filas caen en "
+            "cada pliegue, no cuantas, y las filas reservadas fuera de "
+            "los pliegues son grupos enteros."
+        ),
+        pt=(
+            "K dobras que mantem cada grupo inteiro de um so lado e ainda "
+            "aproximam o balanco de classes do conjunto completo. Use "
+            "quando as linhas compartilham um sujeito e ha tambem uma "
+            "classe rara. Isso muda quais linhas caem em cada dobra, nao "
+            "quantas, e as linhas reservadas fora das dobras sao grupos "
+            "inteiros."
+        ),
+        de=(
+            "K Folds, die ganze Gruppen auf einer Seite halten und dabei "
+            "die Klassenverteilung des gesamten Datensatzes annaehernd "
+            "erhalten. Sinnvoll, wenn Zeilen ein Subjekt teilen und "
+            "zugleich eine Klasse selten ist. Das aendert, welche Zeilen "
+            "in welchen Fold fallen, nicht wie viele, und die "
+            "zurueckgelegten Zeilen sind ganze Gruppen."
+        ),
+        zh=(
+            "k 个折既把整组保留在同一边，又尽量接近完整数据集的类别"
+            "比例。当多行共享同一对象且某类别又罕见时使用。这改变的是"
+            "哪些行落入每一折，而不是有多少行，预留出来的行都是完整的"
+            "组。"
+        ),
+    )
 
     def __init__(self, splits_data):
         """Initialize the stratified group-based K-fold splitter.
@@ -199,7 +298,7 @@ class StratifiedGroupKFoldSplitter(FoldSplitter):
             sgkf = StratifiedGroupKFold(
                 n_splits=self.n_splits,
                 shuffle=self.shuffle,
-                random_state=self.random_state,
+                random_state=sklearn_random_state(self.shuffle, self.random_state),
             )
             folds = list(sgkf.split(indexes, y=y_labels, groups=dataset_df_groups))
         except ValueError as e:

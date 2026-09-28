@@ -59,6 +59,7 @@
     "datasetExists": "A dataset with this name already exists.",
     "datasetNameEmpty": "Dataset name cannot be empty",
     "datasetNameExists": "A dataset with this name already exists.",
+    "datasetNotCreated": "This dataset could not be created because its job failed or was cancelled. Delete it and try again.",
     "datasetRequired": "Dataset is required",
     "enqueueDatasetJob": "Error when trying to enqueue the dataset job.",
     "errorCreatingNotebook": "Error creating notebook",
@@ -415,7 +416,8 @@
     "valueType": "Value Type",
     "viewMode": "View mode",
     "xAxis": "X Axis",
-    "yAxis": "Y Axis"
+    "yAxis": "Y Axis",
+    "reverseColorscale": "Reverse colorscale"
   },
   "message": {
     "columnTypesUpdated": "Column types updated successfully",

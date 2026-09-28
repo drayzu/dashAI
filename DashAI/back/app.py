@@ -1,6 +1,7 @@
 """FastAPI Application module."""
 
 import logging
+import os
 import pathlib
 from typing import Literal, Union
 
@@ -18,6 +19,7 @@ from DashAI.back.dependencies.database.backfill import (
 )
 from DashAI.back.dependencies.database.migrate import migrate_on_startup
 from DashAI.back.fine_tuning.reconciliation import reconcile_fine_tuning
+from DashAI.back.plugins.environment import activate_plugins_directory
 from DashAI.back.seeds import seed_datasets_if_first_run
 
 logger = logging.getLogger(__name__)
@@ -66,6 +68,15 @@ def create_app(
     FastAPI
         The created FastAPI application.
     """
+    # Plugins live in a writable per user directory that has to be importable
+    # before the initial components are collected, since building the config
+    # dict already enumerates the installed plugin entry points.
+    if local_path is not None:
+        os.environ["DASHAI_LOCAL_PATH"] = str(
+            pathlib.Path(local_path).expanduser().absolute()
+        )
+    activate_plugins_directory()
+
     # generating config dict and setting logging level
     config = build_config_dict(
         local_path=local_path,

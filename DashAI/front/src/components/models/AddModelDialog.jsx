@@ -1,3 +1,5 @@
+import { useStrategyKind } from "../../hooks/useStrategyKind";
+import { STRATEGY_KINDS } from "../../utils/splitsPayload";
 import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
@@ -57,6 +59,11 @@ function AddModelDialog({
   onRunCreated,
 }) {
   const { enqueueSnackbar } = useSnackbar();
+  // Nested cross-validation only applies to a folded strategy, which the
+  // backend reports rather than the strategy name implying it.
+  const isCrossValidation =
+    useStrategyKind(session?.evaluation_strategy) === STRATEGY_KINDS.CV;
+
   const [activeStep, setActiveStep] = useState(0);
   const [name, setName] = useState("");
   const [selectedModel, setSelectedModel] = useState(preselectedModel || "");
@@ -334,7 +341,12 @@ function AddModelDialog({
     setSelectedOptimizer(optimizerName);
   };
 
-  const maxInnerFolds = Math.floor(datasetRowCount / outerSplit?.n_splits);
+  // The outer folds are built over the rows left after the carve, so an
+  // inner fold cannot draw from the reserved ones.
+  const maxInnerFolds = Math.floor(
+    (datasetRowCount * (1 - (Number(outerSplit?.test_size) || 0))) /
+      outerSplit?.n_splits,
+  );
 
   const isStep1Valid = Boolean(selectedModel && name.trim() !== "");
   const isStep2Valid = Boolean(
@@ -450,8 +462,7 @@ function AddModelDialog({
               />
             </Box>
 
-            {session?.evaluation_strategy ===
-              "CrossValidationEvaluationStrategy" && (
+            {isCrossValidation && (
               <NestedCVSelector
                 useNestedCV={useNestedCV}
                 onChange={setUseNestedCV}

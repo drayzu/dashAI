@@ -43,6 +43,10 @@ ISOLATED_TRAINING_ENABLED = os.environ.get("DASHAI_ISOLATED_TRAINING", "1") != "
 class FineTuningJob(BaseJob):
     """Execute a persistent fine-tuning run using a pluggable backend."""
 
+    # Training already owns an isolated child process. The Huey consumer must
+    # stay alive to supervise and terminate that child during cancellation.
+    ISOLATED = False
+
     @inject
     def set_status_as_delivered(
         self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
@@ -63,11 +67,35 @@ class FineTuningJob(BaseJob):
             return
         with session_factory() as db:
             run = db.get(FineTuningRun, run_id)
-            if run and run.status not in {
-                FineTuningStatus.CANCELED,
-                FineTuningStatus.COMPLETED,
-            }:
+            if (
+                run
+                and run.status
+                not in {
+                    FineTuningStatus.CANCELED,
+                    FineTuningStatus.COMPLETED,
+                }
+                and not run.cancellation_requested
+            ):
                 run.mark_failed(run.error_message or "Fine-tuning job failed.")
+                db.commit()
+
+    @inject
+    def on_cancel(
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
+    ) -> None:
+        """Ask the supervised training child to stop when Huey cancels its job."""
+        run_id = self.kwargs.get("run_id")
+        if run_id is None:
+            return
+        with session_factory() as db:
+            run = db.get(FineTuningRun, run_id)
+            if run and run.status in {
+                FineTuningStatus.QUEUED,
+                FineTuningStatus.RUNNING,
+            }:
+                run.cancellation_requested = True
+                if run.status == FineTuningStatus.QUEUED:
+                    run.mark_canceled()
                 db.commit()
 
     def get_job_name(self) -> str:

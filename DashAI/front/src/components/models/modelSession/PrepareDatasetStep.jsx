@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import PropTypes from "prop-types";
 
 import {
@@ -22,6 +22,12 @@ import { getColorByColumnType } from "../../../utils";
 import { useTranslation } from "react-i18next";
 import { Trans } from "react-i18next";
 import { useModels } from "../ModelsContext";
+import {
+  buildSplitsPayload,
+  resolveSplitterName,
+  STRATEGY_KINDS,
+  SPLIT_TYPES,
+} from "../../../utils/splitsPayload";
 /**
  * Step of the experiment modal: Set the input and output columns to use for clasification
  * and the splits for training, validation and testing.
@@ -59,21 +65,29 @@ function PrepareDatasetStep({
     newExp.output_columns,
   );
 
-  const [columnsReady, setColumnsReady] = useState(false);
+  const columnsReady =
+    inputColumnNames.length >= 1 && outputColumnNames.length >= 1;
   const [columnsAreValid, setColumnsAreValid] = useState(false);
   // True until the current column selection has actually been checked against
   // the backend at least once — distinct from columnsAreValid=false, so the
   // banner doesn't flash red while columns are still being auto-selected or a
   // check is in flight, only once a real valid/invalid result is known.
   const [validationPending, setValidationPending] = useState(true);
-  const [shuffle, setShuffle] = useState(true);
-  const [stratify, setStratify] = useState(false);
-  const [seed, setSeed] = useState(42);
+
+  // Values submitted by the schema generated splitter form, and whether that
+  // form currently reports a validation error.
+  const [splitterParams, setSplitterParams] = useState(null);
+  const [paramsError, setParamsError] = useState(false);
 
   // Cross-Validation configuration states
   const [cvType, setCvType] = useState(null);
-  const [numFolds, setNumFolds] = useState(5);
-  const [numRepeats, setNumRepeats] = useState(2);
+  // Which holdout splitter this task uses. Resolved from the task rather
+  // than hardcoded, so a time series cannot be handed a shuffling one.
+  const [holdoutType, setHoldoutType] = useState(null);
+  // The split shape of the selected strategy, reported by the backend. The
+  // screens used to compare strategy names, which is why a new strategy
+  // rendered nothing at all.
+  const [strategyKind, setStrategyKind] = useState(null);
   const [groupColumn, setGroupColumn] = useState("");
 
   const defaultParitionsIndex = {
@@ -81,25 +95,11 @@ function PrepareDatasetStep({
     validation: [],
     test: [],
   };
-  const defaultPartitionsPercentage = {
-    train: 0.6,
-    validation: 0.2,
-    test: 0.2,
-  };
-
   const [datasetPartitionsIndex, setDatasetPartitionsIndex] = useState({});
 
   const [rowsPartitionsIndex, setRowsPartitionsIndex] = useState(
     defaultParitionsIndex,
   );
-  const [rowsPartitionsPercentage, setRowsPartitionsPercentage] = useState(
-    defaultPartitionsPercentage,
-  );
-  const SPLIT_TYPES = {
-    RANDOM: "random",
-    MANUAL: "manual",
-    PREDEFINED: "predefined",
-  };
   const [splitType, setSplitType] = useState("");
 
   const [splitsReady, setSplitsReady] = useState(false);
@@ -258,75 +258,63 @@ function PrepareDatasetStep({
       evaluation_strategy: evaluationStrategy,
     };
 
-    if (evaluationStrategy === "HoldoutEvaluationStrategy") {
-      if (splitType === SPLIT_TYPES.MANUAL) {
-        updatedExpData.splits = {
-          ...rowsPartitionsIndex,
-          splitter_name: "HoldoutSplitter",
-          splitType: splitType,
-        };
-      } else if (splitType === SPLIT_TYPES.RANDOM) {
-        updatedExpData.splits = {
-          ...rowsPartitionsPercentage,
-          shuffle: shuffle,
-          stratify: stratify,
-          seed: seed === "" || seed == null ? 42 : Number(seed),
-          splitter_name: "HoldoutSplitter",
-          splitType: splitType,
-        };
-      } else if (splitType === SPLIT_TYPES.PREDEFINED) {
-        updatedExpData.splits = {
-          ...datasetPartitionsIndex,
-          splitter_name: "HoldoutSplitter",
-          splitType: splitType,
-        };
-      }
-    } else if (evaluationStrategy === "CrossValidationEvaluationStrategy") {
-      const cvSchemaProperties = cvType.schema?.properties || {};
-      updatedExpData.splits = {
-        splitter_name: cvType.name,
-        seed: seed === "" || seed == null ? 42 : Number(seed),
-        ...(cvSchemaProperties.n_splits ? { n_splits: numFolds } : {}),
-        ...(cvSchemaProperties.n_repeats ? { n_repeats: numRepeats } : {}),
-        ...(cvSchemaProperties.group_column
-          ? { group_column: groupColumn }
-          : {}),
-        ...(cvSchemaProperties.shuffle ? { shuffle: shuffle } : {}),
-      };
+    const splitterName = resolveSplitterName(strategyKind, cvType, holdoutType);
+    if (splitterName) {
+      updatedExpData.splits = buildSplitsPayload({
+        splitterName,
+        splitType:
+          strategyKind === STRATEGY_KINDS.HOLDOUT ? splitType : SPLIT_TYPES.CV,
+        params: {
+          ...(splitterParams ?? {}),
+          // The group column select is rendered by hand, so its value is not
+          // part of the generated form's values.
+          ...(cvType?.schema?.properties?.group_column
+            ? { group_column: groupColumn }
+            : {}),
+        },
+        indexes:
+          splitType === SPLIT_TYPES.PREDEFINED
+            ? datasetPartitionsIndex
+            : rowsPartitionsIndex,
+      });
     }
 
     setNewExp(updatedExpData);
   };
 
-  useEffect(() => {
-    if (inputColumnNames.length >= 1 && outputColumnNames.length >= 1) {
-      setColumnsReady(true);
-    } else {
-      setColumnsReady(false);
+  // Column validity depends on the columns, the dataset and the task, never on
+  // the split configuration. Gating it on the splits being ready made every
+  // split change re-check the columns over HTTP and blank the requirements
+  // banner in the meantime.
+  //
+  // When columnsReady is false we already know the selection is invalid
+  // (input or output is empty) without asking the backend, so
+  // validationPending goes straight to false — otherwise the requirements
+  // banner below stayed hidden forever after the user cleared a column,
+  // instead of showing why the selection is invalid.
+  //
+  // This runs as a layout effect (not a regular effect) so that when
+  // columns go from empty back to a ready selection — e.g. the dataset
+  // finishes loading and auto-selects defaults — validationPending flips
+  // back to true synchronously before the browser paints. A regular effect
+  // runs one commit too late: React would paint a frame with the stale
+  // "already validated" state (an incorrect red banner) against the new,
+  // not-yet-checked columns before the effect corrected it.
+  useLayoutEffect(() => {
+    if (!columnsReady) {
+      setColumnsAreValid(false);
+      setValidationPending(false);
+      return;
     }
-  }, [inputColumnNames, outputColumnNames]);
-
-  useEffect(() => {
     if (
-      columnsReady &&
-      splitsReady &&
       datasetInfo &&
       datasetInfo.column_names &&
       datasetInfo.column_names.length > 0
     ) {
       setValidationPending(true);
       validateColumns();
-    } else {
-      setColumnsAreValid(false);
-      setValidationPending(true);
     }
-  }, [
-    columnsReady,
-    splitsReady,
-    inputColumnNames,
-    outputColumnNames,
-    datasetInfo,
-  ]);
+  }, [columnsReady, inputColumnNames, outputColumnNames, datasetInfo]);
 
   useEffect(() => {
     if (columnsAreValid && splitsReady && columnsReady) {
@@ -340,16 +328,16 @@ function PrepareDatasetStep({
     splitsReady,
     columnsAreValid,
     splitType,
-    shuffle,
-    stratify,
-    seed,
+    splitterParams,
     inputColumnNames,
     outputColumnNames,
     cvType,
-    numFolds,
-    numRepeats,
+    holdoutType,
+    strategyKind,
     groupColumn,
     evaluationStrategy,
+    rowsPartitionsIndex,
+    datasetPartitionsIndex,
   ]);
 
   useEffect(() => {
@@ -382,26 +370,22 @@ function PrepareDatasetStep({
         datasetInfo={datasetInfo}
         rowsPartitionsIndex={rowsPartitionsIndex}
         setRowsPartitionsIndex={setRowsPartitionsIndex}
-        rowsPartitionsPercentage={rowsPartitionsPercentage}
-        setRowsPartitionsPercentage={setRowsPartitionsPercentage}
         setSplitsReady={setSplitsReady}
         splitType={splitType}
         setSplitType={setSplitType}
         SPLIT_TYPES={SPLIT_TYPES}
-        shuffle={shuffle}
-        setShuffle={setShuffle}
-        stratify={stratify}
-        setStratify={setStratify}
-        seed={seed}
-        setSeed={setSeed}
+        splitterParams={splitterParams}
+        setSplitterParams={setSplitterParams}
+        paramsError={paramsError}
+        setParamsError={setParamsError}
         evaluationStrategy={evaluationStrategy}
         setEvaluationStrategy={setEvaluationStrategy}
         cvType={cvType}
         setCvType={setCvType}
-        numFolds={numFolds}
-        setNumFolds={setNumFolds}
-        numRepeats={numRepeats}
-        setNumRepeats={setNumRepeats}
+        holdoutType={holdoutType}
+        setHoldoutType={setHoldoutType}
+        strategyKind={strategyKind}
+        setStrategyKind={setStrategyKind}
         groupColumn={groupColumn}
         setGroupColumn={setGroupColumn}
         inputColumnNames={inputColumnNames}
@@ -413,18 +397,41 @@ function PrepareDatasetStep({
     infoLoading,
     datasetInfo,
     rowsPartitionsIndex,
-    rowsPartitionsPercentage,
     splitType,
-    shuffle,
-    stratify,
-    seed,
+    splitterParams,
+    paramsError,
     evaluationStrategy,
     cvType,
-    numFolds,
-    numRepeats,
+    holdoutType,
+    strategyKind,
     groupColumn,
     inputColumnNames,
   ]);
+
+  const columnGroupsOf = (side) => {
+    const metadata = taskRequirements?.metadata ?? {};
+    if (Array.isArray(metadata[side]) && metadata[side].length > 0) {
+      return metadata[side];
+    }
+    const cardinality = metadata[`${side}_cardinality`];
+    return [
+      {
+        types: metadata[`${side}_types`] ?? [],
+        min: cardinality === "n" ? 0 : cardinality,
+        max: cardinality,
+      },
+    ];
+  };
+
+  const describeCardinality = ({ min, max }) => {
+    if (max === "n") {
+      return min ? t("experiments:label.cardinalityAtLeast", { min }) : "n";
+    }
+    if (min === max) {
+      return String(max);
+    }
+    return t("experiments:label.cardinalityBetween", { min, max });
+  };
 
   const renderTypesAsChips = (typesList) => {
     if (!typesList || typesList.length === 0) {
@@ -492,7 +499,7 @@ function PrepareDatasetStep({
           </Alert>
         ) : null
       ) : null}
-      {taskRequirements && !validationPending && (
+      {taskRequirements && !infoLoading && !validationPending && (
         <Alert
           severity={columnsAreValid ? "success" : "error"}
           sx={{
@@ -501,7 +508,9 @@ function PrepareDatasetStep({
             bgcolor: (theme) =>
               `${theme.palette[columnsAreValid ? "success" : "error"].main}40`,
             border: (theme) =>
-              `1px solid ${theme.palette[columnsAreValid ? "success" : "error"].main}`,
+              `1px solid ${
+                theme.palette[columnsAreValid ? "success" : "error"].main
+              }`,
           }}
           data-tour="models-validation-alert"
         >
@@ -514,54 +523,35 @@ function PrepareDatasetStep({
             )}
           </AlertTitle>
           <Grid container spacing={4}>
-            <Grid size={{ xs: 12 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  flexWrap: "wrap",
-                }}
-              >
-                <Trans i18nKey="experiments:label.datasetInputColumnRequirements">
-                  <span>The input columns must be of the types</span>
-                  {renderTypesAsChips(taskRequirements.metadata.inputs_types)}
-                  <span>
-                    , and they should have a cardinality of
-                    <span>
-                      {{
-                        cardinality:
-                          taskRequirements.metadata.inputs_cardinality,
-                      }}
-                      .
-                    </span>
-                  </span>
-                </Trans>
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  flexWrap: "wrap",
-                }}
-              >
-                <Trans i18nKey="experiments:label.datasetOutputColumnRequirements">
-                  <span>The output columns must be of the types</span>
-                  {renderTypesAsChips(taskRequirements.metadata.outputs_types)}
-                  <span>
-                    , and they should have a cardinality of
-                    {{
-                      cardinality:
-                        taskRequirements.metadata.outputs_cardinality,
+            {["inputs", "outputs"].map((side) =>
+              columnGroupsOf(side).map((group, index) => (
+                <Grid size={{ xs: 12 }} key={`${side}-${index}`}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                      flexWrap: "wrap",
                     }}
-                    .
-                  </span>
-                </Trans>
-              </Box>
-            </Grid>
+                  >
+                    <Trans
+                      i18nKey={
+                        side === "inputs"
+                          ? "experiments:label.datasetInputColumnRequirements"
+                          : "experiments:label.datasetOutputColumnRequirements"
+                      }
+                    >
+                      <span>The columns must be of the types</span>
+                      {renderTypesAsChips(group.types)}
+                      <span>, and they should have a cardinality of </span>
+                      <span>
+                        {{ cardinality: describeCardinality(group) }}.
+                      </span>
+                    </Trans>
+                  </Box>
+                </Grid>
+              )),
+            )}
           </Grid>
         </Alert>
       )}
@@ -575,6 +565,14 @@ function PrepareDatasetStep({
             onInputColumnNamesChange={setInputColumnNames}
             selectedOutputColumnNames={outputColumnNames}
             onOutputColumnNamesChange={setOutputColumnNames}
+            inputError={inputColumnNames.length === 0}
+            inputHelperText={
+              inputColumnNames.length === 0 ? t("common:required") : ""
+            }
+            outputError={outputColumnNames.length === 0}
+            outputHelperText={
+              outputColumnNames.length === 0 ? t("common:required") : ""
+            }
             disabled={
               infoLoading || (datasetInfo.column_names || []).length === 0
             }

@@ -32,6 +32,17 @@ def test_empty_queue(test_job_queue: HueyJobQueue):
     assert test_job_queue.is_empty()
 
 
+def test_task_snapshot_finds_pending_huey_id(tmp_path):
+    queue = HueyJobQueue("snapshot", path_db=str(tmp_path))
+    job_id = queue.put(DummyJob()).id
+
+    snapshot = queue.task_snapshot(job_id)
+    assert snapshot == {"pending": True, "mirror_status": "not_started"}
+
+    queue.delete_from_db(job_id)
+    assert queue.task_snapshot(job_id)["pending"] is False
+
+
 def test_queue_jobs_list(test_job_queue: HueyJobQueue):
     jobs_list = test_job_queue.to_list()
     assert isinstance(jobs_list, list)

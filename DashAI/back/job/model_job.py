@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Dict, List
 from kink import inject
 from sqlalchemy import exc
 
-from DashAI.back.api.utils import remove_path
+from DashAI.back.core.atomic import atomic_save_path
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrategy
@@ -13,6 +13,7 @@ from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 from DashAI.back.splitters.base_splitter import BaseSplitter
+from DashAI.back.splitters.splits_payload import normalize_splits_payload
 from DashAI.back.tasks.base_task import BaseTask
 
 if TYPE_CHECKING:
@@ -188,9 +189,8 @@ class ModelJob(BaseJob):
                 self.report_progress(0.95, "Saving model")
                 try:
                     run_path = os.path.join(config["RUNS_PATH"], str(run.id))
-                    if os.path.exists(run_path):
-                        remove_path(run_path)
-                    model.save(run_path)
+                    with atomic_save_path(run_path) as tmp_run_path:
+                        model.save(str(tmp_run_path))
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
@@ -320,9 +320,14 @@ class ModelJob(BaseJob):
 
         try:
             # Divide the dataset into two datasets:
-            # one with the input columns and another with the output column
+            # one with the input columns and another with the output column.
+            # This reads the prepared dataset rather than the loaded one: a
+            # task may reorder or otherwise adjust the rows, and forecasting
+            # does, sorting them by date so the temporal splitter carves real
+            # periods of time. Selecting from the loaded dataset would drop
+            # that work on the floor.
             X, Y = select_columns(
-                loaded_dataset,
+                prepared_dataset,
                 model_session.input_columns,
                 model_session.output_columns,
             )
@@ -337,6 +342,9 @@ class ModelJob(BaseJob):
             splits_data = json.loads(model_session.splits)
             if run.split_indexes:
                 splits_data["splitted_indexes"] = json.loads(run.split_indexes)
+            # Sessions created before the splits payload followed the splitter
+            # schema use different keys for the seed and for manual indexes.
+            splits_data = normalize_splits_payload(splits_data)
         except Exception as e:
             log.exception(e)
             raise JobError(

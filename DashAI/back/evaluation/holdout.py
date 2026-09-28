@@ -1,9 +1,10 @@
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Metric, Run
 from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrategy
 
 
-class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
+class SinglePartitionEvaluationStrategy(BaseEvaluationStrategy):
     """Evaluation strategy implementing holdout (train/validation/test split)
     validation.
 
@@ -15,6 +16,8 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
     - TRIAL level: Metrics during HPO trials on validation set
     - LAST level: Final metrics computed on all three partitions after training
     """
+
+    KIND: str = "holdout"
 
     def execute(self, x, y, run: Run, db):
         """Execute holdout validation: train on training set, optimize with validation,
@@ -59,14 +62,32 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
 
         # Train the model with the provided data and return it
         self._report_progress(0.5, "Training")
-        model.train(x["train"], y["train"], x["validation"], y["validation"])
+        self._fit_final_model(model, x, y)
 
         # Calculate metrics at the end of training if not done already
         self._report_progress(0.85, "Computing metrics")
-        for split in (SplitEnum.TRAIN, SplitEnum.VALIDATION, SplitEnum.TEST):
+        for split in self.SCORED_SPLITS:
             self._calculate_metrics_if_missing(model, run, db, split)
 
         return model, plot_paths
+
+    def _fit_final_model(self, model, x, y):
+        """Fit the model that gets kept.
+
+        Separate from the trial fits so a strategy can differ on what the
+        kept model is allowed to learn from, which is the one thing
+        forecasting needs to change here.
+
+        Parameters
+        ----------
+        model : BaseModel
+            The model to fit.
+        x : DatasetDict
+            Input partitions.
+        y : DatasetDict
+            Target partitions.
+        """
+        model.train(x["train"], y["train"], x["validation"], y["validation"])
 
     def _calculate_metrics_if_missing(self, model, run: Run, db, split: SplitEnum):
         """Compute and persist LAST-level metrics for a split, unless already saved.
@@ -114,8 +135,20 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
         float
             The metric score value for this hyperparameter combination.
         """
-        # Train the model with the training set
-        model.train(input_dataset["train"], output_dataset["train"])
+        # Validation data is passed on purpose. Without it the epoch loops
+        # skip `calculate_metrics(split=VALIDATION, level=EPOCH)` entirely —
+        # they guard it behind `if x_validation is not None` — so during
+        # optimization the per-epoch validation score was never computed.
+        #
+        # That is the deeper reason pruning could not work here: the number a
+        # pruner needs to decide did not exist, independently of whether the
+        # pruner itself was an instance or a string.
+        model.train(
+            input_dataset["train"],
+            output_dataset["train"],
+            input_dataset["validation"],
+            output_dataset["validation"],
+        )
 
         # Evaluate the model on the validation set
         y_pred = model.predict(input_dataset["validation"])
@@ -124,11 +157,65 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
             output_dataset["validation"], is_fit=False
         )
 
-        # Calculate metric for train and validation data each trial
-        model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.TRIAL)
+        # Calculate metric for train and validation data each trial.
+        if SplitEnum.TRAIN in self.SCORED_SPLITS:
+            model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.TRIAL)
         model.calculate_metrics(split=SplitEnum.VALIDATION, level=LevelEnum.TRIAL)
 
         # Compute the objective metric score on the validation set
         score = metric.score(output_dataset_transformed, y_pred)
 
         return score
+
+
+class HoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
+    """Split once into train, validation and test, and score all three.
+
+    The ordinary holdout evaluation. Not offered for ``ForecastingTask``:
+    scoring the training partition of a forecaster means predicting on dates
+    it was fitted on, which is a fit statistic rather than a forecast and does
+    not belong in the same results table as one.
+    ``ForecastingHoldoutEvaluationStrategy`` records validation and test only.
+
+    The final fit is the same in both: the kept model is fitted on the training
+    partition alone, so it is the model the recorded metrics describe.
+    """
+
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Holdout cuts the dataset once. The model trains on one part and is "
+            "scored on rows it never saw. Fast, but the score depends on which "
+            "rows happened to land where."
+        ),
+        es=(
+            "Holdout corta el conjunto una sola vez. El modelo entrena con una "
+            "parte y se evalua con filas que nunca vio. Es rapido, pero el "
+            "resultado depende de que filas cayeron en cada parte."
+        ),
+        pt=(
+            "O holdout corta o conjunto uma unica vez. O modelo treina em uma "
+            "parte e e avaliado em linhas que nunca viu. E rapido, mas o "
+            "resultado depende de quais linhas cairam em cada parte."
+        ),
+        de=(
+            "Holdout teilt den Datensatz ein einziges Mal. Das Modell trainiert "
+            "auf einem Teil und wird auf Zeilen bewertet, die es nie gesehen "
+            "hat. Schnell, aber das Ergebnis haengt davon ab, welche Zeilen wo "
+            "gelandet sind."
+        ),
+        zh=(
+            "留出法只切分数据集一次。"
+            "模型在一部分上训练，"
+            "并在从未见过的行上评分。"
+            "速度快，但结果取决于"
+            "哪些行落在了哪一部分。"
+        ),
+    )
+
+    COMPATIBLE_COMPONENTS = [
+        "TabularClassificationTask",
+        "TextClassificationTask",
+        "ImageClassificationTask",
+        "TranslationTask",
+        "RegressionTask",
+    ]

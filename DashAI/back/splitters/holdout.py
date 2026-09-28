@@ -3,15 +3,19 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 from DashAI.back.core.schema_fields import (
+    Approx,
     BaseSchema,
+    Check,
+    F,
+    Sum,
     bool_field,
     float_field,
     int_field,
-    none_type,
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import split_dataset
+from DashAI.back.splitters.rules import SEED_ONLY_MATTERS_WHEN_SHUFFLING
 
 from .base_splitter import BaseSplitter
 
@@ -23,7 +27,7 @@ if TYPE_CHECKING:
 
 class HoldoutSplitterSchema(BaseSchema):
     train: schema_field(
-        none_type(float_field(ge=0, le=1)),
+        float_field(ge=0, le=1),
         placeholder=0.6,
         description=MultilingualString(
             en="Proportion of the dataset assigned to the training partition.",
@@ -37,7 +41,7 @@ class HoldoutSplitterSchema(BaseSchema):
         ),
     )  # type: ignore
     test: schema_field(
-        none_type(float_field(ge=0, le=1)),
+        float_field(ge=0, le=1),
         placeholder=0.2,
         description=MultilingualString(
             en="Proportion of the dataset assigned to the test partition.",
@@ -51,7 +55,7 @@ class HoldoutSplitterSchema(BaseSchema):
         ),
     )  # type: ignore
     validation: schema_field(
-        none_type(float_field(ge=0, le=1)),
+        float_field(ge=0, le=1),
         placeholder=0.2,
         description=MultilingualString(
             en="Proportion of the dataset assigned to the validation partition.",
@@ -103,21 +107,16 @@ class HoldoutSplitterSchema(BaseSchema):
     random_state: schema_field(
         int_field(ge=0),
         placeholder=42,
+        # The "ignored when shuffling is disabled" sentence this description
+        # used to carry in five languages is now the Relevance rule below, so
+        # the renderer disables the control instead of asking the user to read
+        # about it.
         description=MultilingualString(
-            en="Seed used to make the split reproducible when shuffle is enabled.",
-            es=(
-                "Semilla utilizada para que la división sea reproducible cuando "
-                "se activa la mezcla."
-            ),
-            pt=(
-                "Semente usada para tornar a divisão reproduzível quando o "
-                "embaralhamento está ativado."
-            ),
-            de=(
-                "Seed, um die Aufteilung reproduzierbar zu machen, wenn Mischen "
-                "aktiviert ist."
-            ),
-            zh="启用打乱时，用于使划分可复现的随机种子。",
+            en="Seed used to make the split reproducible.",
+            es="Semilla utilizada para que la división sea reproducible.",
+            pt="Semente usada para tornar a divisão reproduzível.",
+            de="Seed, um die Aufteilung reproduzierbar zu machen.",
+            zh="用于使划分可复现的随机种子。",
         ),
         alias=MultilingualString(
             en="Random state",
@@ -128,8 +127,55 @@ class HoldoutSplitterSchema(BaseSchema):
         ),
     )  # type: ignore
 
+    # The three partitions must describe the whole dataset, and the seed is
+    # meaningless without shuffling. Both were previously a `model_validator`
+    # body plus a sentence in a description, which left the browser to
+    # re-implement the first one by hand at a different tolerance and the
+    # second one not at all.
+    rules = [
+        Check(
+            Approx(Sum("train", "validation", "test"), 1.0, tol=1e-6),
+            id="holdout.proportions_sum_to_one",
+            targets=["train", "validation", "test"],
+            message=MultilingualString(
+                en=(
+                    "Train, validation and test must sum to 1 "
+                    "(they currently add up to {total})."
+                ),
+                es=(
+                    "Entrenamiento, validación y prueba deben sumar 1 "
+                    "(actualmente suman {total})."
+                ),
+                pt=(
+                    "Treinamento, validação e teste devem somar 1 "
+                    "(atualmente somam {total})."
+                ),
+                de=(
+                    "Training, Validierung und Test müssen zusammen 1 ergeben "
+                    "(aktuell ergeben sie {total})."
+                ),
+                zh="训练集、验证集和测试集的比例之和必须为 1（当前为 {total}）。",
+            ),
+            bindings={"total": Sum("train", "validation", "test")},
+        ),
+        Check(
+            F("train") > 0,
+            id="holdout.train_not_empty",
+            targets=["train"],
+            message=MultilingualString(
+                en="The train proportion must be greater than 0.",
+                es="La proporción de entrenamiento debe ser mayor que 0.",
+                pt="A proporção de treinamento deve ser maior que 0.",
+                de="Der Trainingsanteil muss größer als 0 sein.",
+                zh="训练集比例必须大于 0。",
+            ),
+        ),
+        # Shared with the four fold splitters, which carry the same dependency.
+        SEED_ONLY_MATTERS_WHEN_SHUFFLING,
+    ]
 
-class HoldoutSplitter(BaseSplitter):
+
+class PartitionSplitter(BaseSplitter):
     """Splitter that creates train, test, and validation partitions for holdout
     evaluation.
 
@@ -146,7 +192,27 @@ class HoldoutSplitter(BaseSplitter):
     - https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html
     """
 
-    SCHEMA = HoldoutSplitterSchema
+    GEOMETRY: str = "partitions"
+
+    @classmethod
+    def explainable_partitions(cls, split_indexes):
+        """Return the train, test and validation partitions of a holdout run.
+
+        Parameters
+        ----------
+        split_indexes : dict
+            The ``Run.split_indexes`` payload, already parsed.
+
+        Returns
+        -------
+        dict
+            Row indexes for the ``train``, ``test`` and ``val`` partitions.
+        """
+        return {
+            "train": split_indexes["train_indexes"],
+            "test": split_indexes["test_indexes"],
+            "val": split_indexes.get("val_indexes", []),
+        }
 
     def __init__(self, splits_data):
         """Initialize the holdout splitter with the requested proportions.
@@ -294,3 +360,64 @@ class HoldoutSplitter(BaseSplitter):
             stratify=stratify_labels_test_val,
         )
         return train_indexes.tolist(), test_indexes.tolist(), val_indexes.tolist()
+
+
+class HoldoutSplitter(PartitionSplitter):
+    """Split the dataset into train, test and validation partitions at random.
+
+    The ordinary holdout split: rows are sampled into three partitions, with
+    optional shuffling, stratification and a seed to make the sample
+    reproducible.
+
+    Not offered for ``ForecastingTask``. Sampling rows out of a series lets a
+    model train on its own future and report a score it could never reproduce
+    in use, and nothing about that failure raises an error. Forecasting uses
+    ``TemporalHoldoutSplitter``, which cuts the rows where they lie.
+    """
+
+    SCHEMA = HoldoutSplitterSchema
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Cuts the dataset into train, validation and test in the "
+            "proportions you set. Rows are sampled at random unless you "
+            "turn shuffling off, and can be drawn keeping the class "
+            "balance of the full dataset. The usual choice when a single "
+            "split is enough."
+        ),
+        es=(
+            "Corta el conjunto en entrenamiento, validacion y prueba con "
+            "las proporciones que elijas. Las filas se toman al azar "
+            "salvo que desactives la mezcla, y pueden tomarse conservando "
+            "el balance de clases del conjunto completo. Es la opcion "
+            "habitual cuando basta con un solo corte."
+        ),
+        pt=(
+            "Corta o conjunto em treino, validacao e teste nas proporcoes "
+            "que voce escolher. As linhas sao sorteadas ao acaso a menos "
+            "que voce desative o embaralhamento, e podem ser sorteadas "
+            "mantendo o balanco de classes do conjunto completo. E a "
+            "escolha usual quando um unico corte basta."
+        ),
+        de=(
+            "Teilt den Datensatz in den gewaehlten Anteilen in Training, "
+            "Validierung und Test. Die Zeilen werden zufaellig gezogen, "
+            "sofern das Mischen nicht abgeschaltet ist, und koennen unter "
+            "Beibehaltung der Klassenverteilung des gesamten Datensatzes "
+            "gezogen werden. Die uebliche Wahl, wenn eine einzelne "
+            "Teilung genuegt."
+        ),
+        zh=(
+            "按你设定的比例把数据集切成训练、验证和测试三部分。除非关"
+            "闭打乱，行都是随机抽取的，并且可以在抽取时保持完整数据集"
+            "的类别比例。只需一次切分时的常用选择。"
+        ),
+    )
+    # Listed per task rather than left universal, so the frontend can resolve
+    # a holdout splitter from the task instead of hardcoding this class.
+    COMPATIBLE_COMPONENTS = [
+        "TabularClassificationTask",
+        "TextClassificationTask",
+        "ImageClassificationTask",
+        "TranslationTask",
+        "RegressionTask",
+    ]

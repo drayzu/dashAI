@@ -188,6 +188,9 @@ def test_managed_model_injection_in_generative_job(client: TestClient, monkeypat
     real_registry = client.app.container["component_registry"]
 
     class RegistryProxy:
+        def __contains__(self, name):
+            return name == "LocalManagedTextGenerationModel" or name in real_registry
+
         def __getitem__(self, name):
             if name == "LocalManagedTextGenerationModel":
                 return {"class": FakeLocalModel}

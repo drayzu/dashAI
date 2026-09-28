@@ -162,7 +162,7 @@ export default function UploadDatasetSteps({ backHome }) {
     }
 
     if (tourContext?.run) {
-      tourContext.stopTour();
+      tourContext.completeTour();
       sessionStorage.setItem("startDatasetViewTour", "true");
     }
   };
