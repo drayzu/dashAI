@@ -320,3 +320,9 @@ La ejecución vuelve a hacer preflight al iniciar el run persistido, evitando ut
 ## Siguientes pasos técnicos recomendados
 
 Estado tras la productización: la reconciliación al arrancar, la programación exclusiva del acelerador, el warmup configurable, la evaluación final, la instrumentación de estabilidad (con la prueba real de 15 pasos), la internacionalización, el inventario local, la carga-retorno de datasets, la cancelación fuerte por aislamiento en proceso y una primera comparación cualitativa base vs adaptador ya están implementados. Lo pendiente es un protocolo cuantitativo de calidad base vs adaptado, el smoke en Apple Silicon real y la decisión con el profesor sobre plugins, artefactos (fusión/GGUF) y modelos adicionales. Unsloth queda habilitable cuando exista hardware compatible o un worker aislado que no reemplace el stack principal.
+
+## Actualización de la integración — 28 de septiembre de 2026
+
+La rama `memoria/glm-weekend-productization` incorpora `upstream/develop` hasta `c813e37af` (25 de septiembre) mediante el merge `114519603`. Se conservó la nueva arquitectura de trabajos persistentes de DashAI y se ajustó `FineTuningJob` para que su proceso supervisor siga controlando al proceso aislado de entrenamiento durante la cancelación. También se unieron las ramas de migraciones de Alembic y se corrigió la detección de tareas en espera durante la reconciliación al arrancar.
+
+Verificación sobre el código integrado: 67 pruebas focalizadas de fine-tuning y API, 120 de RAG y sesiones, 19 de cancelación de trabajos (una omitida), 8 de frontend, compilación de producción, Ruff y comprobación de que no quedan cambios de esquema sin migración. No se ejecutó un nuevo entrenamiento en GPU ni una comparación cuantitativa de calidad después del merge. Por ello, el siguiente control de extremo a extremo debe repetir el smoke sobre esta revisión exacta y registrar sus resultados antes de tomarla como línea base experimental.
