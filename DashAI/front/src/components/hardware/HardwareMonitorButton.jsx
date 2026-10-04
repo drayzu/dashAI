@@ -7,6 +7,8 @@ import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { useHardwareMonitor } from "../../hooks/useHardwareMonitor";
 import HardwareMonitorPanel from "./HardwareMonitorPanel";
+import { Box, Typography } from "@mui/material";
+import { fineTuningDemoEnabled } from "../../api/fineTuningDemo/config";
 
 export default function HardwareMonitorButton() {
   const theme = useTheme();
@@ -58,7 +60,18 @@ export default function HardwareMonitorButton() {
           horizontal: "right",
         }}
       >
-        <HardwareMonitorPanel stats={stats} connected={connected} />
+        {fineTuningDemoEnabled ? (
+          <Box sx={{ p: 5, maxWidth: 320 }}>
+            <Typography variant="h6" sx={{ mb: 3 }}>
+              {t("fineTuningDemo:hardwareDemo")}
+            </Typography>
+            <Typography variant="body2">
+              {t("fineTuningDemo:memoryWarning")}
+            </Typography>
+          </Box>
+        ) : (
+          <HardwareMonitorPanel stats={stats} connected={connected} />
+        )}
       </Popover>
     </>
   );

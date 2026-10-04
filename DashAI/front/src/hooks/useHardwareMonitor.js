@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { fineTuningDemoEnabled } from "../api/fineTuningDemo/config";
 
 export function useHardwareMonitor(enabled) {
   const [stats, setStats] = useState(null);
@@ -29,6 +30,7 @@ export function useHardwareMonitor(enabled) {
   }, []);
 
   const connect = useCallback(() => {
+    if (fineTuningDemoEnabled) return;
     if (!enabledRef.current) {
       return;
     }

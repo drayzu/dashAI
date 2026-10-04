@@ -1,9 +1,12 @@
 import axios from "axios";
 import type { AxiosInstance } from "axios";
 import i18n from "../utils/i18n";
+import { fineTuningDemoEnabled } from "./fineTuningDemo/config";
+import { fineTuningDemoAdapter } from "./fineTuningDemo/adapter";
 
 const api: AxiosInstance = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
+  ...(fineTuningDemoEnabled ? { adapter: fineTuningDemoAdapter } : {}),
   paramsSerializer: (params) => {
     const sp = new URLSearchParams();
     for (const [key, val] of Object.entries(params)) {
