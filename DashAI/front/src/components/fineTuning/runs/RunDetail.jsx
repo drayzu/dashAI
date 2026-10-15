@@ -54,6 +54,8 @@ import {
   formatRelative,
   shortHash,
 } from "./runFormat";
+import Hideable from "../viewEditing/Hideable";
+import { useViewState, viewStore } from "../viewEditing/viewStore";
 
 export const RUN_DETAIL_TABS = Object.freeze([
   "metrics",
@@ -373,46 +375,56 @@ export function RunProgressBlock({ run, sx }) {
         )}
       </Box>
       {downloading && (
-        <Box sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: "divider" }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: 2,
-              flexWrap: "wrap",
-              mb: 1,
-            }}
-          >
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              {t("fineTuning:runs.progress.downloading", {
-                name: ck.name || ck.repository,
-              })}
+        <Hideable
+          id="shared.run.downloadDetails"
+          label={t("fineTuning:viewEditing.sections.runDownloadDetails")}
+          level="full"
+        >
+          <Box sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: "divider" }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 2,
+                flexWrap: "wrap",
+                mb: 1,
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {t("fineTuning:runs.progress.downloading", {
+                  name: ck.name || ck.repository,
+                })}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {`${formatBytes(run.download.doneBytes)} / ${formatBytes(
+                  run.download.totalBytes,
+                )}`}
+              </Typography>
+            </Box>
+            <LinearProgress
+              variant="determinate"
+              value={
+                run.download.totalBytes
+                  ? (run.download.doneBytes / run.download.totalBytes) * 100
+                  : 0
+              }
+              color="info"
+              sx={{ height: 4, borderRadius: 1 }}
+            />
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mt: 1, fontFamily: "monospace" }}
+            >
+              {`~/.DashAI/llm_models/${ck.repository || ck.id}@${shortHash(
+                ck.revision,
+              )}`}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {`${formatBytes(run.download.doneBytes)} / ${formatBytes(run.download.totalBytes)}`}
+            <Typography variant="caption" color="text.secondary">
+              {t("fineTuning:runs.progress.downloadPathNote")}
             </Typography>
           </Box>
-          <LinearProgress
-            variant="determinate"
-            value={
-              run.download.totalBytes
-                ? (run.download.doneBytes / run.download.totalBytes) * 100
-                : 0
-            }
-            color="info"
-            sx={{ height: 4, borderRadius: 1 }}
-          />
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ display: "block", mt: 1, fontFamily: "monospace" }}
-          >
-            {`~/.DashAI/llm_models/${ck.repository || ck.id}@${shortHash(ck.revision)}`}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {t("fineTuning:runs.progress.downloadPathNote")}
-          </Typography>
-        </Box>
+        </Hideable>
       )}
     </Paper>
   );
@@ -484,16 +496,22 @@ export function RunHealthAlert({ run, sx }) {
   if (!warnings.length) return null;
   const info = failureInfo("grad_norm_warning", t);
   return (
-    <Alert severity="warning" sx={sx}>
-      <AlertTitle sx={{ fontWeight: 600 }}>{info.title}</AlertTitle>
-      {info.explanation}
-      <Typography variant="body2" sx={{ mt: 1 }}>
-        {t("fineTuning:runs.health.steps", {
-          count: warnings.length,
-          steps: warnings.map((w) => w.step).join(", "),
-        })}
-      </Typography>
-    </Alert>
+    <Hideable
+      id="shared.run.healthWarning"
+      label={t("fineTuning:viewEditing.sections.runHealthWarning")}
+      level="full"
+    >
+      <Alert severity="warning" sx={sx}>
+        <AlertTitle sx={{ fontWeight: 600 }}>{info.title}</AlertTitle>
+        {info.explanation}
+        <Typography variant="body2" sx={{ mt: 1 }}>
+          {t("fineTuning:runs.health.steps", {
+            count: warnings.length,
+            steps: warnings.map((w) => w.step).join(", "),
+          })}
+        </Typography>
+      </Alert>
+    </Hideable>
   );
 }
 
@@ -507,21 +525,41 @@ export function RunLossSection({ run, showLr }) {
   const notStarted = run.status === 0 || (run.status === 1 && !run.startedAt);
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <RunMetricsStrip run={run} />
-      <LossChart
-        points={run.points}
-        showEval={run.snapshot ? run.snapshot.dataset?.useEval !== false : true}
-        showLr={showLr}
-        filename={`${run.name || run.id}-loss`}
-        emptyText={
-          notStarted
-            ? t("fineTuning:charts.notStarted")
-            : t("fineTuning:charts.empty")
-        }
-      />
-      <Typography variant="caption" color="text.secondary">
-        {t("fineTuning:charts.lossDisclaimer")}
-      </Typography>
+      <Hideable
+        id="shared.run.metricsStrip"
+        label={t("fineTuning:viewEditing.sections.runMetricsStrip")}
+        level="intermediate"
+      >
+        <RunMetricsStrip run={run} />
+      </Hideable>
+      <Hideable
+        id="shared.run.lossChart"
+        label={t("fineTuning:viewEditing.sections.runLossChart")}
+        level="essential"
+      >
+        <LossChart
+          points={run.points}
+          showEval={
+            run.snapshot ? run.snapshot.dataset?.useEval !== false : true
+          }
+          showLr={showLr}
+          filename={`${run.name || run.id}-loss`}
+          emptyText={
+            notStarted
+              ? t("fineTuning:charts.notStarted")
+              : t("fineTuning:charts.empty")
+          }
+        />
+      </Hideable>
+      <Hideable
+        id="shared.run.lossDisclaimer"
+        label={t("fineTuning:viewEditing.sections.runLossDisclaimer")}
+        level="full"
+      >
+        <Typography variant="caption" color="text.secondary">
+          {t("fineTuning:charts.lossDisclaimer")}
+        </Typography>
+      </Hideable>
     </Box>
   );
 }
@@ -617,17 +655,60 @@ RunTimingList.defaultProps = { run: null };
 
 // ------------------------------------------------------------- variants --
 
+/** Hideable wrappers shared by both variants (same id = same choice). */
+function HideablePhaseTimeline({ run }) {
+  const { t } = useTranslation(["fineTuning"]);
+  return (
+    <Hideable
+      id="shared.run.phaseTimeline"
+      label={t("fineTuning:viewEditing.sections.runPhaseTimeline")}
+      level="intermediate"
+    >
+      <PhaseTimeline run={run} />
+    </Hideable>
+  );
+}
+
+HideablePhaseTimeline.propTypes = { run: PropTypes.object.isRequired };
+
+// Optional tabs of variant B: hidden tabs disappear from the tab bar (their
+// content carries the Hideable, so edit mode can toggle them back).
+const OPTIONAL_TABS = {
+  resources: { id: "shared.run.resources", level: "intermediate" },
+  log: { id: "shared.run.eventLog", level: "full" },
+  provenance: { id: "b.run.provenanceTab", level: "intermediate" },
+};
+
 function StackedBody({ run, actions }) {
+  const { t } = useTranslation(["fineTuning"]);
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      <PhaseTimeline run={run} />
+      <HideablePhaseTimeline run={run} />
       <RunProgressBlock run={run} />
       <RunHealthAlert run={run} />
       <RunOutcome run={run} variant="A" actions={actions} />
       <RunLossSection run={run} showLr />
-      <ResourcePanel run={run} />
-      <EventLog events={run.events} />
-      <FrozenConfigAccordion run={run} />
+      <Hideable
+        id="shared.run.resources"
+        label={t("fineTuning:viewEditing.sections.runResources")}
+        level="intermediate"
+      >
+        <ResourcePanel run={run} />
+      </Hideable>
+      <Hideable
+        id="shared.run.eventLog"
+        label={t("fineTuning:viewEditing.sections.runEventLog")}
+        level="full"
+      >
+        <EventLog events={run.events} />
+      </Hideable>
+      <Hideable
+        id="shared.run.frozenConfig"
+        label={t("fineTuning:viewEditing.sections.runFrozenConfig")}
+        level="full"
+      >
+        <FrozenConfigAccordion run={run} />
+      </Hideable>
     </Box>
   );
 }
@@ -637,8 +718,24 @@ StackedBody.propTypes = {
   actions: PropTypes.object.isRequired,
 };
 
-function TabsBody({ run, actions, tab, onTabChange, renderExample }) {
+function TabsBody({
+  run,
+  actions,
+  tab: requestedTab,
+  onTabChange,
+  renderExample,
+}) {
   const { t } = useTranslation(["fineTuning"]);
+  const view = useViewState();
+  const visibleTabs = RUN_DETAIL_TABS.filter((key) => {
+    const optional = OPTIONAL_TABS[key];
+    return (
+      view.editMode ||
+      !optional ||
+      viewStore.isVisible(optional.id, optional.level)
+    );
+  });
+  const tab = visibleTabs.includes(requestedTab) ? requestedTab : "metrics";
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
       <RunOutcome run={run} variant="B" actions={actions} />
@@ -650,7 +747,7 @@ function TabsBody({ run, actions, tab, onTabChange, renderExample }) {
         aria-label={t("fineTuning:runs.tabs.ariaLabel")}
         sx={{ alignSelf: "flex-start", maxWidth: "100%" }}
       >
-        {RUN_DETAIL_TABS.map((key) => (
+        {visibleTabs.map((key) => (
           <Tab key={key} value={key} label={t(`fineTuning:runs.tabs.${key}`)} />
         ))}
       </PillTabs>
@@ -663,7 +760,7 @@ function TabsBody({ run, actions, tab, onTabChange, renderExample }) {
           gap: 4,
         }}
       >
-        <PhaseTimeline run={run} />
+        <HideablePhaseTimeline run={run} />
         <RunProgressBlock run={run} />
         <RunHealthAlert run={run} />
         <RunLossSection run={run} showLr />
@@ -671,35 +768,71 @@ function TabsBody({ run, actions, tab, onTabChange, renderExample }) {
       {tab === "data" && (
         <FrozenDataPanel run={run} renderExample={renderExample} />
       )}
-      {tab === "resources" && <ResourcePanel run={run} />}
-      {tab === "log" && <EventLog events={run.events} maxHeight={480} />}
+      {tab === "resources" && (
+        <Hideable
+          id="shared.run.resources"
+          label={t("fineTuning:viewEditing.sections.runResources")}
+          level="intermediate"
+        >
+          <ResourcePanel run={run} />
+        </Hideable>
+      )}
+      {tab === "log" && (
+        <Hideable
+          id="shared.run.eventLog"
+          label={t("fineTuning:viewEditing.sections.runEventLog")}
+          level="full"
+        >
+          <EventLog events={run.events} maxHeight={480} />
+        </Hideable>
+      )}
       {tab === "provenance" && (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <Paper elevation={0} sx={cardSx}>
-            <Typography
-              variant="overline"
-              color="text.secondary"
-              sx={{ display: "block", letterSpacing: 1, mb: 1 }}
-            >
-              {t("fineTuning:runs.timing.title")}
-            </Typography>
-            <RunTimingList run={run} />
-          </Paper>
-          <Paper elevation={0} sx={cardSx}>
-            <FrozenConfigContent run={run} />
-          </Paper>
-          {run.adapterId && (
-            <Box>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => actions.provenance()}
+        <Hideable
+          id="b.run.provenanceTab"
+          label={t("fineTuning:viewEditing.sections.bRunProvenanceTab")}
+          level="intermediate"
+        >
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <Paper elevation={0} sx={cardSx}>
+              <Typography
+                variant="overline"
+                color="text.secondary"
+                sx={{ display: "block", letterSpacing: 1, mb: 1 }}
               >
-                {t("fineTuning:runs.actions.adapterProvenance")}
-              </Button>
-            </Box>
-          )}
-        </Box>
+                {t("fineTuning:runs.timing.title")}
+              </Typography>
+              <RunTimingList run={run} />
+            </Paper>
+            <Hideable
+              id="shared.run.frozenConfig"
+              label={t("fineTuning:viewEditing.sections.runFrozenConfig")}
+              level="full"
+            >
+              <Paper elevation={0} sx={cardSx}>
+                <FrozenConfigContent run={run} />
+              </Paper>
+            </Hideable>
+            {run.adapterId && (
+              <Hideable
+                id="shared.provenance.openButton"
+                label={t(
+                  "fineTuning:viewEditing.sections.provenanceOpenButton",
+                )}
+                level="intermediate"
+              >
+                <Box>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => actions.provenance()}
+                  >
+                    {t("fineTuning:runs.actions.adapterProvenance")}
+                  </Button>
+                </Box>
+              </Hideable>
+            )}
+          </Box>
+        </Hideable>
       )}
     </Box>
   );

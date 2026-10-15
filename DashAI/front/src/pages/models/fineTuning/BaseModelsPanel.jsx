@@ -22,6 +22,7 @@ import {
 } from "../../../components/fineTuning/common/VramEstimate";
 import { formatBytes } from "../../../components/fineTuning/data/catalog";
 import { methodLabel } from "../../../components/fineTuning/data/labels";
+import Hideable from "../../../components/fineTuning/viewEditing/Hideable";
 
 const selectCheckpoints = (s) => s.checkpoints;
 const selectCredential = (s) => Boolean(s.demo && s.demo.hfCredential);
@@ -165,31 +166,50 @@ function BaseModelRow({
                 : t(`fineTuning:shellB.baseModels.state.${state.key}`)
             }
           />
-          {METHOD_ORDER.filter((m) => checkpoint.methods.includes(m)).map(
-            (m) => (
-              <Chip
-                key={m}
-                size="small"
-                variant="outlined"
-                label={methodLabel(m, t)}
-              />
-            ),
-          )}
-          <VramRiskChip estimatedGb={estimate} availableGb={available} />
+          <Hideable
+            id="b.baseModels.methodChips"
+            label={t("fineTuning:viewEditing.sections.bBaseModelsMethodChips")}
+            level="full"
+            sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}
+          >
+            {METHOD_ORDER.filter((m) => checkpoint.methods.includes(m)).map(
+              (m) => (
+                <Chip
+                  key={m}
+                  size="small"
+                  variant="outlined"
+                  label={methodLabel(m, t)}
+                />
+              ),
+            )}
+          </Hideable>
+          <Hideable
+            id="b.baseModels.vram"
+            label={t("fineTuning:viewEditing.sections.bBaseModelsVram")}
+            level="intermediate"
+          >
+            <VramRiskChip estimatedGb={estimate} availableGb={available} />
+          </Hideable>
         </Stack>
         {typeof estimate === "number" && (
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            component="p"
-            sx={{ mt: 1 }}
+          <Hideable
+            id="b.baseModels.vram"
+            label={t("fineTuning:viewEditing.sections.bBaseModelsVram")}
+            level="intermediate"
           >
-            {t("fineTuning:shellB.baseModels.vram", {
-              estimated: estimate,
-              available: available ?? "?",
-              method: methodLabel(method, t),
-            })}
-          </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              component="p"
+              sx={{ mt: 1 }}
+            >
+              {t("fineTuning:shellB.baseModels.vram", {
+                estimated: estimate,
+                available: available ?? "?",
+                method: methodLabel(method, t),
+              })}
+            </Typography>
+          </Hideable>
         )}
       </Box>
     </Box>
@@ -273,14 +293,20 @@ export default function BaseModelsPanel({ onSelect, parameters }) {
               },
             }}
           />
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            component="p"
-            sx={{ mt: 2 }}
+          <Hideable
+            id="b.baseModels.hint"
+            label={t("fineTuning:viewEditing.sections.bBaseModelsHint")}
+            level="full"
           >
-            {t("fineTuning:shellB.baseModels.hint")}
-          </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              component="p"
+              sx={{ mt: 2 }}
+            >
+              {t("fineTuning:shellB.baseModels.hint")}
+            </Typography>
+          </Hideable>
         </Box>
         <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 4, pb: 4 }}>
           {filtered.length === 0 ? (
@@ -305,14 +331,20 @@ export default function BaseModelsPanel({ onSelect, parameters }) {
               ))}
             </Box>
           )}
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            component="p"
-            sx={{ mt: 3 }}
+          <Hideable
+            id="b.baseModels.catalogNote"
+            label={t("fineTuning:viewEditing.sections.bBaseModelsCatalogNote")}
+            level="full"
           >
-            {t("fineTuning:shellB.baseModels.catalogNote")}
-          </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              component="p"
+              sx={{ mt: 3 }}
+            >
+              {t("fineTuning:shellB.baseModels.catalogNote")}
+            </Typography>
+          </Hideable>
         </Box>
       </Box>
     </SideBar>

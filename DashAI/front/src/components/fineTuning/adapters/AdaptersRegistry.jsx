@@ -45,6 +45,7 @@ import {
 } from "../data/labels";
 import { modelBlockReason } from "../inference/ModelPickerMenu";
 import { formatDateTime, modelRefStatus } from "../inference/modelAvailability";
+import Hideable from "../viewEditing/Hideable";
 import AdapterProvenanceDialog from "./AdapterProvenanceDialog";
 
 const selectRegistry = (s) => ({
@@ -213,236 +214,257 @@ export default function AdaptersRegistry({
         </Box>
       )}
 
-      {adapters.length === 0 ? (
-        <Box
-          sx={{
-            border: "1px dashed",
-            borderColor: "divider",
-            borderRadius: 1,
-            p: 8,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 2,
-            textAlign: "center",
-          }}
-        >
-          <ExtensionOutlinedIcon sx={{ fontSize: 48, opacity: 0.4 }} />
-          <Typography variant="body2" color="text.secondary">
-            {t("fineTuning:adapters.empty")}
-          </Typography>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => navigate(routes.home())}
+      <Hideable
+        id="shared.adapters.registry"
+        label={t("fineTuning:viewEditing.sections.adaptersRegistry")}
+        level="intermediate"
+      >
+        {adapters.length === 0 ? (
+          <Box
+            sx={{
+              border: "1px dashed",
+              borderColor: "divider",
+              borderRadius: 1,
+              p: 8,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+              textAlign: "center",
+            }}
           >
-            {t("fineTuning:adapters.emptyAction")}
-          </Button>
-        </Box>
-      ) : (
-        <TableContainer
-          component={Paper}
-          elevation={0}
-          sx={{ border: 1, borderColor: "divider" }}
-        >
-          <Table
-            size="small"
-            sx={{ minWidth: 880 }}
-            aria-label={t("fineTuning:adapters.tableAria")}
+            <ExtensionOutlinedIcon sx={{ fontSize: 48, opacity: 0.4 }} />
+            <Typography variant="body2" color="text.secondary">
+              {t("fineTuning:adapters.empty")}
+            </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => navigate(routes.home())}
+            >
+              {t("fineTuning:adapters.emptyAction")}
+            </Button>
+          </Box>
+        ) : (
+          <TableContainer
+            component={Paper}
+            elevation={0}
+            sx={{ border: 1, borderColor: "divider" }}
           >
-            <TableHead>
-              <TableRow>
-                <TableCell>{t("fineTuning:adapters.columns.name")}</TableCell>
-                <TableCell>{t("fineTuning:adapters.columns.base")}</TableCell>
-                <TableCell>
-                  {t("fineTuning:adapters.columns.dataset")}
-                </TableCell>
-                <TableCell>{t("fineTuning:adapters.columns.method")}</TableCell>
-                <TableCell>
-                  {t("fineTuning:adapters.columns.created")}
-                </TableCell>
-                <TableCell align="right">
-                  {t("fineTuning:adapters.columns.size")}
-                </TableCell>
-                <TableCell>
-                  {t("fineTuning:adapters.columns.availability")}
-                </TableCell>
-                <TableCell align="right">
-                  {t("fineTuning:adapters.columns.actions")}
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {adapters.map((adapter) => {
-                const run =
-                  data.runs.find((r) => r.id === adapter.runId) || null;
-                const session =
-                  data.sessions.find((s) => s.id === adapter.sessionId) || null;
-                const checkpoint =
-                  data.checkpoints.find((c) => c.id === adapter.checkpointId) ||
-                  null;
-                const status = modelRefStatus(pseudoState, {
-                  kind: "adapter",
-                  id: adapter.id,
-                });
-                const blocked = modelBlockReason(status, t);
-                const dsRef = run && run.snapshot ? run.snapshot.dataset : null;
-                const dsName = dsRef
-                  ? datasetName(dsRef, t)
-                  : adapter.datasetName || "";
-                const loraR =
-                  adapter.loraR ||
-                  (run && run.snapshot
-                    ? run.snapshot.draft.parameters.loraR
-                    : null);
-                const selected = selectedId === adapter.id;
-                const baseNotReady =
-                  checkpoint && checkpoint.availability !== "ready";
-                return (
-                  <TableRow
-                    key={adapter.id}
-                    hover
-                    selected={selected}
-                    onClick={onSelect ? () => onSelect(adapter.id) : undefined}
-                    sx={{
-                      cursor: onSelect ? "pointer" : "default",
-                      "&.Mui-selected": { bgcolor: "action.selected" },
-                    }}
-                  >
-                    <TableCell sx={{ maxWidth: 260 }}>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontWeight: 600 }}
-                        noWrap
-                        title={adapter.name}
-                      >
-                        {adapter.name}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        noWrap
-                        component="div"
-                      >
-                        {run
-                          ? t("fineTuning:adapters.origin", {
-                              number: run.number,
-                              session: session ? session.name : "",
-                            })
-                          : ""}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <Typography variant="body2">
-                          {adapter.checkpointName || adapter.checkpointId}
+            <Table
+              size="small"
+              sx={{ minWidth: 880 }}
+              aria-label={t("fineTuning:adapters.tableAria")}
+            >
+              <TableHead>
+                <TableRow>
+                  <TableCell>{t("fineTuning:adapters.columns.name")}</TableCell>
+                  <TableCell>{t("fineTuning:adapters.columns.base")}</TableCell>
+                  <TableCell>
+                    {t("fineTuning:adapters.columns.dataset")}
+                  </TableCell>
+                  <TableCell>
+                    {t("fineTuning:adapters.columns.method")}
+                  </TableCell>
+                  <TableCell>
+                    {t("fineTuning:adapters.columns.created")}
+                  </TableCell>
+                  <TableCell align="right">
+                    {t("fineTuning:adapters.columns.size")}
+                  </TableCell>
+                  <TableCell>
+                    {t("fineTuning:adapters.columns.availability")}
+                  </TableCell>
+                  <TableCell align="right">
+                    {t("fineTuning:adapters.columns.actions")}
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {adapters.map((adapter) => {
+                  const run =
+                    data.runs.find((r) => r.id === adapter.runId) || null;
+                  const session =
+                    data.sessions.find((s) => s.id === adapter.sessionId) ||
+                    null;
+                  const checkpoint =
+                    data.checkpoints.find(
+                      (c) => c.id === adapter.checkpointId,
+                    ) || null;
+                  const status = modelRefStatus(pseudoState, {
+                    kind: "adapter",
+                    id: adapter.id,
+                  });
+                  const blocked = modelBlockReason(status, t);
+                  const dsRef =
+                    run && run.snapshot ? run.snapshot.dataset : null;
+                  const dsName = dsRef
+                    ? datasetName(dsRef, t)
+                    : adapter.datasetName || "";
+                  const loraR =
+                    adapter.loraR ||
+                    (run && run.snapshot
+                      ? run.snapshot.draft.parameters.loraR
+                      : null);
+                  const selected = selectedId === adapter.id;
+                  const baseNotReady =
+                    checkpoint && checkpoint.availability !== "ready";
+                  return (
+                    <TableRow
+                      key={adapter.id}
+                      hover
+                      selected={selected}
+                      onClick={
+                        onSelect ? () => onSelect(adapter.id) : undefined
+                      }
+                      sx={{
+                        cursor: onSelect ? "pointer" : "default",
+                        "&.Mui-selected": { bgcolor: "action.selected" },
+                      }}
+                    >
+                      <TableCell sx={{ maxWidth: 260 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 600 }}
+                          noWrap
+                          title={adapter.name}
+                        >
+                          {adapter.name}
                         </Typography>
-                        {baseNotReady && (
-                          <Tooltip
-                            title={t("fineTuning:adapters.baseNotReady")}
-                          >
-                            <WarningAmberIcon
-                              fontSize="small"
-                              color="warning"
-                              aria-label={t("fineTuning:adapters.baseNotReady")}
-                            />
-                          </Tooltip>
-                        )}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{dsName}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        variant="outlined"
-                        label={
-                          loraR
-                            ? t("fineTuning:adapters.methodRank", {
-                                method: methodLabel(adapter.method, t),
-                                r: loraR,
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          noWrap
+                          component="div"
+                        >
+                          {run
+                            ? t("fineTuning:adapters.origin", {
+                                number: run.number,
+                                session: session ? session.name : "",
                               })
-                            : methodLabel(adapter.method, t)
-                        }
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" noWrap>
-                        {formatDateTime(adapter.createdAt, i18n.language)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography variant="body2" noWrap>
-                        {formatBytes(adapter.sizeBytes)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        color={availabilityColor(adapter.availability)}
-                        label={adapterAvailabilityLabel(
-                          adapter.availability,
-                          t,
-                        )}
-                      />
-                    </TableCell>
-                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                      <ActionButton
-                        title={t("fineTuning:adapters.actions.chat")}
-                        disabledReason={blocked}
-                        disabled={!status.usable}
-                        color="primary"
-                        onClick={() => openChat(adapter)}
-                      >
-                        <ForumOutlinedIcon fontSize="small" />
-                      </ActionButton>
-                      <ActionButton
-                        title={t("fineTuning:adapters.actions.compare")}
-                        onClick={() => navigate(routes.compare(adapter.id))}
-                      >
-                        <CompareArrowsIcon fontSize="small" />
-                      </ActionButton>
-                      <ActionButton
-                        title={t("fineTuning:adapters.actions.provenance")}
-                        onClick={() => setProvenanceId(adapter.id)}
-                      >
-                        <ReceiptLongOutlinedIcon fontSize="small" />
-                      </ActionButton>
-                      <ActionButton
-                        title={t("fineTuning:adapters.actions.rename")}
-                        onClick={() =>
-                          setRenaming({ id: adapter.id, name: adapter.name })
-                        }
-                      >
-                        <EditOutlinedIcon fontSize="small" />
-                      </ActionButton>
-                      <ActionButton
-                        title={t("fineTuning:adapters.actions.delete")}
-                        color="error"
-                        onClick={() => setDeleting(adapter)}
-                      >
-                        <DeleteOutlineIcon fontSize="small" />
-                      </ActionButton>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+                            : ""}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <Typography variant="body2">
+                            {adapter.checkpointName || adapter.checkpointId}
+                          </Typography>
+                          {baseNotReady && (
+                            <Tooltip
+                              title={t("fineTuning:adapters.baseNotReady")}
+                            >
+                              <WarningAmberIcon
+                                fontSize="small"
+                                color="warning"
+                                aria-label={t(
+                                  "fineTuning:adapters.baseNotReady",
+                                )}
+                              />
+                            </Tooltip>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">{dsName}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label={
+                            loraR
+                              ? t("fineTuning:adapters.methodRank", {
+                                  method: methodLabel(adapter.method, t),
+                                  r: loraR,
+                                })
+                              : methodLabel(adapter.method, t)
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" noWrap>
+                          {formatDateTime(adapter.createdAt, i18n.language)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" noWrap>
+                          {formatBytes(adapter.sizeBytes)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          color={availabilityColor(adapter.availability)}
+                          label={adapterAvailabilityLabel(
+                            adapter.availability,
+                            t,
+                          )}
+                        />
+                      </TableCell>
+                      <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                        <ActionButton
+                          title={t("fineTuning:adapters.actions.chat")}
+                          disabledReason={blocked}
+                          disabled={!status.usable}
+                          color="primary"
+                          onClick={() => openChat(adapter)}
+                        >
+                          <ForumOutlinedIcon fontSize="small" />
+                        </ActionButton>
+                        <ActionButton
+                          title={t("fineTuning:adapters.actions.compare")}
+                          onClick={() => navigate(routes.compare(adapter.id))}
+                        >
+                          <CompareArrowsIcon fontSize="small" />
+                        </ActionButton>
+                        <ActionButton
+                          title={t("fineTuning:adapters.actions.provenance")}
+                          onClick={() => setProvenanceId(adapter.id)}
+                        >
+                          <ReceiptLongOutlinedIcon fontSize="small" />
+                        </ActionButton>
+                        <ActionButton
+                          title={t("fineTuning:adapters.actions.rename")}
+                          onClick={() =>
+                            setRenaming({ id: adapter.id, name: adapter.name })
+                          }
+                        >
+                          <EditOutlinedIcon fontSize="small" />
+                        </ActionButton>
+                        <ActionButton
+                          title={t("fineTuning:adapters.actions.delete")}
+                          color="error"
+                          onClick={() => setDeleting(adapter)}
+                        >
+                          <DeleteOutlineIcon fontSize="small" />
+                        </ActionButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Hideable>
 
       {adapters.length > 0 && (
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ display: "block", mt: 2 }}
+        <Hideable
+          id="shared.adapters.availabilityNote"
+          label={t("fineTuning:viewEditing.sections.adaptersAvailabilityNote")}
+          level="full"
         >
-          {t("fineTuning:adapters.availabilityNote")}
-        </Typography>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", mt: 2 }}
+          >
+            {t("fineTuning:adapters.availabilityNote")}
+          </Typography>
+        </Hideable>
       )}
 
       <AdapterProvenanceDialog

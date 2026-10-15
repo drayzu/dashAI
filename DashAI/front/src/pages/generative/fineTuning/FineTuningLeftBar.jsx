@@ -27,6 +27,7 @@ import {
 } from "../../../components/fineTuning/FineTuningContext";
 import { isActiveStatus } from "../../../components/fineTuning/data/selectors";
 import { statusLabel } from "../../../components/fineTuning/data/labels";
+import Hideable from "../../../components/fineTuning/viewEditing/Hideable";
 
 const NS = "fineTuning:shellA.leftBar";
 
@@ -43,9 +44,9 @@ function selectSessionItems(state) {
         (acc, r) => (!acc || r.number > acc.number ? r : acc),
         null,
       );
-      return `${session.id}\u0000${session.name}\u0000${runs.length}\u0000${last ? last.status : ""}\u0000${
-        runs.some((r) => isActiveStatus(r.status)) ? 1 : 0
-      }`;
+      return `${session.id}\u0000${session.name}\u0000${runs.length}\u0000${
+        last ? last.status : ""
+      }\u0000${runs.some((r) => isActiveStatus(r.status)) ? 1 : 0}`;
     });
 }
 
@@ -111,7 +112,9 @@ export default function FineTuningLeftBar({
       if (code) {
         enqueueSnackbar(
           t(
-            `${NS}.deleteErrors.${code === "session_has_active_run" ? "active" : "generic"}`,
+            `${NS}.deleteErrors.${
+              code === "session_has_active_run" ? "active" : "generic"
+            }`,
           ),
           {
             variant: "error",
@@ -164,18 +167,21 @@ export default function FineTuningLeftBar({
   const navItems = [
     {
       key: "adapters",
+      level: "intermediate",
       icon: ExtensionOutlinedIcon,
       label: t(`${NS}.adapters`, { count: counts.adapters }),
       to: routes.adapters(),
     },
     {
       key: "chat",
+      level: "essential",
       icon: ForumOutlinedIcon,
       label: t(`${NS}.chat`),
       to: routes.chat(),
     },
     {
       key: "compare",
+      level: "intermediate",
       icon: CompareArrowsIcon,
       label: t(`${NS}.compare`),
       to: `${routes.home()}/compare`,
@@ -226,24 +232,32 @@ export default function FineTuningLeftBar({
             const Icon = item.icon;
             const selected = activeSection === item.key;
             return (
-              <ListItemButton
+              <Hideable
                 key={item.key}
-                selected={selected}
-                onClick={() => navigate(item.to)}
-                sx={{ borderRadius: 1 }}
-                aria-current={selected ? "page" : undefined}
+                id={`a.leftBar.nav.${item.key}`}
+                label={t(
+                  `fineTuning:viewEditing.sections.aLeftBarNav.${item.key}`,
+                )}
+                level={item.level}
               >
-                <ListItemIcon sx={{ minWidth: 32 }}>
-                  <Icon
-                    fontSize="small"
-                    color={selected ? "primary" : "inherit"}
+                <ListItemButton
+                  selected={selected}
+                  onClick={() => navigate(item.to)}
+                  sx={{ borderRadius: 1 }}
+                  aria-current={selected ? "page" : undefined}
+                >
+                  <ListItemIcon sx={{ minWidth: 32 }}>
+                    <Icon
+                      fontSize="small"
+                      color={selected ? "primary" : "inherit"}
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.label}
+                    slotProps={{ primary: { variant: "body2" } }}
                   />
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.label}
-                  slotProps={{ primary: { variant: "body2" } }}
-                />
-              </ListItemButton>
+                </ListItemButton>
+              </Hideable>
             );
           })}
         </List>

@@ -57,6 +57,7 @@ import {
   displayOrder,
   downloadTextFile,
 } from "./compareCsv";
+import Hideable from "../viewEditing/Hideable";
 
 // Same defaults the store uses for a new comparison (temperature 0.2).
 const DEFAULT_COMPARE_PARAMS = Object.freeze({
@@ -158,29 +159,37 @@ function AnswerCell({ item, side, onScore, sideLabel }) {
           label={t("fineTuning:compare.checks.category")}
         />
       </Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-        <Typography variant="caption" color="text.secondary">
-          {t("fineTuning:compare.score.label")}
-        </Typography>
-        <ToggleButtonGroup
-          size="small"
-          exclusive
-          value={typeof score === "number" ? score : null}
-          onChange={(_, v) => onScore(v === undefined ? null : v)}
-          aria-label={t("fineTuning:compare.score.aria", { answer: sideLabel })}
-        >
-          {[0, 1, 2].map((v) => (
-            <ToggleButton
-              key={v}
-              value={v}
-              aria-label={t(`fineTuning:compare.score.value${v}`)}
-              sx={{ px: 3, py: 0.5 }}
-            >
-              {v}
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
-      </Box>
+      <Hideable
+        id="shared.compare.manualScoring"
+        label={t("fineTuning:viewEditing.sections.compareManualScoring")}
+        level="full"
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Typography variant="caption" color="text.secondary">
+            {t("fineTuning:compare.score.label")}
+          </Typography>
+          <ToggleButtonGroup
+            size="small"
+            exclusive
+            value={typeof score === "number" ? score : null}
+            onChange={(_, v) => onScore(v === undefined ? null : v)}
+            aria-label={t("fineTuning:compare.score.aria", {
+              answer: sideLabel,
+            })}
+          >
+            {[0, 1, 2].map((v) => (
+              <ToggleButton
+                key={v}
+                value={v}
+                aria-label={t(`fineTuning:compare.score.value${v}`)}
+                sx={{ px: 3, py: 0.5 }}
+              >
+                {v}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        </Box>
+      </Hideable>
     </Box>
   );
 }
@@ -394,53 +403,59 @@ export default function ComparePanel({ adapterId, comparisonId }) {
       </Box>
 
       {/* Condition: same instruction and parameters for both models */}
-      <Paper
-        elevation={0}
-        sx={{ p: 4, border: 1, borderColor: "divider", mb: 4 }}
+      <Hideable
+        id="shared.compare.condition"
+        label={t("fineTuning:viewEditing.sections.compareCondition")}
+        level="intermediate"
       >
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-          {t("fineTuning:compare.condition.title")}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {t("fineTuning:compare.condition.description")}
-        </Typography>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              {t("fineTuning:compare.condition.instruction")}
-            </Typography>
-            <CodeBox>{instruction}</CodeBox>
+        <Paper
+          elevation={0}
+          sx={{ p: 4, border: 1, borderColor: "divider", mb: 4 }}
+        >
+          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            {t("fineTuning:compare.condition.title")}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {t("fineTuning:compare.condition.description")}
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                {t("fineTuning:compare.condition.instruction")}
+              </Typography>
+              <CodeBox>{instruction}</CodeBox>
+            </Box>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              <Chip
+                size="small"
+                variant="outlined"
+                label={t("fineTuning:compare.condition.temperature", {
+                  value: formatNumber(Number(params.temperature), language, 2),
+                })}
+              />
+              <Chip
+                size="small"
+                variant="outlined"
+                label={t("fineTuning:compare.condition.topP", {
+                  value: formatNumber(Number(params.topP), language, 2),
+                })}
+              />
+              <Chip
+                size="small"
+                variant="outlined"
+                label={t("fineTuning:compare.condition.maxNewTokens", {
+                  value: params.maxNewTokens,
+                })}
+              />
+              <Chip
+                size="small"
+                variant="outlined"
+                label={t("fineTuning:compare.condition.cases", { count: 12 })}
+              />
+            </Box>
           </Box>
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-            <Chip
-              size="small"
-              variant="outlined"
-              label={t("fineTuning:compare.condition.temperature", {
-                value: formatNumber(Number(params.temperature), language, 2),
-              })}
-            />
-            <Chip
-              size="small"
-              variant="outlined"
-              label={t("fineTuning:compare.condition.topP", {
-                value: formatNumber(Number(params.topP), language, 2),
-              })}
-            />
-            <Chip
-              size="small"
-              variant="outlined"
-              label={t("fineTuning:compare.condition.maxNewTokens", {
-                value: params.maxNewTokens,
-              })}
-            />
-            <Chip
-              size="small"
-              variant="outlined"
-              label={t("fineTuning:compare.condition.cases", { count: 12 })}
-            />
-          </Box>
-        </Box>
-      </Paper>
+        </Paper>
+      </Hideable>
 
       {!status.usable && (
         <Alert severity="warning" sx={{ mb: 4 }}>
@@ -494,25 +509,37 @@ export default function ComparePanel({ adapterId, comparisonId }) {
         <Box sx={{ flex: 1 }} />
         {comparison && (
           <>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={blind}
-                  onChange={(e) =>
-                    store.setComparisonBlind(comparison.id, e.target.checked)
-                  }
-                />
-              }
-              label={t("fineTuning:compare.blind")}
-            />
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<DownloadIcon />}
-              onClick={exportCsv}
+            <Hideable
+              id="shared.compare.blindReview"
+              label={t("fineTuning:viewEditing.sections.compareBlindReview")}
+              level="full"
             >
-              {t("fineTuning:compare.exportCsv")}
-            </Button>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={blind}
+                    onChange={(e) =>
+                      store.setComparisonBlind(comparison.id, e.target.checked)
+                    }
+                  />
+                }
+                label={t("fineTuning:compare.blind")}
+              />
+            </Hideable>
+            <Hideable
+              id="shared.compare.csvExport"
+              label={t("fineTuning:viewEditing.sections.compareCsvExport")}
+              level="full"
+            >
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<DownloadIcon />}
+                onClick={exportCsv}
+              >
+                {t("fineTuning:compare.exportCsv")}
+              </Button>
+            </Hideable>
           </>
         )}
       </Box>
@@ -557,149 +584,169 @@ export default function ComparePanel({ adapterId, comparisonId }) {
 
           {/* Summary (hidden in blind mode: it reveals which side is which) */}
           {!blind && summary && (
-            <Grid container spacing={4} sx={{ mb: 4 }}>
-              <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-                <SummaryCard
-                  title={t("fineTuning:compare.summary.jsonValid")}
-                  rows={[
-                    [
-                      t("fineTuning:compare.summary.base"),
-                      pct(summary.base.jsonValidRate),
-                    ],
-                    [
-                      t("fineTuning:compare.summary.adapted"),
-                      pct(summary.adapted.jsonValidRate),
-                    ],
-                  ]}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-                <SummaryCard
-                  title={t("fineTuning:compare.summary.category")}
-                  rows={[
-                    [
-                      t("fineTuning:compare.summary.base"),
-                      pct(summary.base.categoryRate),
-                    ],
-                    [
-                      t("fineTuning:compare.summary.adapted"),
-                      pct(summary.adapted.categoryRate),
-                    ],
-                  ]}
-                >
-                  <Box
-                    sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}
+            <Hideable
+              id="shared.compare.summaryCards"
+              label={t("fineTuning:viewEditing.sections.compareSummaryCards")}
+              level="intermediate"
+            >
+              <Grid container spacing={4} sx={{ mb: 4 }}>
+                <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                  <SummaryCard
+                    title={t("fineTuning:compare.summary.jsonValid")}
+                    rows={[
+                      [
+                        t("fineTuning:compare.summary.base"),
+                        pct(summary.base.jsonValidRate),
+                      ],
+                      [
+                        t("fineTuning:compare.summary.adapted"),
+                        pct(summary.adapted.jsonValidRate),
+                      ],
+                    ]}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                  <SummaryCard
+                    title={t("fineTuning:compare.summary.category")}
+                    rows={[
+                      [
+                        t("fineTuning:compare.summary.base"),
+                        pct(summary.base.categoryRate),
+                      ],
+                      [
+                        t("fineTuning:compare.summary.adapted"),
+                        pct(summary.adapted.categoryRate),
+                      ],
+                    ]}
                   >
-                    <Typography variant="caption" color="text.secondary">
-                      {t("fineTuning:compare.summary.byCategory")}
-                    </Typography>
-                    {FICHA_CATEGORIES.map((cat) => {
-                      const b = summary.base.byCategory[cat] || {
-                        correct: 0,
-                        total: 0,
-                      };
-                      const a = summary.adapted.byCategory[cat] || {
-                        correct: 0,
-                        total: 0,
-                      };
-                      return (
-                        <Box
-                          key={cat}
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            gap: 2,
-                          }}
-                        >
-                          <Typography variant="caption">
-                            {t(`fineTuning:compare.categories.${cat}`)}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {t("fineTuning:compare.summary.categoryPair", {
-                              base: `${b.correct}/${b.total}`,
-                              adapted: `${a.correct}/${a.total}`,
-                            })}
-                          </Typography>
-                        </Box>
-                      );
-                    })}
-                  </Box>
-                </SummaryCard>
+                    <Box
+                      sx={{
+                        mt: 2,
+                        pt: 2,
+                        borderTop: 1,
+                        borderColor: "divider",
+                      }}
+                    >
+                      <Typography variant="caption" color="text.secondary">
+                        {t("fineTuning:compare.summary.byCategory")}
+                      </Typography>
+                      {FICHA_CATEGORIES.map((cat) => {
+                        const b = summary.base.byCategory[cat] || {
+                          correct: 0,
+                          total: 0,
+                        };
+                        const a = summary.adapted.byCategory[cat] || {
+                          correct: 0,
+                          total: 0,
+                        };
+                        return (
+                          <Box
+                            key={cat}
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              gap: 2,
+                            }}
+                          >
+                            <Typography variant="caption">
+                              {t(`fineTuning:compare.categories.${cat}`)}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {t("fineTuning:compare.summary.categoryPair", {
+                                base: `${b.correct}/${b.total}`,
+                                adapted: `${a.correct}/${a.total}`,
+                              })}
+                            </Typography>
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  </SummaryCard>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                  <SummaryCard
+                    title={t("fineTuning:compare.summary.score")}
+                    rows={[
+                      [
+                        t("fineTuning:compare.summary.base"),
+                        summary.base.meanScore === null
+                          ? "—"
+                          : t("fineTuning:compare.summary.scoreValue", {
+                              value: formatNumber(
+                                summary.base.meanScore,
+                                language,
+                                2,
+                              ),
+                              count: summary.base.scoredCount,
+                            }),
+                      ],
+                      [
+                        t("fineTuning:compare.summary.adapted"),
+                        summary.adapted.meanScore === null
+                          ? "—"
+                          : t("fineTuning:compare.summary.scoreValue", {
+                              value: formatNumber(
+                                summary.adapted.meanScore,
+                                language,
+                                2,
+                              ),
+                              count: summary.adapted.scoredCount,
+                            }),
+                      ],
+                    ]}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                  <SummaryCard
+                    title={t("fineTuning:compare.summary.latency")}
+                    rows={[
+                      [
+                        t("fineTuning:compare.summary.base"),
+                        summary.base.meanLatencyMs === null
+                          ? "—"
+                          : t("fineTuning:compare.summary.seconds", {
+                              value: formatNumber(
+                                summary.base.meanLatencyMs / 1000,
+                                language,
+                                1,
+                              ),
+                            }),
+                      ],
+                      [
+                        t("fineTuning:compare.summary.adapted"),
+                        summary.adapted.meanLatencyMs === null
+                          ? "—"
+                          : t("fineTuning:compare.summary.seconds", {
+                              value: formatNumber(
+                                summary.adapted.meanLatencyMs / 1000,
+                                language,
+                                1,
+                              ),
+                            }),
+                      ],
+                    ]}
+                  />
+                </Grid>
               </Grid>
-              <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-                <SummaryCard
-                  title={t("fineTuning:compare.summary.score")}
-                  rows={[
-                    [
-                      t("fineTuning:compare.summary.base"),
-                      summary.base.meanScore === null
-                        ? "—"
-                        : t("fineTuning:compare.summary.scoreValue", {
-                            value: formatNumber(
-                              summary.base.meanScore,
-                              language,
-                              2,
-                            ),
-                            count: summary.base.scoredCount,
-                          }),
-                    ],
-                    [
-                      t("fineTuning:compare.summary.adapted"),
-                      summary.adapted.meanScore === null
-                        ? "—"
-                        : t("fineTuning:compare.summary.scoreValue", {
-                            value: formatNumber(
-                              summary.adapted.meanScore,
-                              language,
-                              2,
-                            ),
-                            count: summary.adapted.scoredCount,
-                          }),
-                    ],
-                  ]}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-                <SummaryCard
-                  title={t("fineTuning:compare.summary.latency")}
-                  rows={[
-                    [
-                      t("fineTuning:compare.summary.base"),
-                      summary.base.meanLatencyMs === null
-                        ? "—"
-                        : t("fineTuning:compare.summary.seconds", {
-                            value: formatNumber(
-                              summary.base.meanLatencyMs / 1000,
-                              language,
-                              1,
-                            ),
-                          }),
-                    ],
-                    [
-                      t("fineTuning:compare.summary.adapted"),
-                      summary.adapted.meanLatencyMs === null
-                        ? "—"
-                        : t("fineTuning:compare.summary.seconds", {
-                            value: formatNumber(
-                              summary.adapted.meanLatencyMs / 1000,
-                              language,
-                              1,
-                            ),
-                          }),
-                    ],
-                  ]}
-                />
-              </Grid>
-            </Grid>
+            </Hideable>
           )}
 
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ display: "block", mb: 2 }}
+          <Hideable
+            id="shared.compare.manualScoring"
+            label={t("fineTuning:viewEditing.sections.compareManualScoring")}
+            level="full"
           >
-            {t("fineTuning:compare.score.legend")}
-          </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mb: 2 }}
+            >
+              {t("fineTuning:compare.score.legend")}
+            </Typography>
+          </Hideable>
 
           <TableContainer
             component={Paper}

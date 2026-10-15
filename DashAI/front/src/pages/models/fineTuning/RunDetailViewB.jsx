@@ -35,6 +35,7 @@ import {
 import { formatBytes } from "../../../components/fineTuning/data/catalog";
 import RunConfigDialog from "./RunConfigDialog";
 import { SessionNotFound } from "./SessionViewB";
+import Hideable from "../../../components/fineTuning/viewEditing/Hideable";
 
 /**
  * Right panel of a run detail (like Models' RunInfoSidebar): the frozen
@@ -169,22 +170,31 @@ export function RunInfoPanel({ runId }) {
                   )}
                 </Box>
               )}
-              {groups.map((group, index) => (
-                <Box key={group.key}>
-                  {index > 0 && <Divider sx={{ mb: 3 }} />}
-                  <KeyValueList
-                    dense
-                    title={group.title}
-                    rows={group.rows.map((row) => ({
-                      key: row.key,
-                      label: row.label,
-                      value: row.value,
-                      mono: row.mono,
-                      title: row.full,
-                    }))}
-                  />
-                </Box>
-              ))}
+              <Hideable
+                id="b.runInfo.configGroups"
+                label={t(
+                  "fineTuning:viewEditing.sections.bRunInfoConfigGroups",
+                )}
+                level="intermediate"
+                sx={{ display: "flex", flexDirection: "column", gap: 4 }}
+              >
+                {groups.map((group, index) => (
+                  <Box key={group.key}>
+                    {index > 0 && <Divider sx={{ mb: 3 }} />}
+                    <KeyValueList
+                      dense
+                      title={group.title}
+                      rows={group.rows.map((row) => ({
+                        key: row.key,
+                        label: row.label,
+                        value: row.value,
+                        mono: row.mono,
+                        title: row.full,
+                      }))}
+                    />
+                  </Box>
+                ))}
+              </Hideable>
             </>
           )}
         </Box>

@@ -13,6 +13,7 @@ import { adapterById, checkpointById } from "../data/selectors";
 import { adapterAvailabilityLabel, availabilityColor } from "../data/labels";
 import { formatBytes } from "../data/catalog";
 import { formatDuration, formatGb, formatMetric, shortHash } from "./runFormat";
+import Hideable from "../viewEditing/Hideable";
 
 /** Why the adapter cannot be used for inference right now (or null). */
 export function adapterUseBlocker(adapter, checkpoint, t) {
@@ -162,28 +163,43 @@ export default function AdapterResultCard({
                 {chatLabel || t("fineTuning:runs.actions.chat")}
               </Button>,
             )}
-          {onCompare &&
-            withTooltip(
-              compareBlocker,
+          {onCompare && (
+            <Hideable
+              id="shared.adapterResult.compareButton"
+              label={t(
+                "fineTuning:viewEditing.sections.adapterResultCompareButton",
+              )}
+              level="intermediate"
+            >
+              {withTooltip(
+                compareBlocker,
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<CompareArrows fontSize="small" />}
+                  disabled={Boolean(compareBlocker)}
+                  onClick={() => onCompare(adapter)}
+                >
+                  {t("fineTuning:runs.actions.compare")}
+                </Button>,
+              )}
+            </Hideable>
+          )}
+          {onProvenance && (
+            <Hideable
+              id="shared.provenance.openButton"
+              label={t("fineTuning:viewEditing.sections.provenanceOpenButton")}
+              level="intermediate"
+            >
               <Button
                 size="small"
-                variant="outlined"
-                startIcon={<CompareArrows fontSize="small" />}
-                disabled={Boolean(compareBlocker)}
-                onClick={() => onCompare(adapter)}
+                variant="text"
+                startIcon={<ReceiptLong fontSize="small" />}
+                onClick={() => onProvenance(adapter)}
               >
-                {t("fineTuning:runs.actions.compare")}
-              </Button>,
-            )}
-          {onProvenance && (
-            <Button
-              size="small"
-              variant="text"
-              startIcon={<ReceiptLong fontSize="small" />}
-              onClick={() => onProvenance(adapter)}
-            >
-              {t("fineTuning:runs.actions.provenance")}
-            </Button>
+                {t("fineTuning:runs.actions.provenance")}
+              </Button>
+            </Hideable>
           )}
         </Box>
       </Box>
@@ -194,70 +210,82 @@ export default function AdapterResultCard({
         </Typography>
       )}
 
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 6, mt: 4 }}>
-        <Metric
-          label={t("fineTuning:runs.metrics.finalLoss")}
-          value={formatMetric(metrics.finalLoss)}
-        />
-        <Metric
-          label={t("fineTuning:runs.metrics.finalEvalLoss")}
-          value={formatMetric(metrics.finalEvalLoss)}
-        />
-        <Metric
-          label={t("fineTuning:runs.metrics.duration")}
-          value={formatDuration(
-            metrics.durationSec != null ? metrics.durationSec * 1000 : null,
-          )}
-        />
-        <Metric
-          label={t("fineTuning:runs.metrics.peakVram")}
-          value={formatGb(metrics.peakVramGb)}
-        />
-        <Metric
-          label={t("fineTuning:runs.adapter.size")}
-          value={formatBytes(adapter.sizeBytes)}
-        />
-      </Box>
-
-      <Box sx={{ mt: 4, display: "grid", gap: 1 }}>
-        <Typography variant="caption" color="text.secondary">
-          {t("fineTuning:runs.adapter.files")}
-        </Typography>
-        {(adapter.files || []).map((file) => (
-          <Box
-            key={file.name}
-            sx={{ display: "flex", alignItems: "center", gap: 2 }}
-          >
-            <InsertDriveFileOutlined
-              sx={{ fontSize: 16, color: "text.secondary" }}
-            />
-            <Typography
-              variant="body2"
-              sx={{
-                fontFamily: "monospace",
-                flex: 1,
-                minWidth: 0,
-                wordBreak: "break-all",
-              }}
-            >
-              {file.name}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {formatBytes(file.bytes)}
-            </Typography>
-          </Box>
-        ))}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1 }}>
-          <Typography variant="caption" color="text.secondary">
-            {t("fineTuning:runs.adapter.manifestHash")}
-          </Typography>
-          <Tooltip title={adapter.manifestHash || ""}>
-            <Typography variant="caption" sx={{ fontFamily: "monospace" }}>
-              {shortHash(adapter.manifestHash, 16)}
-            </Typography>
-          </Tooltip>
+      <Hideable
+        id="shared.adapterResult.metrics"
+        label={t("fineTuning:viewEditing.sections.adapterResultMetrics")}
+        level="intermediate"
+      >
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 6, mt: 4 }}>
+          <Metric
+            label={t("fineTuning:runs.metrics.finalLoss")}
+            value={formatMetric(metrics.finalLoss)}
+          />
+          <Metric
+            label={t("fineTuning:runs.metrics.finalEvalLoss")}
+            value={formatMetric(metrics.finalEvalLoss)}
+          />
+          <Metric
+            label={t("fineTuning:runs.metrics.duration")}
+            value={formatDuration(
+              metrics.durationSec != null ? metrics.durationSec * 1000 : null,
+            )}
+          />
+          <Metric
+            label={t("fineTuning:runs.metrics.peakVram")}
+            value={formatGb(metrics.peakVramGb)}
+          />
+          <Metric
+            label={t("fineTuning:runs.adapter.size")}
+            value={formatBytes(adapter.sizeBytes)}
+          />
         </Box>
-      </Box>
+      </Hideable>
+
+      <Hideable
+        id="shared.adapterResult.files"
+        label={t("fineTuning:viewEditing.sections.adapterResultFiles")}
+        level="full"
+      >
+        <Box sx={{ mt: 4, display: "grid", gap: 1 }}>
+          <Typography variant="caption" color="text.secondary">
+            {t("fineTuning:runs.adapter.files")}
+          </Typography>
+          {(adapter.files || []).map((file) => (
+            <Box
+              key={file.name}
+              sx={{ display: "flex", alignItems: "center", gap: 2 }}
+            >
+              <InsertDriveFileOutlined
+                sx={{ fontSize: 16, color: "text.secondary" }}
+              />
+              <Typography
+                variant="body2"
+                sx={{
+                  fontFamily: "monospace",
+                  flex: 1,
+                  minWidth: 0,
+                  wordBreak: "break-all",
+                }}
+              >
+                {file.name}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {formatBytes(file.bytes)}
+              </Typography>
+            </Box>
+          ))}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1 }}>
+            <Typography variant="caption" color="text.secondary">
+              {t("fineTuning:runs.adapter.manifestHash")}
+            </Typography>
+            <Tooltip title={adapter.manifestHash || ""}>
+              <Typography variant="caption" sx={{ fontFamily: "monospace" }}>
+                {shortHash(adapter.manifestHash, 16)}
+              </Typography>
+            </Tooltip>
+          </Box>
+        </Box>
+      </Hideable>
     </Paper>
   );
 }

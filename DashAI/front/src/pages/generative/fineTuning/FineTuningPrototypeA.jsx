@@ -19,6 +19,7 @@ import {
 import { getPrototypeStore } from "../../../components/fineTuning/data/instances";
 import { sessionById } from "../../../components/fineTuning/data/selectors";
 import EmptyState from "../../../components/fineTuning/common/EmptyState";
+import ViewEditingLayer from "../../../components/fineTuning/viewEditing/ViewEditingLayer";
 import FineTuningLeftBar from "./FineTuningLeftBar";
 import FineTuningBreadcrumbs from "./FineTuningBreadcrumbs";
 import FineTuningHome from "./FineTuningHome";
@@ -138,6 +139,7 @@ function FineTuningShellA() {
           <FineTuningRightPanel route={route} sessionExists={sessionExists} />
         </RightPanel>
       </ModuleContainer>
+      <ViewEditingLayer />
     </ThreePanelLayoutContext.Provider>
   );
 }

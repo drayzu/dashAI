@@ -25,6 +25,7 @@ import {
 } from "../data/sft";
 import { formatLabel } from "../data/labels";
 import { isAutoConfirmed } from "./useDataPreparation";
+import Hideable from "../viewEditing/Hideable";
 
 const NONE = "__none__";
 const SAMPLE_CHARS = 70;
@@ -147,7 +148,15 @@ export default function FormatMappingEditor({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      {alert}
+      {alert && (
+        <Hideable
+          id="shared.data.formatDetection"
+          label={t("fineTuning:viewEditing.sections.dataFormatDetection")}
+          level="intermediate"
+        >
+          {alert}
+        </Hideable>
+      )}
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 6 }}>
@@ -270,23 +279,31 @@ export default function FormatMappingEditor({
       )}
 
       {format && (
-        <TextField
-          size="small"
-          fullWidth
-          multiline
-          minRows={2}
-          maxRows={6}
-          disabled={disabled}
-          label={t("fineTuning:dataPrep.mapping.systemPrompt")}
-          placeholder={t("fineTuning:dataPrep.mapping.systemPromptPlaceholder")}
-          helperText={
-            format === "messages"
-              ? t("fineTuning:dataPrep.mapping.systemPromptHelpMessages")
-              : t("fineTuning:dataPrep.mapping.systemPromptHelp")
-          }
-          value={v.systemPrompt || ""}
-          onChange={(e) => emit({ systemPrompt: e.target.value })}
-        />
+        <Hideable
+          id="shared.data.systemPrompt"
+          label={t("fineTuning:viewEditing.sections.dataSystemPrompt")}
+          level="full"
+        >
+          <TextField
+            size="small"
+            fullWidth
+            multiline
+            minRows={2}
+            maxRows={6}
+            disabled={disabled}
+            label={t("fineTuning:dataPrep.mapping.systemPrompt")}
+            placeholder={t(
+              "fineTuning:dataPrep.mapping.systemPromptPlaceholder",
+            )}
+            helperText={
+              format === "messages"
+                ? t("fineTuning:dataPrep.mapping.systemPromptHelpMessages")
+                : t("fineTuning:dataPrep.mapping.systemPromptHelp")
+            }
+            value={v.systemPrompt || ""}
+            onChange={(e) => emit({ systemPrompt: e.target.value })}
+          />
+        </Hideable>
       )}
 
       {format && (

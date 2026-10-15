@@ -128,9 +128,7 @@
     "cancelled": {
       "title": "Ejecución cancelada",
       "explanation": "La ejecución se canceló. Conserva su configuración y su registro; para reintentar se crea una nueva ejecución.",
-      "actions": [
-        "Crear una nueva ejecución desde esta configuración."
-      ]
+      "actions": ["Crear una nueva ejecución desde esta configuración."]
     },
     "adapter_missing": {
       "title": "Adaptador no disponible",
@@ -159,10 +157,7 @@
     "missing_column": {
       "title": "Columna faltante",
       "explanation": "El mapeo apunta a una columna que no existe o falta asignar un campo obligatorio.",
-      "actions": [
-        "Revisar el mapeo de columnas.",
-        "Confirmar el formato."
-      ]
+      "actions": ["Revisar el mapeo de columnas.", "Confirmar el formato."]
     },
     "invalid_json": {
       "title": "JSON inválido",
@@ -1999,5 +1994,145 @@
     "empty": "Aún no hay puntos de pérdida.",
     "notStarted": "La curva aparecerá cuando comience el entrenamiento.",
     "lossDisclaimer": "La pérdida de entrenamiento no demuestra por sí sola una mejora: compara el adaptador con el modelo base en casos reservados."
+  },
+  "viewEditing": {
+    "title": "Editar vista",
+    "hint": "Oculta bloques con el ícono de ojo. Al salir, lo oculto no deja rastro. Atajo: Ctrl+Shift+E.",
+    "toolbarLabel": "Edición de la vista del prototipo",
+    "levelLabel": "Nivel de detalle",
+    "levels": {
+      "essential": {
+        "label": "Esencial",
+        "description": "Solo el flujo central de la memoria: modelo, datos, parámetros básicos, ejecución y resultado."
+      },
+      "intermediate": {
+        "label": "Intermedio",
+        "description": "Agrega validación detallada, particiones, recursos e historial."
+      },
+      "full": {
+        "label": "Completo",
+        "description": "Todo lo que incluye el prototipo."
+      }
+    },
+    "hiddenHere_one": "{{count}} bloque oculto en esta pantalla:",
+    "hiddenHere_other": "{{count}} bloques ocultos en esta pantalla:",
+    "noneHidden": "No hay bloques ocultos en esta pantalla.",
+    "restore": "Volver a mostrar",
+    "showAll": "Mostrar todo",
+    "done": "Listo",
+    "hiddenChip": "Oculto",
+    "hideBlock": "Ocultar «{{label}}»",
+    "showBlock": "Mostrar «{{label}}»",
+    "menuItem": "Editar vista (Ctrl+Shift+E)",
+    "menuItemActive": "Terminar edición de la vista",
+    "sections": {
+      "aHomeOption": {
+        "adapters": "Tarjeta «Adaptadores» (inicio)",
+        "chat": "Tarjeta «Chat» (inicio)",
+        "compare": "Tarjeta «Comparar» (inicio)"
+      },
+      "aHomeRecentRuns": "Ejecuciones recientes",
+      "aLeftBarNav": {
+        "adapters": "Enlace «Adaptadores»",
+        "chat": "Enlace «Chat»",
+        "compare": "Enlace «Comparar»"
+      },
+      "aChatRecentChats": "Chats recientes",
+      "aSessionRunCountCaption": "Conteo de ejecuciones",
+      "aHistoryCards": "Tarjetas del historial",
+      "aHistoryTable": "Tabla comparativa",
+      "aPreviewReadinessChip": "Estado de preparación",
+      "aPreviewTraining": "Resumen de entrenamiento",
+      "aPreviewData": "Resumen de datos",
+      "aPreviewHardware": "Hardware y VRAM",
+      "aPreviewFiles": "Archivos del modelo",
+      "aPreviewPending": "Pendientes",
+      "aPreviewGpuQueueNote": "Aviso de cola de GPU",
+      "aReviewModelGroup": "Resumen: modelo",
+      "aReviewDataGroup": "Resumen: datos",
+      "aReviewTrainingGroup": "Resumen: entrenamiento",
+      "aReviewResourcesGroup": "Resumen: recursos",
+      "aReviewPreflight": "Verificación previa",
+      "aReviewGpuQueueNote": "Aviso de cola de GPU",
+      "aRightHistoryHint": "Nota del historial",
+      "aRightModuleHardware": "Hardware detectado",
+      "adaptersRegistry": "Registro de adaptadores",
+      "adaptersAvailabilityNote": "Nota de disponibilidad",
+      "adapterResultCompareButton": "Botón «Comparar»",
+      "adapterResultMetrics": "Métricas del adaptador",
+      "adapterResultFiles": "Archivos del adaptador",
+      "bAdaptersTrainedInNote": "Nota «Entrenados en Modelos»",
+      "bAdapterSummaryDetails": "Detalle del adaptador",
+      "bAdapterSummaryCompareButton": "Botón «Comparar»",
+      "bBaseModelsMethodChips": "Métodos por modelo",
+      "bBaseModelsVram": "Estimación de VRAM",
+      "bBaseModelsHint": "Indicación del panel",
+      "bBaseModelsCatalogNote": "Nota del catálogo",
+      "bCreatePreviewSummary": "Resumen de datos",
+      "bRunInfoConfigGroups": "Configuración congelada",
+      "bRunProvenanceTab": "Pestaña Procedencia",
+      "bSessionEditDataButton": "Botón «Editar preparación»",
+      "bSessionTrainAll": "Botón «Entrenar todas»",
+      "bSessionComparisonTable": "Comparación de configuraciones",
+      "chatSnapshotCaptions": "Datos de cada respuesta",
+      "chatMessageCount": "Conteo de mensajes",
+      "chatSuggestions": "Sugerencias de mensaje",
+      "chatComposerHint": "Ayuda del cuadro de texto",
+      "chatGenerationParams": "Parámetros de generación",
+      "chatParamsNotes": "Notas de parámetros",
+      "compareCondition": "Condiciones de la comparación",
+      "compareBlindReview": "Revisión a ciegas",
+      "compareCsvExport": "Exportar CSV",
+      "compareSummaryCards": "Resumen de resultados",
+      "compareManualScoring": "Puntuación manual",
+      "dataSummaryCard": "Resumen del dataset",
+      "dataFormatDetection": "Detección de formato",
+      "dataSystemPrompt": "Prompt de sistema",
+      "dataValidationReport": "Reporte de validación",
+      "dataSplits": "Particiones",
+      "dataMaxSamples": "Máximo de ejemplos",
+      "dataSftPreview": "Vista previa SFT",
+      "dataPreviewDialogButton": "Botón «Ver más ejemplos»",
+      "dataSftLegend": "Leyenda de tokens",
+      "dataTokenApproxNote": "Nota de tokens aproximados",
+      "modelHardwareChip": "Hardware detectado",
+      "modelCatalogNote": "Nota del catálogo",
+      "modelCardVram": "Estimación de VRAM (catálogo)",
+      "modelCardDownloadProgress": "Progreso de descarga",
+      "modelFilesStatus": "Estado de archivos y credencial",
+      "modelMethodDescription": "Explicación del método",
+      "modelMethodVram": "Estimación de VRAM (método)",
+      "modelQuantizationNote": "Nota de cuantización",
+      "paramsModeToggle": "Selector Simple/Avanzado",
+      "paramsPresets": "Ajustes predefinidos",
+      "paramsEffectiveBatch": "Batch efectivo",
+      "paramsLora": "Parámetros LoRA",
+      "paramsTargetModules": "Módulos objetivo",
+      "paramsQloraInfo": "Información QLoRA",
+      "paramsOptimization": "Optimizador y scheduler",
+      "paramsEvaluation": "Evaluación y semilla",
+      "paramsVramEstimate": "Estimación de VRAM",
+      "provenanceOpenButton": "Botón «Procedencia»",
+      "provenanceJsonButton": "Botón «Ver JSON»",
+      "provenanceSection": {
+        "base": "Procedencia: modelo base",
+        "data": "Procedencia: datos",
+        "method": "Procedencia: método",
+        "config": "Procedencia: configuración",
+        "environment": "Procedencia: entorno",
+        "metrics": "Procedencia: métricas",
+        "artifact": "Procedencia: artefacto",
+        "origin": "Procedencia: origen"
+      },
+      "runPhaseTimeline": "Línea de fases",
+      "runDownloadDetails": "Detalle de descarga",
+      "runHealthWarning": "Aviso de salud (grad norm)",
+      "runMetricsStrip": "Métricas actuales",
+      "runLossChart": "Curva de pérdida",
+      "runLossDisclaimer": "Nota sobre la pérdida",
+      "runResources": "Panel de recursos",
+      "runEventLog": "Registro de eventos",
+      "runFrozenConfig": "Configuración congelada"
+    }
   }
 }

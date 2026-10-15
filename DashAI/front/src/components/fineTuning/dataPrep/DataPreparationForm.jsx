@@ -17,6 +17,7 @@ import FormatMappingEditor from "./FormatMappingEditor";
 import ValidationReport from "./ValidationReport";
 import SplitEditor from "./SplitEditor";
 import SftExampleView, { SftLegend } from "./SftExampleView";
+import Hideable from "../viewEditing/Hideable";
 
 /**
  * The whole data-preparation flow as stacked sections (picker → summary →
@@ -97,16 +98,22 @@ export default function DataPreparationForm({
       </PrepSection>
 
       {dataset && (
-        <DatasetSummaryCard
-          dataset={dataset}
-          datasetState={datasetState}
-          format={format}
-          formatConfirmed={formatConfirmed}
-          onPreview={() => setPreviewOpen(true)}
-          onRemove={clearDataset}
-          onRetry={reload}
-          disabled={disabled}
-        />
+        <Hideable
+          id="shared.data.summaryCard"
+          label={t("fineTuning:viewEditing.sections.dataSummaryCard")}
+          level="essential"
+        >
+          <DatasetSummaryCard
+            dataset={dataset}
+            datasetState={datasetState}
+            format={format}
+            formatConfirmed={formatConfirmed}
+            onPreview={() => setPreviewOpen(true)}
+            onRemove={clearDataset}
+            onRetry={reload}
+            disabled={disabled}
+          />
+        </Hideable>
       )}
 
       {dataset && rowsReady && (
@@ -132,83 +139,123 @@ export default function DataPreparationForm({
       )}
 
       {dataset && rowsReady && format && (
-        <PrepSection
-          icon={FactCheckOutlined}
-          title={t("fineTuning:dataPrep.sections.validation")}
-          subtitle={t("fineTuning:dataPrep.sections.validationHelp", {
-            maxLength,
-          })}
+        <Hideable
+          id="shared.data.validationReport"
+          label={t("fineTuning:viewEditing.sections.dataValidationReport")}
+          level="intermediate"
         >
-          <ValidationReport
-            validation={validation}
-            sampled={datasetState.sampled}
-            totalRows={datasetState.totalRows}
-            loading={loading}
-            formatMissing={prep.missingFields.length > 0}
-          />
-        </PrepSection>
+          <PrepSection
+            icon={FactCheckOutlined}
+            title={t("fineTuning:dataPrep.sections.validation")}
+            subtitle={t("fineTuning:dataPrep.sections.validationHelp", {
+              maxLength,
+            })}
+          >
+            <ValidationReport
+              validation={validation}
+              sampled={datasetState.sampled}
+              totalRows={datasetState.totalRows}
+              loading={loading}
+              formatMissing={prep.missingFields.length > 0}
+            />
+          </PrepSection>
+        </Hideable>
       )}
 
       {dataset && rowsReady && format && showSplits && (
-        <PrepSection
-          icon={CallSplitOutlined}
-          title={t("fineTuning:dataPrep.sections.splits")}
-          subtitle={t("fineTuning:dataPrep.sections.splitsHelp")}
+        <Hideable
+          id="shared.data.splits"
+          label={t("fineTuning:viewEditing.sections.dataSplits")}
+          level="intermediate"
         >
-          <SplitEditor
-            splits={splits}
-            maxSamples={maxSamples}
-            totalRows={datasetState.totalRows}
-            onChange={onChange}
-            disabled={disabled}
-          />
-        </PrepSection>
+          <PrepSection
+            icon={CallSplitOutlined}
+            title={t("fineTuning:dataPrep.sections.splits")}
+            subtitle={t("fineTuning:dataPrep.sections.splitsHelp")}
+          >
+            <SplitEditor
+              splits={splits}
+              maxSamples={maxSamples}
+              totalRows={datasetState.totalRows}
+              onChange={onChange}
+              disabled={disabled}
+            />
+          </PrepSection>
+        </Hideable>
       )}
 
       {dataset && rowsReady && format && showPreview && (
-        <PrepSection
-          icon={VisibilityOutlined}
-          title={t("fineTuning:dataPrep.sections.preview")}
-          subtitle={t("fineTuning:dataPrep.sections.previewHelp", {
-            maxLength,
-          })}
-          action={
-            examples.length > 0 ? (
-              <Button
-                size="small"
-                variant="text"
-                onClick={() => setPreviewOpen(true)}
-              >
-                {t("fineTuning:dataPrep.sections.previewMore")}
-              </Button>
-            ) : null
-          }
+        <Hideable
+          id="shared.data.sftPreview"
+          label={t("fineTuning:viewEditing.sections.dataSftPreview")}
+          level="essential"
         >
-          {renderedExamples.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              {t("fineTuning:dataPrep.example.noneValid")}
-            </Typography>
-          ) : (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <SftLegend />
-              {renderedExamples.map((ex, i) => (
-                <SftExampleView
-                  key={ex.sourceIndex}
-                  rendered={ex.rendered}
-                  maxLength={maxLength}
-                  title={t("fineTuning:dataPrep.example.title", {
-                    n: i + 1,
-                    row: ex.rowNumber,
-                  })}
-                  maxHeight={360}
-                />
-              ))}
-              <Typography variant="caption" color="text.secondary">
-                {t("fineTuning:dataPrep.example.approxNote")}
+          <PrepSection
+            icon={VisibilityOutlined}
+            title={t("fineTuning:dataPrep.sections.preview")}
+            subtitle={t("fineTuning:dataPrep.sections.previewHelp", {
+              maxLength,
+            })}
+            action={
+              examples.length > 0 ? (
+                <Hideable
+                  id="shared.data.previewDialogButton"
+                  label={t(
+                    "fineTuning:viewEditing.sections.dataPreviewDialogButton",
+                  )}
+                  level="full"
+                >
+                  <Button
+                    size="small"
+                    variant="text"
+                    onClick={() => setPreviewOpen(true)}
+                  >
+                    {t("fineTuning:dataPrep.sections.previewMore")}
+                  </Button>
+                </Hideable>
+              ) : null
+            }
+          >
+            {renderedExamples.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                {t("fineTuning:dataPrep.example.noneValid")}
               </Typography>
-            </Box>
-          )}
-        </PrepSection>
+            ) : (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                <Hideable
+                  id="shared.data.sftLegend"
+                  label={t("fineTuning:viewEditing.sections.dataSftLegend")}
+                  level="full"
+                >
+                  <SftLegend />
+                </Hideable>
+                {renderedExamples.map((ex, i) => (
+                  <SftExampleView
+                    key={ex.sourceIndex}
+                    rendered={ex.rendered}
+                    maxLength={maxLength}
+                    title={t("fineTuning:dataPrep.example.title", {
+                      n: i + 1,
+                      row: ex.rowNumber,
+                    })}
+                    maxHeight={360}
+                  />
+                ))}
+                <Hideable
+                  id="shared.data.tokenApproxNote"
+                  label={t(
+                    "fineTuning:viewEditing.sections.dataTokenApproxNote",
+                  )}
+                  level="full"
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    {t("fineTuning:dataPrep.example.approxNote")}
+                  </Typography>
+                </Hideable>
+              </Box>
+            )}
+          </PrepSection>
+        </Hideable>
       )}
 
       <DatasetPreviewDialog

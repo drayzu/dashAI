@@ -38,6 +38,7 @@ import {
   methodLabel,
 } from "../../../components/fineTuning/data/labels";
 import { formatBytes } from "../../../components/fineTuning/data/catalog";
+import Hideable from "../../../components/fineTuning/viewEditing/Hideable";
 
 const NS = "fineTuning:shellA.right";
 
@@ -54,7 +55,9 @@ function PanelHeader({ title, action = null }) {
         alignItems: "center",
         justifyContent: "space-between",
         gap: 2,
-        borderBottom: `1px solid ${theme.palette.ui ? theme.palette.ui.border : theme.palette.divider}`,
+        borderBottom: `1px solid ${
+          theme.palette.ui ? theme.palette.ui.border : theme.palette.divider
+        }`,
       }}
     >
       <Typography variant="h6" component="h2" color="text.primary" noWrap>
@@ -174,14 +177,20 @@ function AdapterSummary({ adapterId = null, showOpen = false }) {
         ]}
       />
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<ReceiptLongIcon fontSize="small" />}
-          onClick={() => setOpen(true)}
+        <Hideable
+          id="shared.provenance.openButton"
+          label={t("fineTuning:viewEditing.sections.provenanceOpenButton")}
+          level="intermediate"
         >
-          {t(`${NS}.provenance`)}
-        </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<ReceiptLongIcon fontSize="small" />}
+            onClick={() => setOpen(true)}
+          >
+            {t(`${NS}.provenance`)}
+          </Button>
+        </Hideable>
         {showOpen && (
           <Button
             size="small"
@@ -255,15 +264,22 @@ function RunInfo({ runId = null }) {
           },
         ]}
       />
-      <Divider />
-      <Typography
-        variant="overline"
-        color="text.secondary"
-        sx={{ letterSpacing: 1, lineHeight: 1.5 }}
+      <Hideable
+        id="shared.run.frozenConfig"
+        label={t("fineTuning:viewEditing.sections.runFrozenConfig")}
+        level="full"
+        sx={{ display: "flex", flexDirection: "column", gap: 4 }}
       >
-        {t(`${NS}.frozenConfig`)}
-      </Typography>
-      <FrozenConfigContent run={run} showJsonToggle={false} />
+        <Divider />
+        <Typography
+          variant="overline"
+          color="text.secondary"
+          sx={{ letterSpacing: 1, lineHeight: 1.5 }}
+        >
+          {t(`${NS}.frozenConfig`)}
+        </Typography>
+        <FrozenConfigContent run={run} showJsonToggle={false} />
+      </Hideable>
       {run.adapterId && (
         <>
           <Divider />
@@ -336,9 +352,15 @@ function SessionSummary({ sessionId = null }) {
           },
         ]}
       />
-      <Typography variant="caption" color="text.secondary">
-        {t(`${NS}.historyHint`)}
-      </Typography>
+      <Hideable
+        id="a.right.historyHint"
+        label={t("fineTuning:viewEditing.sections.aRightHistoryHint")}
+        level="full"
+      >
+        <Typography variant="caption" color="text.secondary">
+          {t(`${NS}.historyHint`)}
+        </Typography>
+      </Hideable>
     </PanelBody>
   );
 }
@@ -372,27 +394,35 @@ function ModuleSummary() {
         ]}
       />
       {profile && (
-        <KeyValueList
-          dense
-          title={t(`${NS}.hardwareGroup`)}
-          rows={[
-            {
-              label: t(`${NS}.fields.gpu`),
-              value: profile.gpuName,
-              hint: t(
-                `${NS}.hardwareSource.${profile.source === "detected" ? "detected" : "simulated"}`,
-              ),
-            },
-            {
-              label: t(`${NS}.fields.vram`),
-              value: profile.vramGb ? formatGb(profile.vramGb) : null,
-            },
-            {
-              label: t(`${NS}.fields.ram`),
-              value: profile.ramGb ? formatGb(profile.ramGb) : null,
-            },
-          ]}
-        />
+        <Hideable
+          id="a.right.moduleHardware"
+          label={t("fineTuning:viewEditing.sections.aRightModuleHardware")}
+          level="intermediate"
+        >
+          <KeyValueList
+            dense
+            title={t(`${NS}.hardwareGroup`)}
+            rows={[
+              {
+                label: t(`${NS}.fields.gpu`),
+                value: profile.gpuName,
+                hint: t(
+                  `${NS}.hardwareSource.${
+                    profile.source === "detected" ? "detected" : "simulated"
+                  }`,
+                ),
+              },
+              {
+                label: t(`${NS}.fields.vram`),
+                value: profile.vramGb ? formatGb(profile.vramGb) : null,
+              },
+              {
+                label: t(`${NS}.fields.ram`),
+                value: profile.ramGb ? formatGb(profile.ramGb) : null,
+              },
+            ]}
+          />
+        </Hideable>
       )}
     </PanelBody>
   );

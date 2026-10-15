@@ -25,6 +25,7 @@ import {
   chatById,
 } from "../../../components/fineTuning/data/selectors";
 import { adapterAvailabilityLabel } from "../../../components/fineTuning/data/labels";
+import Hideable from "../../../components/fineTuning/viewEditing/Hideable";
 
 const NS = "fineTuning:shellA.views";
 
@@ -116,46 +117,53 @@ export function ChatView({ chatId = null }) {
       sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
     >
       {recent.length > 0 && (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            flexWrap: "wrap",
-            mb: 4,
-            flexShrink: 0,
-          }}
-          role="navigation"
-          aria-label={t(`${NS}.recentChats`)}
+        <Hideable
+          id="a.chat.recentChats"
+          label={t("fineTuning:viewEditing.sections.aChatRecentChats")}
+          level="full"
+          sx={{ flexShrink: 0 }}
         >
-          <Typography variant="caption" color="text.secondary">
-            {t(`${NS}.recentChats`)}
-          </Typography>
-          {recent.map((key) => {
-            const [id, name] = key.split("\u0000");
-            const selected = id === chatId;
-            return (
-              <Chip
-                key={id}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              flexWrap: "wrap",
+              mb: 4,
+              flexShrink: 0,
+            }}
+            role="navigation"
+            aria-label={t(`${NS}.recentChats`)}
+          >
+            <Typography variant="caption" color="text.secondary">
+              {t(`${NS}.recentChats`)}
+            </Typography>
+            {recent.map((key) => {
+              const [id, name] = key.split("\u0000");
+              const selected = id === chatId;
+              return (
+                <Chip
+                  key={id}
+                  size="small"
+                  label={name}
+                  clickable
+                  color={selected ? "primary" : "default"}
+                  variant={selected ? "filled" : "outlined"}
+                  onClick={() => navigate(routes.chat(id))}
+                />
+              );
+            })}
+            {chatId && (
+              <Button
                 size="small"
-                label={name}
-                clickable
-                color={selected ? "primary" : "default"}
-                variant={selected ? "filled" : "outlined"}
-                onClick={() => navigate(routes.chat(id))}
-              />
-            );
-          })}
-          {chatId && (
-            <Button
-              size="small"
-              variant="text"
-              onClick={() => navigate(routes.chat())}
-            >
-              {t(`${NS}.newChat`)}
-            </Button>
-          )}
-        </Box>
+                variant="text"
+                onClick={() => navigate(routes.chat())}
+              >
+                {t(`${NS}.newChat`)}
+              </Button>
+            )}
+          </Box>
+        </Hideable>
       )}
       <Box
         sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}

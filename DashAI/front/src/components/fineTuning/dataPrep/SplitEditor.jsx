@@ -13,6 +13,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { partitionCounts } from "../data/sft";
 import { DEFAULT_SPLITS } from "./useDataPreparation";
+import Hideable from "../viewEditing/Hideable";
 
 const MAX_EVAL_PERCENT = 30;
 
@@ -206,19 +207,25 @@ export default function SplitEditor({
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <IntField
-            label={t("fineTuning:dataPrep.split.maxSamples")}
-            value={limit}
-            min={2}
-            allowEmpty
-            disabled={disabled}
-            placeholder={t("fineTuning:dataPrep.split.allRows")}
-            onCommit={(n) => onChange && onChange({ maxSamples: n })}
-            helperText={t("fineTuning:dataPrep.split.maxSamplesHelp", {
-              total,
-            })}
-            errorText={t("fineTuning:validation.params.out_of_range")}
-          />
+          <Hideable
+            id="shared.data.maxSamples"
+            label={t("fineTuning:viewEditing.sections.dataMaxSamples")}
+            level="full"
+          >
+            <IntField
+              label={t("fineTuning:dataPrep.split.maxSamples")}
+              value={limit}
+              min={2}
+              allowEmpty
+              disabled={disabled}
+              placeholder={t("fineTuning:dataPrep.split.allRows")}
+              onCommit={(n) => onChange && onChange({ maxSamples: n })}
+              helperText={t("fineTuning:dataPrep.split.maxSamplesHelp", {
+                total,
+              })}
+              errorText={t("fineTuning:validation.params.out_of_range")}
+            />
+          </Hideable>
         </Grid>
       </Grid>
 

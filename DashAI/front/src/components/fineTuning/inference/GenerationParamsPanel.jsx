@@ -18,6 +18,7 @@ import { useFineTuningActions, useFineTuningStore } from "../FineTuningContext";
 import { chatById } from "../data/selectors";
 import { modelDisplayName } from "../data/store";
 import { formatNumber } from "./modelAvailability";
+import Hideable from "../viewEditing/Hideable";
 
 export const DEFAULT_GENERATION_PARAMS = Object.freeze({
   temperature: 0.7,
@@ -198,7 +199,9 @@ export default function GenerationParamsPanel({ chatId }) {
       <Box
         sx={{
           p: 4,
-          borderBottom: `1px solid ${theme.palette.ui ? theme.palette.ui.border : theme.palette.divider}`,
+          borderBottom: `1px solid ${
+            theme.palette.ui ? theme.palette.ui.border : theme.palette.divider
+          }`,
           flexShrink: 0,
           display: "flex",
           alignItems: "center",
@@ -254,38 +257,52 @@ export default function GenerationParamsPanel({ chatId }) {
             </Typography>
           </Box>
 
-          {FIELDS.map((field) => (
-            <ParamField
-              key={field.key}
-              field={field}
-              value={Number(params[field.key])}
-              onCommit={(v) =>
-                store.updateChatParams(chat.id, { [field.key]: v })
-              }
-            />
-          ))}
+          <Hideable
+            id="shared.chat.generationParams"
+            label={t("fineTuning:viewEditing.sections.chatGenerationParams")}
+            level="intermediate"
+            sx={{ display: "flex", flexDirection: "column", gap: 4 }}
+          >
+            {FIELDS.map((field) => (
+              <ParamField
+                key={field.key}
+                field={field}
+                value={Number(params[field.key])}
+                onCommit={(v) =>
+                  store.updateChatParams(chat.id, { [field.key]: v })
+                }
+              />
+            ))}
 
-          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-            <Button
-              size="small"
-              startIcon={<RestartAltIcon fontSize="small" />}
-              disabled={isDefault}
-              onClick={() =>
-                store.updateChatParams(chat.id, {
-                  ...DEFAULT_GENERATION_PARAMS,
-                })
-              }
-            >
-              {t("fineTuning:chat.params.reset")}
-            </Button>
-          </Box>
+            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <Button
+                size="small"
+                startIcon={<RestartAltIcon fontSize="small" />}
+                disabled={isDefault}
+                onClick={() =>
+                  store.updateChatParams(chat.id, {
+                    ...DEFAULT_GENERATION_PARAMS,
+                  })
+                }
+              >
+                {t("fineTuning:chat.params.reset")}
+              </Button>
+            </Box>
+          </Hideable>
 
-          <Typography variant="caption" color="text.secondary">
-            {t("fineTuning:chat.params.futureOnly")}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {t("fineTuning:chat.params.simulatedNote")}
-          </Typography>
+          <Hideable
+            id="shared.chat.paramsNotes"
+            label={t("fineTuning:viewEditing.sections.chatParamsNotes")}
+            level="full"
+            sx={{ display: "flex", flexDirection: "column", gap: 4 }}
+          >
+            <Typography variant="caption" color="text.secondary">
+              {t("fineTuning:chat.params.futureOnly")}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {t("fineTuning:chat.params.simulatedNote")}
+            </Typography>
+          </Hideable>
         </Box>
       )}
     </SideBar>

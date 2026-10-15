@@ -14,6 +14,7 @@ import {
   useFineTuningRoutes,
   useFineTuningStore,
 } from "../../../components/fineTuning/FineTuningContext";
+import Hideable from "../../../components/fineTuning/viewEditing/Hideable";
 
 const NS = "fineTuning:shellA.home";
 
@@ -50,6 +51,7 @@ export default function FineTuningHome() {
   const options = [
     {
       key: "new",
+      level: null,
       Icon: ModelTrainingIcon,
       title: t(`${NS}.options.newSession.title`),
       description: t(`${NS}.options.newSession.description`),
@@ -57,6 +59,7 @@ export default function FineTuningHome() {
     },
     {
       key: "adapters",
+      level: "intermediate",
       Icon: ExtensionOutlinedIcon,
       title: t(`${NS}.options.adapters.title`),
       description: t(`${NS}.options.adapters.description`, {
@@ -66,6 +69,7 @@ export default function FineTuningHome() {
     },
     {
       key: "chat",
+      level: "essential",
       Icon: ForumOutlinedIcon,
       title: t(`${NS}.options.chat.title`),
       description: t(`${NS}.options.chat.description`),
@@ -73,6 +77,7 @@ export default function FineTuningHome() {
     },
     {
       key: "compare",
+      level: "intermediate",
       Icon: CompareArrowsIcon,
       title: t(`${NS}.options.compare.title`),
       description: t(`${NS}.options.compare.description`, {
@@ -100,31 +105,53 @@ export default function FineTuningHome() {
           gap: 4,
         }}
       >
-        {options.map((option) => (
-          <OptionBox
-            key={option.key}
-            optionName={option.title}
-            description={option.description}
-            onClick={option.onClick}
-            Icon={option.Icon}
-          />
-        ))}
+        {options.map((option) => {
+          const box = (
+            <OptionBox
+              key={option.key}
+              optionName={option.title}
+              description={option.description}
+              onClick={option.onClick}
+              Icon={option.Icon}
+            />
+          );
+          // "Nueva sesión" is the primary action: never hideable.
+          if (!option.level) return box;
+          return (
+            <Hideable
+              key={option.key}
+              id={`a.home.option.${option.key}`}
+              label={t(
+                `fineTuning:viewEditing.sections.aHomeOption.${option.key}`,
+              )}
+              level={option.level}
+            >
+              {box}
+            </Hideable>
+          );
+        })}
       </Box>
 
-      <Box component="section" aria-labelledby="ft-a-recent-runs">
-        <Typography id="ft-a-recent-runs" variant="h6" sx={{ mb: 1 }}>
-          {t(`${NS}.recentTitle`)}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-          {t(`${NS}.recentSubtitle`, { count: counts.runs })}
-        </Typography>
-        <RunHistory
-          limit={3}
-          showTable={false}
-          showHeader={false}
-          includeConfigs={false}
-        />
-      </Box>
+      <Hideable
+        id="a.home.recentRuns"
+        label={t("fineTuning:viewEditing.sections.aHomeRecentRuns")}
+        level="full"
+      >
+        <Box component="section" aria-labelledby="ft-a-recent-runs">
+          <Typography id="ft-a-recent-runs" variant="h6" sx={{ mb: 1 }}>
+            {t(`${NS}.recentTitle`)}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+            {t(`${NS}.recentSubtitle`, { count: counts.runs })}
+          </Typography>
+          <RunHistory
+            limit={3}
+            showTable={false}
+            showHeader={false}
+            includeConfigs={false}
+          />
+        </Box>
+      </Hideable>
     </Box>
   );
 }

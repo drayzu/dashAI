@@ -31,6 +31,7 @@ import {
 } from "../../../components/fineTuning/data/labels";
 import { createDefaultDraft } from "../../../components/fineTuning/data/catalog";
 import { extractDataPrep } from "../../../components/fineTuning/data/store";
+import Hideable from "../../../components/fineTuning/viewEditing/Hideable";
 
 const selectSessionNames = (s) => s.sessions.map((session) => session.name);
 
@@ -93,48 +94,62 @@ export function SftPreviewPanel({ prep }) {
             />
           ) : (
             <>
-              <KeyValueList
-                dense
-                rows={[
-                  {
-                    label: t("fineTuning:shellB.preview.dataset"),
-                    value: datasetName(prep.dataset, t),
-                  },
-                  {
-                    label: t("fineTuning:shellB.preview.format"),
-                    value: formatLabel(prep.format, t),
-                  },
-                  {
-                    label: t("fineTuning:shellB.preview.rows"),
-                    value: t("fineTuning:shellB.preview.rowsValue", {
-                      used: prep.usedRows,
-                      total: prep.datasetState.totalRows,
-                    }),
-                  },
-                  {
-                    label: t("fineTuning:shellB.preview.train"),
-                    value: String(prep.splitCounts.train),
-                  },
-                  {
-                    label: t("fineTuning:shellB.preview.eval"),
-                    value: String(prep.splitCounts.eval),
-                  },
-                  {
-                    label: t("fineTuning:shellB.preview.fingerprint"),
-                    value: prep.fingerprint
-                      ? prep.fingerprint.slice(0, 12)
-                      : "",
-                    mono: true,
-                  },
-                ]}
-              />
+              <Hideable
+                id="b.create.previewSummary"
+                label={t(
+                  "fineTuning:viewEditing.sections.bCreatePreviewSummary",
+                )}
+                level="intermediate"
+              >
+                <KeyValueList
+                  dense
+                  rows={[
+                    {
+                      label: t("fineTuning:shellB.preview.dataset"),
+                      value: datasetName(prep.dataset, t),
+                    },
+                    {
+                      label: t("fineTuning:shellB.preview.format"),
+                      value: formatLabel(prep.format, t),
+                    },
+                    {
+                      label: t("fineTuning:shellB.preview.rows"),
+                      value: t("fineTuning:shellB.preview.rowsValue", {
+                        used: prep.usedRows,
+                        total: prep.datasetState.totalRows,
+                      }),
+                    },
+                    {
+                      label: t("fineTuning:shellB.preview.train"),
+                      value: String(prep.splitCounts.train),
+                    },
+                    {
+                      label: t("fineTuning:shellB.preview.eval"),
+                      value: String(prep.splitCounts.eval),
+                    },
+                    {
+                      label: t("fineTuning:shellB.preview.fingerprint"),
+                      value: prep.fingerprint
+                        ? prep.fingerprint.slice(0, 12)
+                        : "",
+                      mono: true,
+                    },
+                  ]}
+                />
+              </Hideable>
               {prep.renderedExamples.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
                   {t("fineTuning:shellB.preview.noExamples")}
                 </Typography>
               ) : (
                 <>
-                  <SftLegend />
+                  <Hideable
+                    id="shared.data.sftLegend"
+                    label={t("fineTuning:viewEditing.sections.dataSftLegend")}
+                    level="full"
+                  >
+                    <SftLegend />
+                  </Hideable>
                   {prep.renderedExamples.map((ex, i) => (
                     <SftExampleView
                       key={ex.sourceIndex}
@@ -147,9 +162,17 @@ export function SftPreviewPanel({ prep }) {
                       maxHeight={260}
                     />
                   ))}
-                  <Typography variant="caption" color="text.secondary">
-                    {t("fineTuning:shellB.preview.approxNote")}
-                  </Typography>
+                  <Hideable
+                    id="shared.data.tokenApproxNote"
+                    label={t(
+                      "fineTuning:viewEditing.sections.dataTokenApproxNote",
+                    )}
+                    level="full"
+                  >
+                    <Typography variant="caption" color="text.secondary">
+                      {t("fineTuning:shellB.preview.approxNote")}
+                    </Typography>
+                  </Hideable>
                 </>
               )}
             </>

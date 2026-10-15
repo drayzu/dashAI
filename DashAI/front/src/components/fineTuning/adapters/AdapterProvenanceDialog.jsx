@@ -38,6 +38,7 @@ import {
   formatNumber,
   splitDuration,
 } from "../inference/modelAvailability";
+import Hideable from "../viewEditing/Hideable";
 
 function Mono({ children }) {
   const theme = useTheme();
@@ -54,57 +55,77 @@ function Mono({ children }) {
 Mono.propTypes = { children: PropTypes.node };
 
 /** Dense label/value rows under an overline section title. */
-function Section({ title, rows }) {
+// View-editing level of each provenance section (ids "shared.provenance.<key>").
+const SECTION_LEVELS = {
+  base: "intermediate",
+  data: "intermediate",
+  method: "intermediate",
+  config: "full",
+  environment: "full",
+  metrics: "intermediate",
+  artifact: "full",
+  origin: "full",
+};
+
+function Section({ title, rows, viewKey }) {
+  const { t } = useTranslation(["fineTuning"]);
   const visible = rows.filter(
     (r) => r && r[1] !== null && r[1] !== undefined && r[1] !== "",
   );
   if (visible.length === 0) return null;
   return (
-    <Box sx={{ mb: 4 }}>
-      <Typography
-        variant="overline"
-        color="text.secondary"
-        sx={{ letterSpacing: 1, display: "block" }}
-      >
-        {title}
-      </Typography>
-      <Box
-        sx={{
-          border: 1,
-          borderColor: "divider",
-          borderRadius: 2,
-          bgcolor: "background.paper",
-        }}
-      >
-        {visible.map(([label, value], i) => (
-          <Box
-            key={label}
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "200px 1fr" },
-              gap: 2,
-              px: 4,
-              py: 2,
-              borderTop: i === 0 ? 0 : 1,
-              borderColor: "divider",
-            }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              {label}
-            </Typography>
-            <Typography variant="body2" component="div" sx={{ minWidth: 0 }}>
-              {value}
-            </Typography>
-          </Box>
-        ))}
+    <Hideable
+      id={`shared.provenance.${viewKey}`}
+      label={t(`fineTuning:viewEditing.sections.provenanceSection.${viewKey}`)}
+      level={SECTION_LEVELS[viewKey] || "full"}
+    >
+      <Box sx={{ mb: 4 }}>
+        <Typography
+          variant="overline"
+          color="text.secondary"
+          sx={{ letterSpacing: 1, display: "block" }}
+        >
+          {title}
+        </Typography>
+        <Box
+          sx={{
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 2,
+            bgcolor: "background.paper",
+          }}
+        >
+          {visible.map(([label, value], i) => (
+            <Box
+              key={label}
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", sm: "200px 1fr" },
+                gap: 2,
+                px: 4,
+                py: 2,
+                borderTop: i === 0 ? 0 : 1,
+                borderColor: "divider",
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                {label}
+              </Typography>
+              <Typography variant="body2" component="div" sx={{ minWidth: 0 }}>
+                {value}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
       </Box>
-    </Box>
+    </Hideable>
   );
 }
 
 Section.propTypes = {
   title: PropTypes.string.isRequired,
   rows: PropTypes.array.isRequired,
+  viewKey: PropTypes.oneOf(Object.keys(SECTION_LEVELS)).isRequired,
 };
 
 function scientific(value) {
@@ -250,6 +271,7 @@ export default function AdapterProvenanceDialog({ adapterId, open, onClose }) {
             )}
 
             <Section
+              viewKey="base"
               title={t("fineTuning:adapters.provenance.sections.base")}
               rows={[
                 [
@@ -311,6 +333,7 @@ export default function AdapterProvenanceDialog({ adapterId, open, onClose }) {
             />
 
             <Section
+              viewKey="data"
               title={t("fineTuning:adapters.provenance.sections.data")}
               rows={[
                 [
@@ -321,7 +344,9 @@ export default function AdapterProvenanceDialog({ adapterId, open, onClose }) {
                   t("fineTuning:adapters.provenance.source"),
                   ds
                     ? t(
-                        `fineTuning:adapters.provenance.sourceKind.${ds.source === "dashai" ? "dashai" : "sample"}`,
+                        `fineTuning:adapters.provenance.sourceKind.${
+                          ds.source === "dashai" ? "dashai" : "sample"
+                        }`,
                       )
                     : "",
                 ],
@@ -375,6 +400,7 @@ export default function AdapterProvenanceDialog({ adapterId, open, onClose }) {
             />
 
             <Section
+              viewKey="method"
               title={t("fineTuning:adapters.provenance.sections.method")}
               rows={[
                 [
@@ -410,6 +436,7 @@ export default function AdapterProvenanceDialog({ adapterId, open, onClose }) {
             />
 
             <Section
+              viewKey="config"
               title={t("fineTuning:adapters.provenance.sections.config")}
               rows={[
                 [t("fineTuning:adapters.provenance.duration"), duration],
@@ -460,6 +487,7 @@ export default function AdapterProvenanceDialog({ adapterId, open, onClose }) {
             />
 
             <Section
+              viewKey="environment"
               title={t("fineTuning:adapters.provenance.sections.environment")}
               rows={[
                 ...Object.entries(versions).map(([lib, version]) => [
@@ -473,7 +501,11 @@ export default function AdapterProvenanceDialog({ adapterId, open, onClose }) {
                         gpu: hardware.gpuName,
                         vram: hardware.vramGb,
                         source: t(
-                          `fineTuning:adapters.provenance.hardwareSource.${hardware.source === "detected" ? "detected" : "simulated"}`,
+                          `fineTuning:adapters.provenance.hardwareSource.${
+                            hardware.source === "detected"
+                              ? "detected"
+                              : "simulated"
+                          }`,
                         ),
                       })
                     : "",
@@ -488,6 +520,7 @@ export default function AdapterProvenanceDialog({ adapterId, open, onClose }) {
             />
 
             <Section
+              viewKey="metrics"
               title={t("fineTuning:adapters.provenance.sections.metrics")}
               rows={[
                 [
@@ -532,6 +565,7 @@ export default function AdapterProvenanceDialog({ adapterId, open, onClose }) {
             />
 
             <Section
+              viewKey="artifact"
               title={t("fineTuning:adapters.provenance.sections.artifact")}
               rows={[
                 [
@@ -584,6 +618,7 @@ export default function AdapterProvenanceDialog({ adapterId, open, onClose }) {
             />
 
             <Section
+              viewKey="origin"
               title={t("fineTuning:adapters.provenance.sections.origin")}
               rows={[
                 [
@@ -635,16 +670,23 @@ export default function AdapterProvenanceDialog({ adapterId, open, onClose }) {
         )}
       </DialogContent>
       <DialogActions sx={{ p: 4 }}>
-        <Button
-          size="small"
-          startIcon={<CodeIcon fontSize="small" />}
-          onClick={() => setShowJson((v) => !v)}
+        <Hideable
+          id="shared.provenance.jsonButton"
+          label={t("fineTuning:viewEditing.sections.provenanceJsonButton")}
+          level="full"
           sx={{ mr: "auto" }}
         >
-          {showJson
-            ? t("fineTuning:adapters.provenance.hideJson")
-            : t("fineTuning:adapters.provenance.showJson")}
-        </Button>
+          <Button
+            size="small"
+            startIcon={<CodeIcon fontSize="small" />}
+            onClick={() => setShowJson((v) => !v)}
+            sx={{ mr: "auto" }}
+          >
+            {showJson
+              ? t("fineTuning:adapters.provenance.hideJson")
+              : t("fineTuning:adapters.provenance.showJson")}
+          </Button>
+        </Hideable>
         <Button
           variant="outlined"
           startIcon={<OpenInNewIcon fontSize="small" />}

@@ -27,6 +27,7 @@ import MemoryIcon from "@mui/icons-material/Memory";
 import VpnKeyOutlinedIcon from "@mui/icons-material/VpnKeyOutlined";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import {
@@ -34,6 +35,7 @@ import {
   useFineTuningRoutes,
   useFineTuningStore,
 } from "../FineTuningContext";
+import { useViewState, viewStore } from "../viewEditing/viewStore";
 
 // Ordered roughly by the phase in which each scenario shows up.
 export const DEMO_FAILURE_CODES = [
@@ -98,6 +100,7 @@ export default function DemoControlsMenu({
   const actions = useFineTuningActions();
   const routes = useFineTuningRoutes();
   const demo = useFineTuningStore(selectDemo) || {};
+  const view = useViewState();
 
   const menuId = useId();
   const failureMenuId = useId();
@@ -192,6 +195,30 @@ export default function DemoControlsMenu({
           </Typography>
         </ListSubheader>
 
+        <MenuItem
+          role="menuitemcheckbox"
+          aria-checked={view.editMode}
+          onClick={() => {
+            closeMenus();
+            viewStore.toggleEditMode();
+          }}
+        >
+          <ListItemIcon>
+            <EditOutlinedIcon
+              fontSize="small"
+              color={view.editMode ? "primary" : "inherit"}
+            />
+          </ListItemIcon>
+          <ListItemText
+            primary={
+              view.editMode
+                ? t("fineTuning:viewEditing.menuItemActive")
+                : t("fineTuning:viewEditing.menuItem")
+            }
+          />
+        </MenuItem>
+
+        <Divider />
         <MenuItem
           aria-haspopup="true"
           aria-controls={failureAnchorEl ? failureMenuId : undefined}

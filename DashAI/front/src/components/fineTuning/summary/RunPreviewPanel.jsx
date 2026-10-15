@@ -20,6 +20,7 @@ import {
   useStartRun,
 } from "../steps/ReviewStep";
 import { blockerLabel, warningLabel } from "../data/labels";
+import Hideable from "../viewEditing/Hideable";
 
 const NS = "fineTuning:runPreview";
 
@@ -72,7 +73,9 @@ export default function RunPreviewPanel({
         alignItems: "center",
         justifyContent: "space-between",
         gap: 2,
-        borderBottom: `1px solid ${theme.palette.ui ? theme.palette.ui.border : theme.palette.divider}`,
+        borderBottom: `1px solid ${
+          theme.palette.ui ? theme.palette.ui.border : theme.palette.divider
+        }`,
       }}
     >
       <Typography variant="h6" color="text.primary" noWrap>
@@ -113,13 +116,19 @@ export default function RunPreviewPanel({
   return (
     <SideBar data-testid="run-preview-panel">
       {header(
-        <Chip
-          size="small"
-          label={t(`${NS}.readiness.${readiness}`)}
-          color={READINESS_COLOR[readiness]}
-          variant={readiness === "incomplete" ? "outlined" : "filled"}
-          aria-live="polite"
-        />,
+        <Hideable
+          id="a.preview.readinessChip"
+          label={t("fineTuning:viewEditing.sections.aPreviewReadinessChip")}
+          level="essential"
+        >
+          <Chip
+            size="small"
+            label={t(`${NS}.readiness.${readiness}`)}
+            color={READINESS_COLOR[readiness]}
+            variant={readiness === "incomplete" ? "outlined" : "filled"}
+            aria-live="polite"
+          />
+        </Hideable>,
       )}
 
       <Box
@@ -151,53 +160,75 @@ export default function RunPreviewPanel({
             : t(`${NS}.noDataset`)}
         </Typography>
 
-        <SectionLabel>{t(`${NS}.sections.training`)}</SectionLabel>
-        <KeyValueList
-          dense
-          rows={[
-            {
-              label: t("fineTuning:reviewStep.fields.duration"),
-              value: s.duration,
-            },
-            {
-              label: t("fineTuning:reviewStep.fields.effectiveBatch"),
-              value: s.effectiveBatch,
-            },
-            {
-              label: t("fineTuning:reviewStep.fields.maxLength"),
-              value: s.maxLength,
-            },
-            {
-              label: t("fineTuning:reviewStep.fields.learningRate"),
-              value: s.learningRate,
-              mono: true,
-            },
-            { label: t(`${NS}.loraShort`), value: s.loraShort },
-          ]}
-        />
+        <Hideable
+          id="a.preview.training"
+          label={t("fineTuning:viewEditing.sections.aPreviewTraining")}
+          level="essential"
+        >
+          <SectionLabel>{t(`${NS}.sections.training`)}</SectionLabel>
+          <KeyValueList
+            dense
+            rows={[
+              {
+                label: t("fineTuning:reviewStep.fields.duration"),
+                value: s.duration,
+              },
+              {
+                label: t("fineTuning:reviewStep.fields.effectiveBatch"),
+                value: s.effectiveBatch,
+              },
+              {
+                label: t("fineTuning:reviewStep.fields.maxLength"),
+                value: s.maxLength,
+              },
+              {
+                label: t("fineTuning:reviewStep.fields.learningRate"),
+                value: s.learningRate,
+                mono: true,
+              },
+              { label: t(`${NS}.loraShort`), value: s.loraShort },
+            ]}
+          />
+        </Hideable>
 
-        <SectionLabel>{t(`${NS}.sections.data`)}</SectionLabel>
-        <KeyValueList
-          dense
-          rows={[
-            { label: t(`${NS}.trainEval`), value: s.split },
-            {
-              label: t("fineTuning:reviewStep.fields.fingerprint"),
-              value: s.fingerprintShort,
-              mono: true,
-              title: t("fineTuning:reviewStep.hints.fingerprint"),
-            },
-          ]}
-        />
+        <Hideable
+          id="a.preview.data"
+          label={t("fineTuning:viewEditing.sections.aPreviewData")}
+          level="intermediate"
+        >
+          <SectionLabel>{t(`${NS}.sections.data`)}</SectionLabel>
+          <KeyValueList
+            dense
+            rows={[
+              { label: t(`${NS}.trainEval`), value: s.split },
+              {
+                label: t("fineTuning:reviewStep.fields.fingerprint"),
+                value: s.fingerprintShort,
+                mono: true,
+                title: t("fineTuning:reviewStep.hints.fingerprint"),
+              },
+            ]}
+          />
+        </Hideable>
 
-        <SectionLabel>{t(`${NS}.sections.hardware`)}</SectionLabel>
-        <VramEstimate
-          estimatedGb={v.estimatedVramGb ?? undefined}
-          hardware={v.hardware || undefined}
-        />
+        <Hideable
+          id="a.preview.hardware"
+          label={t("fineTuning:viewEditing.sections.aPreviewHardware")}
+          level="intermediate"
+        >
+          <SectionLabel>{t(`${NS}.sections.hardware`)}</SectionLabel>
+          <VramEstimate
+            estimatedGb={v.estimatedVramGb ?? undefined}
+            hardware={v.hardware || undefined}
+          />
+        </Hideable>
 
         {v.checkpoint && (
-          <>
+          <Hideable
+            id="a.preview.files"
+            label={t("fineTuning:viewEditing.sections.aPreviewFiles")}
+            level="full"
+          >
             <SectionLabel>{t(`${NS}.sections.files`)}</SectionLabel>
             <Typography
               variant="body2"
@@ -207,11 +238,15 @@ export default function RunPreviewPanel({
                 ? t(`${NS}.download`, { size: s.downloadSize })
                 : t(`${NS}.cached`, { size: s.downloadSize })}
             </Typography>
-          </>
+          </Hideable>
         )}
 
         {(blockers.length > 0 || warnings.length > 0) && (
-          <>
+          <Hideable
+            id="a.preview.pending"
+            label={t("fineTuning:viewEditing.sections.aPreviewPending")}
+            level="intermediate"
+          >
             <SectionLabel>{t(`${NS}.sections.pending`)}</SectionLabel>
             <Stack component="ul" spacing={1} sx={{ m: 0, pl: 4 }}>
               {blockers.map((code) => (
@@ -235,7 +270,7 @@ export default function RunPreviewPanel({
                 </Typography>
               ))}
             </Stack>
-          </>
+          </Hideable>
         )}
       </Box>
 
@@ -254,13 +289,19 @@ export default function RunPreviewPanel({
         }}
       >
         {gpuMessage && (
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            aria-live="polite"
+          <Hideable
+            id="a.preview.gpuQueueNote"
+            label={t("fineTuning:viewEditing.sections.aPreviewGpuQueueNote")}
+            level="full"
           >
-            {gpuMessage}
-          </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              aria-live="polite"
+            >
+              {gpuMessage}
+            </Typography>
+          </Hideable>
         )}
         {activeRunId && (
           <Button

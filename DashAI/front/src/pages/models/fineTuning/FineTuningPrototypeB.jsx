@@ -15,6 +15,7 @@ import {
   FINE_TUNING_B_BASE,
   FINE_TUNING_B_NEW,
 } from "../../../components/fineTuning/integration/entryPoints";
+import ViewEditingLayer from "../../../components/fineTuning/viewEditing/ViewEditingLayer";
 import FineTuningLeftBarB from "./FineTuningLeftBarB";
 import CreateSftSessionView from "./CreateSftSessionView";
 import SessionViewB from "./SessionViewB";
@@ -132,6 +133,7 @@ export default function FineTuningPrototypeB({ store, hardwareMonitoring }) {
           </LeftPanel>
           <PrototypeBViews />
         </ModuleContainer>
+        <ViewEditingLayer />
       </ThreePanelLayoutContext.Provider>
     </FineTuningProvider>
   );

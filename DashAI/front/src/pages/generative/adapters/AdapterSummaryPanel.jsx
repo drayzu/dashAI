@@ -32,6 +32,7 @@ import {
   formatDateTime,
   formatMetric,
 } from "../../../components/fineTuning/runs/runFormat";
+import Hideable from "../../../components/fineTuning/viewEditing/Hideable";
 
 /**
  * Right panel of "Modelos adaptados" (prototype B): provenance summary of the
@@ -139,56 +140,68 @@ export default function AdapterSummaryPanel({ adapterId }) {
                   sx={{ mt: 1 }}
                 />
               </Box>
-              <KeyValueList
-                dense
-                rows={[
-                  {
-                    label: t("fineTuning:shellB.adapters.fields.base"),
-                    value: adapter.checkpointName || adapter.checkpointId,
-                  },
-                  {
-                    label: t("fineTuning:shellB.adapters.fields.revision"),
-                    value: adapter.revision ? adapter.revision.slice(0, 7) : "",
-                    mono: true,
-                    title: adapter.revision,
-                  },
-                  {
-                    label: t("fineTuning:shellB.adapters.fields.method"),
-                    value: `${methodLabel(adapter.method, t)} · r ${adapter.loraR}`,
-                  },
-                  {
-                    label: t("fineTuning:shellB.adapters.fields.dataset"),
-                    value: adapter.datasetName,
-                  },
-                  {
-                    label: t("fineTuning:shellB.adapters.fields.fingerprint"),
-                    value: adapter.fingerprint
-                      ? adapter.fingerprint.slice(0, 12)
-                      : "",
-                    mono: true,
-                  },
-                  {
-                    label: t("fineTuning:shellB.adapters.fields.run"),
-                    value: run
-                      ? run.name
-                      : t("fineTuning:shellB.adapters.runDeleted"),
-                  },
-                  {
-                    label: t("fineTuning:shellB.adapters.fields.evalLoss"),
-                    value: adapter.metrics
-                      ? formatMetric(adapter.metrics.finalEvalLoss)
-                      : "",
-                  },
-                  {
-                    label: t("fineTuning:shellB.adapters.fields.size"),
-                    value: formatBytes(adapter.sizeBytes),
-                  },
-                  {
-                    label: t("fineTuning:shellB.adapters.fields.created"),
-                    value: formatDateTime(adapter.createdAt, i18n.language),
-                  },
-                ]}
-              />
+              <Hideable
+                id="b.adapterSummary.details"
+                label={t(
+                  "fineTuning:viewEditing.sections.bAdapterSummaryDetails",
+                )}
+                level="intermediate"
+              >
+                <KeyValueList
+                  dense
+                  rows={[
+                    {
+                      label: t("fineTuning:shellB.adapters.fields.base"),
+                      value: adapter.checkpointName || adapter.checkpointId,
+                    },
+                    {
+                      label: t("fineTuning:shellB.adapters.fields.revision"),
+                      value: adapter.revision
+                        ? adapter.revision.slice(0, 7)
+                        : "",
+                      mono: true,
+                      title: adapter.revision,
+                    },
+                    {
+                      label: t("fineTuning:shellB.adapters.fields.method"),
+                      value: `${methodLabel(adapter.method, t)} · r ${
+                        adapter.loraR
+                      }`,
+                    },
+                    {
+                      label: t("fineTuning:shellB.adapters.fields.dataset"),
+                      value: adapter.datasetName,
+                    },
+                    {
+                      label: t("fineTuning:shellB.adapters.fields.fingerprint"),
+                      value: adapter.fingerprint
+                        ? adapter.fingerprint.slice(0, 12)
+                        : "",
+                      mono: true,
+                    },
+                    {
+                      label: t("fineTuning:shellB.adapters.fields.run"),
+                      value: run
+                        ? run.name
+                        : t("fineTuning:shellB.adapters.runDeleted"),
+                    },
+                    {
+                      label: t("fineTuning:shellB.adapters.fields.evalLoss"),
+                      value: adapter.metrics
+                        ? formatMetric(adapter.metrics.finalEvalLoss)
+                        : "",
+                    },
+                    {
+                      label: t("fineTuning:shellB.adapters.fields.size"),
+                      value: formatBytes(adapter.sizeBytes),
+                    },
+                    {
+                      label: t("fineTuning:shellB.adapters.fields.created"),
+                      value: formatDateTime(adapter.createdAt, i18n.language),
+                    },
+                  ]}
+                />
+              </Hideable>
               <Stack spacing={2}>
                 {tip(
                   blocker,
@@ -203,27 +216,43 @@ export default function AdapterSummaryPanel({ adapterId }) {
                     {t("fineTuning:shellB.adapters.chat")}
                   </Button>,
                 )}
-                {tip(
-                  adapter.availability !== "ready" ? blocker : null,
+                <Hideable
+                  id="b.adapterSummary.compareButton"
+                  label={t(
+                    "fineTuning:viewEditing.sections.bAdapterSummaryCompareButton",
+                  )}
+                  level="intermediate"
+                >
+                  {tip(
+                    adapter.availability !== "ready" ? blocker : null,
+                    <Button
+                      fullWidth
+                      size="small"
+                      variant="outlined"
+                      startIcon={<CompareArrowsIcon fontSize="small" />}
+                      disabled={adapter.availability !== "ready"}
+                      onClick={() => navigate(routes.compare(adapter.id))}
+                    >
+                      {t("fineTuning:shellB.adapters.compare")}
+                    </Button>,
+                  )}
+                </Hideable>
+                <Hideable
+                  id="shared.provenance.openButton"
+                  label={t(
+                    "fineTuning:viewEditing.sections.provenanceOpenButton",
+                  )}
+                  level="intermediate"
+                >
                   <Button
                     fullWidth
                     size="small"
-                    variant="outlined"
-                    startIcon={<CompareArrowsIcon fontSize="small" />}
-                    disabled={adapter.availability !== "ready"}
-                    onClick={() => navigate(routes.compare(adapter.id))}
+                    variant="text"
+                    onClick={() => setProvenanceOpen(true)}
                   >
-                    {t("fineTuning:shellB.adapters.compare")}
-                  </Button>,
-                )}
-                <Button
-                  fullWidth
-                  size="small"
-                  variant="text"
-                  onClick={() => setProvenanceOpen(true)}
-                >
-                  {t("fineTuning:shellB.adapters.fullProvenance")}
-                </Button>
+                    {t("fineTuning:shellB.adapters.fullProvenance")}
+                  </Button>
+                </Hideable>
                 {run && (
                   <Button
                     fullWidth

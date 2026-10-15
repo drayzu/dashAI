@@ -41,6 +41,7 @@ import {
   sessionById,
 } from "../../../components/fineTuning/data/selectors";
 import { blockerLabel } from "../../../components/fineTuning/data/labels";
+import Hideable from "../../../components/fineTuning/viewEditing/Hideable";
 import { CONFIG_STEPS } from "./useFineTuningRouteA";
 
 const NS = "fineTuning:shellA.session";
@@ -160,9 +161,15 @@ function SessionTitle({ sessionId, name, runCount }) {
           </Tooltip>
         </Box>
       )}
-      <Typography variant="caption" color="text.secondary">
-        {t(`${NS}.caption`, { count: runCount })}
-      </Typography>
+      <Hideable
+        id="a.session.runCountCaption"
+        label={t("fineTuning:viewEditing.sections.aSessionRunCountCaption")}
+        level="full"
+      >
+        <Typography variant="caption" color="text.secondary">
+          {t(`${NS}.caption`, { count: runCount })}
+        </Typography>
+      </Hideable>
     </Box>
   );
 }
@@ -438,7 +445,7 @@ export default function SessionWorkspace({ route }) {
       )}
       {view === "history" && (
         <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", pr: 1, pb: 4 }}>
-          <RunHistory sessionId={sessionId} />
+          <RunHistory sessionId={sessionId} hideable />
         </Box>
       )}
     </Box>

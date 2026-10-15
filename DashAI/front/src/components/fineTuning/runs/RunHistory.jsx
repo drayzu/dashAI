@@ -9,6 +9,7 @@ import { runsBySession } from "../data/selectors";
 import EmptyState from "../common/EmptyState";
 import RunHistoryCard from "./RunHistoryCard";
 import RunComparisonTable, { bestEvalRunId } from "./RunComparisonTable";
+import Hideable from "../viewEditing/Hideable";
 
 const EMPTY = [];
 
@@ -25,6 +26,8 @@ function allRunsDesc(state) {
  * model · dataset, loss sparkline, loss · steps · duration) and a compact
  * comparison table below with the best eval loss marked ★.
  * Without `sessionId` it lists the runs of every session (home "recent runs").
+ * With `hideable`, the card grid and the table can be hidden in view-editing
+ * mode (ids "a.history.cards" / "a.history.table").
  */
 export default function RunHistory({
   sessionId,
@@ -35,9 +38,22 @@ export default function RunHistory({
   showHeader,
   includeConfigs,
   columns,
+  hideable,
   sx,
 }) {
   const { t } = useTranslation(["fineTuning"]);
+  const wrap = (id, labelKey, children) =>
+    hideable ? (
+      <Hideable
+        id={id}
+        label={t(`fineTuning:viewEditing.sections.${labelKey}`)}
+        level="intermediate"
+      >
+        {children}
+      </Hideable>
+    ) : (
+      children
+    );
   const routes = useFineTuningRoutes();
   const navigate = useNavigate();
   const runs = useFineTuningStore((s) =>
@@ -69,72 +85,82 @@ export default function RunHistory({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 6, ...sx }}>
-      <Box component="section" aria-label={t("fineTuning:history.cardsTitle")}>
-        {showHeader && (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "baseline",
-              gap: 2,
-              mb: 3,
-              flexWrap: "wrap",
-            }}
-          >
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-              {t("fineTuning:history.cardsTitle")}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {t("fineTuning:history.count", { count: visible.length })}
-            </Typography>
-          </Box>
-        )}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-            gap: 3,
-          }}
-        >
-          {visible.map((run) => (
-            <RunHistoryCard
-              key={run.id}
-              run={run}
-              selected={selectedRunId === run.id}
-              best={bestId === run.id}
-              onClick={open}
-            />
-          ))}
-        </Box>
-      </Box>
-      {showTable && (
+      {wrap(
+        "a.history.cards",
+        "aHistoryCards",
         <Box
           component="section"
-          aria-label={t("fineTuning:history.tableTitle")}
+          aria-label={t("fineTuning:history.cardsTitle")}
         >
+          {showHeader && (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: 2,
+                mb: 3,
+                flexWrap: "wrap",
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                {t("fineTuning:history.cardsTitle")}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {t("fineTuning:history.count", { count: visible.length })}
+              </Typography>
+            </Box>
+          )}
           <Box
             sx={{
-              display: "flex",
-              alignItems: "baseline",
-              gap: 2,
-              mb: 3,
-              flexWrap: "wrap",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+              gap: 3,
             }}
           >
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-              {t("fineTuning:history.tableTitle")}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {t("fineTuning:history.tableCaption")}
-            </Typography>
+            {visible.map((run) => (
+              <RunHistoryCard
+                key={run.id}
+                run={run}
+                selected={selectedRunId === run.id}
+                best={bestId === run.id}
+                onClick={open}
+              />
+            ))}
           </Box>
-          <RunComparisonTable
-            runs={visible}
-            onOpen={open}
-            selectedRunId={selectedRunId}
-            columns={columns}
-          />
-        </Box>
+        </Box>,
       )}
+      {showTable &&
+        wrap(
+          "a.history.table",
+          "aHistoryTable",
+          <Box
+            component="section"
+            aria-label={t("fineTuning:history.tableTitle")}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: 2,
+                mb: 3,
+                flexWrap: "wrap",
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                {t("fineTuning:history.tableTitle")}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {t("fineTuning:history.tableCaption")}
+              </Typography>
+            </Box>
+            <RunComparisonTable
+              runs={visible}
+              onOpen={open}
+              selectedRunId={selectedRunId}
+              columns={columns}
+            />
+          </Box>,
+        )}
     </Box>
   );
 }
@@ -148,6 +174,7 @@ RunHistory.propTypes = {
   showHeader: PropTypes.bool,
   includeConfigs: PropTypes.bool,
   columns: PropTypes.arrayOf(PropTypes.string),
+  hideable: PropTypes.bool,
   sx: PropTypes.object,
 };
 
@@ -160,5 +187,6 @@ RunHistory.defaultProps = {
   showHeader: true,
   includeConfigs: true,
   columns: null,
+  hideable: false,
   sx: {},
 };

@@ -10,7 +10,6 @@ import {
   Button,
   Checkbox,
   FormControlLabel,
-  Grid,
   Paper,
   TextField,
   Tooltip,
@@ -43,6 +42,7 @@ import {
   methodLabel,
   presetLabel,
 } from "../data/labels";
+import Hideable from "../viewEditing/Hideable";
 
 const NS = "fineTuning:reviewStep";
 const REQUEST_REUSE_MS = 2000;
@@ -63,7 +63,9 @@ function newRequestId() {
   } catch (e) {
     // Fall through to the non-crypto id.
   }
-  return `req-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `req-${Date.now().toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2, 10)}`;
 }
 
 /**
@@ -100,7 +102,9 @@ export function buildRunSummary(v, t) {
     datasetName: draft.dataset ? datasetName(draft.dataset, t) : dash,
     datasetSource: draft.dataset
       ? t(
-          `${NS}.values.source.${draft.dataset.source === "sample" ? "sample" : "dashai"}`,
+          `${NS}.values.source.${
+            draft.dataset.source === "sample" ? "sample" : "dashai"
+          }`,
         )
       : dash,
     format: draft.dataset ? formatLabel(draft.format, t) : dash,
@@ -204,7 +208,9 @@ export function useStartRun(
   if (!canStart) {
     disabledReason = blockerLabel(blockers[0] || "unknown", t);
     if (blockers.length > 1)
-      disabledReason += ` ${t(`${NS}.moreBlockers`, { count: blockers.length - 1 })}`;
+      disabledReason += ` ${t(`${NS}.moreBlockers`, {
+        count: blockers.length - 1,
+      })}`;
   }
   const queued = Boolean(validation && validation.gpu && validation.gpu.busy);
   const sessionId = session ? session.id : null;
@@ -760,6 +766,25 @@ export default function ReviewStep({
         }
       : check,
   );
+  const needsConfirm = withConfirm.some((check) => Boolean(check.extra));
+
+  const preflight = (
+    <SummaryCard
+      icon={FactCheckOutlinedIcon}
+      title={t(`${NS}.preflightTitle`)}
+      subtitle={t(`${NS}.preflightSubtitle`)}
+    >
+      <Box
+        component="ul"
+        sx={{ listStyle: "none", m: 0, p: 0 }}
+        aria-label={t(`${NS}.preflightTitle`)}
+      >
+        {withConfirm.map((check) => (
+          <CheckRow key={check.key} check={check} t={t} />
+        ))}
+      </Box>
+    </SummaryCard>
+  );
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -772,8 +797,19 @@ export default function ReviewStep({
         </Typography>
       </Box>
 
-      <Grid container spacing={4}>
-        <Grid size={{ xs: 12, lg: 6 }}>
+      {/* CSS grid (not <Grid>) so hidden groups leave no empty cell. */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" },
+          gap: 4,
+        }}
+      >
+        <Hideable
+          id="a.review.modelGroup"
+          label={t("fineTuning:viewEditing.sections.aReviewModelGroup")}
+          level="essential"
+        >
           <SummaryCard icon={ModelTrainingIcon} title={t(`${NS}.groups.model`)}>
             <KeyValueList
               dense
@@ -798,8 +834,12 @@ export default function ReviewStep({
               ]}
             />
           </SummaryCard>
-        </Grid>
-        <Grid size={{ xs: 12, lg: 6 }}>
+        </Hideable>
+        <Hideable
+          id="a.review.dataGroup"
+          label={t("fineTuning:viewEditing.sections.aReviewDataGroup")}
+          level="essential"
+        >
           <SummaryCard
             icon={TableChartOutlinedIcon}
             title={t(`${NS}.groups.data`)}
@@ -829,8 +869,12 @@ export default function ReviewStep({
               ]}
             />
           </SummaryCard>
-        </Grid>
-        <Grid size={{ xs: 12, lg: 6 }}>
+        </Hideable>
+        <Hideable
+          id="a.review.trainingGroup"
+          label={t("fineTuning:viewEditing.sections.aReviewTrainingGroup")}
+          level="essential"
+        >
           <SummaryCard icon={TuneIcon} title={t(`${NS}.groups.training`)}>
             <KeyValueList
               dense
@@ -863,8 +907,12 @@ export default function ReviewStep({
               ]}
             />
           </SummaryCard>
-        </Grid>
-        <Grid size={{ xs: 12, lg: 6 }}>
+        </Hideable>
+        <Hideable
+          id="a.review.resourcesGroup"
+          label={t("fineTuning:viewEditing.sections.aReviewResourcesGroup")}
+          level="intermediate"
+        >
           <SummaryCard
             icon={MemoryIcon}
             title={t(`${NS}.groups.resources`)}
@@ -892,29 +940,32 @@ export default function ReviewStep({
               ]}
             />
           </SummaryCard>
-        </Grid>
-      </Grid>
+        </Hideable>
+      </Box>
 
-      <SummaryCard
-        icon={FactCheckOutlinedIcon}
-        title={t(`${NS}.preflightTitle`)}
-        subtitle={t(`${NS}.preflightSubtitle`)}
-      >
-        <Box
-          component="ul"
-          sx={{ listStyle: "none", m: 0, p: 0 }}
-          aria-label={t(`${NS}.preflightTitle`)}
+      {needsConfirm ? (
+        // Holds the required download confirmation: never hideable.
+        preflight
+      ) : (
+        <Hideable
+          id="a.review.preflight"
+          label={t("fineTuning:viewEditing.sections.aReviewPreflight")}
+          level="intermediate"
         >
-          {withConfirm.map((check) => (
-            <CheckRow key={check.key} check={check} t={t} />
-          ))}
-        </Box>
-      </SummaryCard>
+          {preflight}
+        </Hideable>
+      )}
 
       {gpuMessage && (
-        <Alert severity="info" sx={{ py: 0.5 }} aria-live="polite">
-          {gpuMessage}
-        </Alert>
+        <Hideable
+          id="a.review.gpuQueueNote"
+          label={t("fineTuning:viewEditing.sections.aReviewGpuQueueNote")}
+          level="full"
+        >
+          <Alert severity="info" sx={{ py: 0.5 }} aria-live="polite">
+            {gpuMessage}
+          </Alert>
+        </Hideable>
       )}
 
       {showStartButton && (

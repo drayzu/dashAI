@@ -37,6 +37,7 @@ import {
 import { useFineTuningActions, useFineTuningStore } from "../FineTuningContext";
 import { useHardwareProfile } from "../hooks/useHardwareProfile";
 import { useDraftEditor } from "./ParametersStep";
+import Hideable from "../viewEditing/Hideable";
 
 const METHOD_ORDER = ["qlora", "lora"];
 
@@ -202,29 +203,44 @@ function CheckpointCard({
         </Stack>
 
         {downloading && (
-          <Box>
-            <LinearProgress
-              variant="determinate"
-              value={pct}
-              aria-label={t("fineTuning:modelStep.download.progressLabel")}
-              sx={{ height: 4, borderRadius: 1 }}
-            />
-            <Typography variant="caption" color="text.secondary">
-              {t("fineTuning:modelStep.download.percent", { percent: pct })}
-            </Typography>
-          </Box>
+          <Hideable
+            id="shared.model.cardDownloadProgress"
+            label={t(
+              "fineTuning:viewEditing.sections.modelCardDownloadProgress",
+            )}
+            level="full"
+          >
+            <Box>
+              <LinearProgress
+                variant="determinate"
+                value={pct}
+                aria-label={t("fineTuning:modelStep.download.progressLabel")}
+                sx={{ height: 4, borderRadius: 1 }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                {t("fineTuning:modelStep.download.percent", { percent: pct })}
+              </Typography>
+            </Box>
+          </Hideable>
         )}
 
-        <Box sx={{ mt: "auto" }}>
-          <VramEstimate
-            variant="compact"
-            estimatedGb={estimate}
-            hardware={hardware}
-            label={t("fineTuning:modelStep.card.vramLabel", {
-              method: methodLabel(usedMethod, t),
-            })}
-          />
-        </Box>
+        <Hideable
+          id="shared.model.cardVram"
+          label={t("fineTuning:viewEditing.sections.modelCardVram")}
+          level="intermediate"
+          sx={{ mt: "auto" }}
+        >
+          <Box sx={{ mt: "auto" }}>
+            <VramEstimate
+              variant="compact"
+              estimatedGb={estimate}
+              hardware={hardware}
+              label={t("fineTuning:modelStep.card.vramLabel", {
+                method: methodLabel(usedMethod, t),
+              })}
+            />
+          </Box>
+        </Hideable>
       </Stack>
     </SelectableCard>
   );
@@ -298,57 +314,73 @@ function CheckpointFilesState({
     </Box>
   );
 
+  // Credential, "ready" and "downloading" details are optional for the flow;
+  // the "missing" state (with the download confirmation) is never hidden.
+  const optional = (children) => (
+    <Hideable
+      id="shared.model.filesStatus"
+      label={t("fineTuning:viewEditing.sections.modelFilesStatus")}
+      level="full"
+    >
+      {children}
+    </Hideable>
+  );
+
   if (locked) {
-    return box(
-      <Stack direction="row" spacing={2} alignItems="flex-start">
-        <VpnKeyOutlinedIcon
-          color="warning"
-          fontSize="small"
-          sx={{ mt: 0.25 }}
-        />
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {t("fineTuning:modelStep.gated.title")}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" component="p">
-            {t("fineTuning:modelStep.gated.body")}
-          </Typography>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            component="p"
-            sx={{ mt: 1 }}
-          >
-            {t("fineTuning:modelStep.gated.demoHint")}
-          </Typography>
-        </Box>
-      </Stack>,
-      "warning.main",
+    return optional(
+      box(
+        <Stack direction="row" spacing={2} alignItems="flex-start">
+          <VpnKeyOutlinedIcon
+            color="warning"
+            fontSize="small"
+            sx={{ mt: 0.25 }}
+          />
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {t("fineTuning:modelStep.gated.title")}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" component="p">
+              {t("fineTuning:modelStep.gated.body")}
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              component="p"
+              sx={{ mt: 1 }}
+            >
+              {t("fineTuning:modelStep.gated.demoHint")}
+            </Typography>
+          </Box>
+        </Stack>,
+        "warning.main",
+      ),
     );
   }
 
   if (checkpoint.availability === "ready") {
-    return box(
-      <Stack direction="row" spacing={2} alignItems="center">
-        <CheckCircleOutlineIcon color="success" fontSize="small" />
-        <Box sx={{ minWidth: 0 }}>
-          <Typography variant="body2">
-            {t("fineTuning:modelStep.download.ready")}
-          </Typography>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            component="p"
-            noWrap
-            sx={mono}
-          >
-            {t("fineTuning:modelStep.download.path", {
-              repository: checkpoint.repository,
-              revision: shortRevision(checkpoint.revision),
-            })}
-          </Typography>
-        </Box>
-      </Stack>,
+    return optional(
+      box(
+        <Stack direction="row" spacing={2} alignItems="center">
+          <CheckCircleOutlineIcon color="success" fontSize="small" />
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="body2">
+              {t("fineTuning:modelStep.download.ready")}
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              component="p"
+              noWrap
+              sx={mono}
+            >
+              {t("fineTuning:modelStep.download.path", {
+                repository: checkpoint.repository,
+                revision: shortRevision(checkpoint.revision),
+              })}
+            </Typography>
+          </Box>
+        </Stack>,
+      ),
     );
   }
 
@@ -356,39 +388,41 @@ function CheckpointFilesState({
     const pct = checkpoint.diskBytes
       ? Math.round((checkpoint.downloadedBytes / checkpoint.diskBytes) * 100)
       : 0;
-    return box(
-      <Box>
-        <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
-          <Typography variant="body2" sx={{ flex: 1 }}>
-            {t("fineTuning:modelStep.download.downloading", {
-              done: formatBytes(checkpoint.downloadedBytes),
-              total: size,
-              percent: pct,
-            })}
-          </Typography>
-          {checkpoint.download && (
-            <Button size="small" color="inherit" onClick={cancel}>
-              {t("common:cancel")}
-            </Button>
+    return optional(
+      box(
+        <Box>
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
+            <Typography variant="body2" sx={{ flex: 1 }}>
+              {t("fineTuning:modelStep.download.downloading", {
+                done: formatBytes(checkpoint.downloadedBytes),
+                total: size,
+                percent: pct,
+              })}
+            </Typography>
+            {checkpoint.download && (
+              <Button size="small" color="inherit" onClick={cancel}>
+                {t("common:cancel")}
+              </Button>
+            )}
+          </Stack>
+          <LinearProgress
+            variant="determinate"
+            value={pct}
+            aria-label={t("fineTuning:modelStep.download.progressLabel")}
+            sx={{ height: 4, borderRadius: 1 }}
+          />
+          {!checkpoint.download && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              component="p"
+              sx={{ mt: 1 }}
+            >
+              {t("fineTuning:modelStep.download.ownedByRun")}
+            </Typography>
           )}
-        </Stack>
-        <LinearProgress
-          variant="determinate"
-          value={pct}
-          aria-label={t("fineTuning:modelStep.download.progressLabel")}
-          sx={{ height: 4, borderRadius: 1 }}
-        />
-        {!checkpoint.download && (
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            component="p"
-            sx={{ mt: 1 }}
-          >
-            {t("fineTuning:modelStep.download.ownedByRun")}
-          </Typography>
-        )}
-      </Box>,
+        </Box>,
+      ),
     );
   }
 
@@ -546,9 +580,17 @@ function MethodSection({
                     />
                   )}
                 </Stack>
-                <Typography variant="caption" color="text.secondary">
-                  {t(`fineTuning:catalog.methods.${m}.description`)}
-                </Typography>
+                <Hideable
+                  id="shared.model.methodDescription"
+                  label={t(
+                    "fineTuning:viewEditing.sections.modelMethodDescription",
+                  )}
+                  level="essential"
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    {t(`fineTuning:catalog.methods.${m}.description`)}
+                  </Typography>
+                </Hideable>
                 {!supported ? (
                   <Stack direction="row" spacing={1} alignItems="flex-start">
                     <InfoOutlinedIcon
@@ -560,23 +602,31 @@ function MethodSection({
                       {t("fineTuning:catalog.qloraUnsupported")}
                     </Typography>
                   </Stack>
-                ) : estimate !== null ? (
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <VramEstimate
-                      variant="compact"
-                      estimatedGb={estimate}
-                      hardware={hardware}
-                      sx={{ flex: 1 }}
-                    />
-                    <VramRiskChip
-                      estimatedGb={estimate}
-                      availableGb={hardware.vramGb}
-                    />
-                  </Stack>
                 ) : (
-                  <Typography variant="caption" color="text.secondary">
-                    {t("fineTuning:modelStep.method.pickModelForEstimate")}
-                  </Typography>
+                  <Hideable
+                    id="shared.model.methodVram"
+                    label={t("fineTuning:viewEditing.sections.modelMethodVram")}
+                    level="intermediate"
+                  >
+                    {estimate !== null ? (
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <VramEstimate
+                          variant="compact"
+                          estimatedGb={estimate}
+                          hardware={hardware}
+                          sx={{ flex: 1 }}
+                        />
+                        <VramRiskChip
+                          estimatedGb={estimate}
+                          availableGb={hardware.vramGb}
+                        />
+                      </Stack>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">
+                        {t("fineTuning:modelStep.method.pickModelForEstimate")}
+                      </Typography>
+                    )}
+                  </Hideable>
                 )}
               </Stack>
             </SelectableCard>
@@ -585,20 +635,26 @@ function MethodSection({
       </Box>
       {method === "qlora" &&
         (!checkpoint || checkpoint.methods.includes("qlora")) && (
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="flex-start"
-            sx={{ mt: 3 }}
+          <Hideable
+            id="shared.model.quantizationNote"
+            label={t("fineTuning:viewEditing.sections.modelQuantizationNote")}
+            level="full"
           >
-            <InfoOutlinedIcon
-              fontSize="small"
-              sx={{ color: "text.secondary", mt: 0.25 }}
-            />
-            <Typography variant="caption" color="text.secondary">
-              {t("fineTuning:catalog.quantization")}
-            </Typography>
-          </Stack>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="flex-start"
+              sx={{ mt: 3 }}
+            >
+              <InfoOutlinedIcon
+                fontSize="small"
+                sx={{ color: "text.secondary", mt: 0.25 }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                {t("fineTuning:catalog.quantization")}
+              </Typography>
+            </Stack>
+          </Hideable>
         )}
     </SectionCard>
   );
@@ -660,28 +716,34 @@ export default function ModelStep({
   };
 
   const hardwareChip = (
-    <Tooltip
-      title={
-        hardware.source === "detected"
-          ? t("fineTuning:modelStep.hardware.detectedTooltip")
-          : t("fineTuning:modelStep.hardware.simulatedTooltip")
-      }
+    <Hideable
+      id="shared.model.hardwareChip"
+      label={t("fineTuning:viewEditing.sections.modelHardwareChip")}
+      level="intermediate"
     >
-      <Chip
-        size="small"
-        variant="outlined"
-        label={t("fineTuning:modelStep.hardware.chip", {
-          gpu: hardware.gpuName,
-          vram: hardware.vramGb,
-          source: t(
-            hardware.source === "detected"
-              ? "fineTuning:common.vram.detected"
-              : "fineTuning:common.vram.simulated",
-          ),
-        })}
-        sx={{ maxWidth: 280 }}
-      />
-    </Tooltip>
+      <Tooltip
+        title={
+          hardware.source === "detected"
+            ? t("fineTuning:modelStep.hardware.detectedTooltip")
+            : t("fineTuning:modelStep.hardware.simulatedTooltip")
+        }
+      >
+        <Chip
+          size="small"
+          variant="outlined"
+          label={t("fineTuning:modelStep.hardware.chip", {
+            gpu: hardware.gpuName,
+            vram: hardware.vramGb,
+            source: t(
+              hardware.source === "detected"
+                ? "fineTuning:common.vram.detected"
+                : "fineTuning:common.vram.simulated",
+            ),
+          })}
+          sx={{ maxWidth: 280 }}
+        />
+      </Tooltip>
+    </Hideable>
   );
 
   return (
@@ -716,21 +778,27 @@ export default function ModelStep({
               />
             ))}
           </Box>
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="flex-start"
-            sx={{ mt: 3 }}
+          <Hideable
+            id="shared.model.catalogNote"
+            label={t("fineTuning:viewEditing.sections.modelCatalogNote")}
+            level="full"
           >
-            <InfoOutlinedIcon
-              fontSize="small"
-              sx={{ color: "text.secondary", mt: 0.25 }}
-            />
-            <Typography variant="caption" color="text.secondary">
-              {t("fineTuning:modelStep.catalog.separateNote")}{" "}
-              {t("fineTuning:modelStep.catalog.estimateNote")}
-            </Typography>
-          </Stack>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="flex-start"
+              sx={{ mt: 3 }}
+            >
+              <InfoOutlinedIcon
+                fontSize="small"
+                sx={{ color: "text.secondary", mt: 0.25 }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                {t("fineTuning:modelStep.catalog.separateNote")}{" "}
+                {t("fineTuning:modelStep.catalog.estimateNote")}
+              </Typography>
+            </Stack>
+          </Hideable>
           {selected && (
             <CheckpointFilesState
               checkpoint={selected}

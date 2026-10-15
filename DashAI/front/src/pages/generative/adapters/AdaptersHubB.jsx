@@ -29,6 +29,8 @@ import AdapterChat from "../../../components/fineTuning/inference/AdapterChat";
 import ComparePanel from "../../../components/fineTuning/inference/ComparePanel";
 import GenerationParamsPanel from "../../../components/fineTuning/inference/GenerationParamsPanel";
 import { chatById } from "../../../components/fineTuning/data/selectors";
+import Hideable from "../../../components/fineTuning/viewEditing/Hideable";
+import ViewEditingLayer from "../../../components/fineTuning/viewEditing/ViewEditingLayer";
 import AdaptersLeftBarB from "./AdaptersLeftBarB";
 import AdapterSummaryPanel from "./AdapterSummaryPanel";
 
@@ -159,7 +161,15 @@ function AdaptersViews() {
             <Box
               sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 4, pb: 4 }}
             >
-              <TrainedInModelsNote />
+              <Hideable
+                id="b.adapters.trainedInNote"
+                label={t(
+                  "fineTuning:viewEditing.sections.bAdaptersTrainedInNote",
+                )}
+                level="intermediate"
+              >
+                <TrainedInModelsNote />
+              </Hideable>
               <AdaptersRegistry
                 onSelect={setSelectedId}
                 selectedId={selectedId}
@@ -223,6 +233,7 @@ export default function AdaptersHubB({ store, hardwareMonitoring }) {
         <ModuleContainer>
           <AdaptersViews />
         </ModuleContainer>
+        <ViewEditingLayer />
       </ThreePanelLayoutContext.Provider>
     </FineTuningProvider>
   );

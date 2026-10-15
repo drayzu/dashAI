@@ -42,6 +42,7 @@ import {
   presetLabel,
 } from "../data/labels";
 import { useFineTuningActions, useFineTuningStore } from "../FineTuningContext";
+import Hideable from "../viewEditing/Hideable";
 
 // ---------------------------------------------------------------------------
 // Draft helpers shared with ModelStep (session draft vs. local config value)
@@ -582,50 +583,63 @@ export default function ParametersStep({
         <Typography variant="body2" color="text.secondary">
           {t("fineTuning:paramsStep.intro")}
         </Typography>
-        <PillToggleButtonGroup
-          value={mode}
-          onChange={changeMode}
-          size="small"
-          aria-label={t("fineTuning:paramsStep.mode.label")}
-          sx={{
-            minHeight: 32,
-            flexShrink: 0,
-            "& .MuiToggleButtonGroup-grouped": { minHeight: 32, px: 3 },
-          }}
+        <Hideable
+          id="shared.params.modeToggle"
+          label={t("fineTuning:viewEditing.sections.paramsModeToggle")}
+          level="intermediate"
+          sx={{ flexShrink: 0 }}
         >
-          <ToggleButton value="simple">
-            {t("fineTuning:paramsStep.mode.simple")}
-          </ToggleButton>
-          <ToggleButton value="advanced">
-            {t("fineTuning:paramsStep.mode.advanced")}
-          </ToggleButton>
-        </PillToggleButtonGroup>
+          <PillToggleButtonGroup
+            value={mode}
+            onChange={changeMode}
+            size="small"
+            aria-label={t("fineTuning:paramsStep.mode.label")}
+            sx={{
+              minHeight: 32,
+              flexShrink: 0,
+              "& .MuiToggleButtonGroup-grouped": { minHeight: 32, px: 3 },
+            }}
+          >
+            <ToggleButton value="simple">
+              {t("fineTuning:paramsStep.mode.simple")}
+            </ToggleButton>
+            <ToggleButton value="advanced">
+              {t("fineTuning:paramsStep.mode.advanced")}
+            </ToggleButton>
+          </PillToggleButtonGroup>
+        </Hideable>
       </Stack>
 
-      <SectionCard
-        {...sectionProps}
-        icon={TuneIcon}
-        title={t("fineTuning:paramsStep.presets.title")}
-        subtitle={t("fineTuning:paramsStep.presets.subtitle")}
-        action={
-          draft.preset === "custom" ? (
-            <Tooltip title={presetDescription("custom", t)}>
-              <Chip
-                size="small"
-                variant="outlined"
-                color="primary"
-                label={presetLabel("custom", t)}
-              />
-            </Tooltip>
-          ) : null
-        }
+      <Hideable
+        id="shared.params.presets"
+        label={t("fineTuning:viewEditing.sections.paramsPresets")}
+        level="intermediate"
       >
-        <PresetPicker
-          activeKey={draft.preset}
-          method={draft.method}
-          onSelect={applyPreset}
-        />
-      </SectionCard>
+        <SectionCard
+          {...sectionProps}
+          icon={TuneIcon}
+          title={t("fineTuning:paramsStep.presets.title")}
+          subtitle={t("fineTuning:paramsStep.presets.subtitle")}
+          action={
+            draft.preset === "custom" ? (
+              <Tooltip title={presetDescription("custom", t)}>
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  color="primary"
+                  label={presetLabel("custom", t)}
+                />
+              </Tooltip>
+            ) : null
+          }
+        >
+          <PresetPicker
+            activeKey={draft.preset}
+            method={draft.method}
+            onSelect={applyPreset}
+          />
+        </SectionCard>
+      </Hideable>
 
       {hiddenAdvancedErrors && (
         <Box
@@ -806,347 +820,401 @@ export default function ParametersStep({
             />
           </Grid>
         </Grid>
-        <Box
-          sx={{
-            mt: 1,
-            px: 3,
-            py: 2,
-            borderRadius: 1,
-            bgcolor: "action.hover",
-            display: "flex",
-            gap: 2,
-            alignItems: "baseline",
-            flexWrap: "wrap",
-          }}
-          aria-live="polite"
+        <Hideable
+          id="shared.params.effectiveBatch"
+          label={t("fineTuning:viewEditing.sections.paramsEffectiveBatch")}
+          level="full"
         >
-          <Typography variant="body2" color="text.secondary">
-            {t("fineTuning:paramsStep.training.effectiveBatch")}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{ fontWeight: 600, fontFamily: '"Geist Mono", monospace' }}
+          <Box
+            sx={{
+              mt: 1,
+              px: 3,
+              py: 2,
+              borderRadius: 1,
+              bgcolor: "action.hover",
+              display: "flex",
+              gap: 2,
+              alignItems: "baseline",
+              flexWrap: "wrap",
+            }}
+            aria-live="polite"
           >
-            {effectiveBatch
-              ? t("fineTuning:paramsStep.training.effectiveBatchValue", {
-                  batch: p.batchSize,
-                  accum: p.gradAccum,
-                  total: effectiveBatch,
-                })
-              : "—"}
-          </Typography>
-        </Box>
-      </SectionCard>
-
-      <SectionCard
-        {...sectionProps}
-        icon={LayersOutlinedIcon}
-        title={t("fineTuning:paramsStep.lora.title")}
-        subtitle={t("fineTuning:paramsStep.lora.subtitle")}
-      >
-        <Grid container spacing={4}>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <NumberField
-              id={`${idp}-loraR`}
-              label={t("fineTuning:paramsStep.fields.loraR")}
-              tooltip={t("fineTuning:paramsStep.help.loraR")}
-              value={p.loraR}
-              onCommit={setParam("loraR")}
-              error={errorText("loraR")}
-              inputMode="numeric"
-            />
-            <Slider
-              size="small"
-              value={
-                Number.isFinite(Number(p.loraR))
-                  ? Math.min(128, Math.max(4, Number(p.loraR)))
-                  : 16
-              }
-              min={4}
-              max={128}
-              step={null}
-              marks={[4, 8, 16, 32, 64, 128].map((v) => ({
-                value: v,
-                label: String(v),
-              }))}
-              onChange={(_e, v) => setParam("loraR")(v)}
-              aria-label={t("fineTuning:paramsStep.fields.loraR")}
-              sx={{ mt: -2, mx: 1, width: "calc(100% - 8px)" }}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <NumberField
-              id={`${idp}-loraAlpha`}
-              label={t("fineTuning:paramsStep.fields.loraAlpha")}
-              tooltip={t("fineTuning:paramsStep.help.loraAlpha")}
-              value={p.loraAlpha}
-              onCommit={setParam("loraAlpha")}
-              error={errorText("loraAlpha")}
-            />
-            {Number.isFinite(Number(p.loraR)) &&
-              Number(p.loraAlpha) !== 2 * Number(p.loraR) && (
-                <Button
-                  size="small"
-                  onClick={() => setParam("loraAlpha")(2 * Number(p.loraR))}
-                  sx={{ mt: -2 }}
-                >
-                  {t("fineTuning:paramsStep.lora.useDoubleR", {
-                    value: 2 * Number(p.loraR),
-                  })}
-                </Button>
-              )}
-          </Grid>
-          {mode === "advanced" && (
-            <>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <FieldLabel
-                  label={t("fineTuning:paramsStep.fields.loraDropout")}
-                  tooltip={t("fineTuning:paramsStep.help.loraDropout")}
-                />
-                <Stack direction="row" spacing={3} alignItems="center">
-                  <Slider
-                    size="small"
-                    value={
-                      Number.isFinite(Number(p.loraDropout))
-                        ? Math.min(0.3, Number(p.loraDropout))
-                        : 0.05
-                    }
-                    min={0}
-                    max={0.3}
-                    step={0.01}
-                    onChange={(_e, v) =>
-                      setParam("loraDropout")(Math.round(v * 100) / 100)
-                    }
-                    aria-label={t("fineTuning:paramsStep.fields.loraDropout")}
-                    sx={{ flex: 1 }}
-                  />
-                  <Typography
-                    variant="body2"
-                    sx={{ minWidth: 40, fontFamily: '"Geist Mono", monospace' }}
-                  >
-                    {formatNumber(p.loraDropout)}
-                  </Typography>
-                </Stack>
-                {errors.loraDropout && (
-                  <Typography variant="caption" color="error.main">
-                    {errorText("loraDropout")}
-                  </Typography>
-                )}
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <Stack
-                  direction="row"
-                  alignItems="center"
-                  justifyContent="space-between"
-                  spacing={2}
-                >
-                  <FieldLabel
-                    label={t("fineTuning:paramsStep.fields.targetModules")}
-                    tooltip={t("fineTuning:paramsStep.help.targetModules")}
-                  />
-                  <Stack direction="row" spacing={1}>
-                    <Chip
-                      size="small"
-                      clickable
-                      color={allModules ? "primary" : "default"}
-                      variant={allModules ? "filled" : "outlined"}
-                      label={t("fineTuning:paramsStep.lora.allLinear")}
-                      onClick={() =>
-                        setParam("targetModules")([...ALL_TARGET_MODULES])
-                      }
-                    />
-                    <Chip
-                      size="small"
-                      clickable
-                      variant="outlined"
-                      label={t("fineTuning:paramsStep.lora.attentionOnly")}
-                      onClick={() =>
-                        setParam("targetModules")([
-                          "q_proj",
-                          "k_proj",
-                          "v_proj",
-                          "o_proj",
-                        ])
-                      }
-                    />
-                  </Stack>
-                </Stack>
-                <Box
-                  role="group"
-                  aria-label={t("fineTuning:paramsStep.fields.targetModules")}
-                  sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}
-                >
-                  {ALL_TARGET_MODULES.map((m) => {
-                    const on = (p.targetModules || []).includes(m);
-                    return (
-                      <Chip
-                        key={m}
-                        size="small"
-                        clickable
-                        aria-pressed={on}
-                        color={on ? "primary" : "default"}
-                        variant={on ? "filled" : "outlined"}
-                        label={m}
-                        onClick={() => toggleModule(m)}
-                        sx={{ fontFamily: '"Geist Mono", monospace' }}
-                      />
-                    );
-                  })}
-                </Box>
-                <Typography
-                  variant="caption"
-                  color={errors.targetModules ? "error.main" : "text.secondary"}
-                  component="p"
-                  sx={{ mt: 1 }}
-                >
-                  {errors.targetModules
-                    ? errorText("targetModules")
-                    : t("fineTuning:paramsStep.lora.modulesHint", {
-                        count: (p.targetModules || []).length,
-                      })}
-                </Typography>
-              </Grid>
-            </>
-          )}
-        </Grid>
-        {draft.method === "qlora" && (
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="flex-start"
-            sx={{ mt: 2 }}
-          >
-            <InfoOutlinedIcon
-              fontSize="small"
-              sx={{ color: "text.secondary", mt: 0.25 }}
-            />
-            <Typography variant="caption" color="text.secondary">
-              {t("fineTuning:catalog.quantization")}
+            <Typography variant="body2" color="text.secondary">
+              {t("fineTuning:paramsStep.training.effectiveBatch")}
             </Typography>
-          </Stack>
-        )}
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 600, fontFamily: '"Geist Mono", monospace' }}
+            >
+              {effectiveBatch
+                ? t("fineTuning:paramsStep.training.effectiveBatchValue", {
+                    batch: p.batchSize,
+                    accum: p.gradAccum,
+                    total: effectiveBatch,
+                  })
+                : "—"}
+            </Typography>
+          </Box>
+        </Hideable>
       </SectionCard>
 
-      {mode === "advanced" && (
-        <SectionCard
-          {...sectionProps}
-          icon={AutoGraphIcon}
-          title={t("fineTuning:paramsStep.optimization.title")}
-          subtitle={t("fineTuning:paramsStep.optimization.subtitle")}
-        >
-          <Grid container spacing={4}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <SelectField
-                id={`${idp}-optimizer`}
-                label={t("fineTuning:paramsStep.fields.optimizer")}
-                tooltip={t("fineTuning:paramsStep.help.optimizer")}
-                value={p.optimizer}
-                onChange={setParam("optimizer")}
-                options={[
-                  {
-                    value: "adamw_8bit",
-                    label: t("fineTuning:paramsStep.optimizers.adamw_8bit"),
-                  },
-                  {
-                    value: "adamw_torch",
-                    label: t("fineTuning:paramsStep.optimizers.adamw_torch"),
-                  },
-                ]}
-                hint={errors.optimizer ? errorText("optimizer") : null}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <SelectField
-                id={`${idp}-scheduler`}
-                label={t("fineTuning:paramsStep.fields.scheduler")}
-                tooltip={t("fineTuning:paramsStep.help.scheduler")}
-                value={p.scheduler}
-                onChange={setParam("scheduler")}
-                options={["linear", "cosine", "constant"].map((s) => ({
-                  value: s,
-                  label: t(`fineTuning:paramsStep.schedulers.${s}`),
-                }))}
-                hint={errors.scheduler ? errorText("scheduler") : null}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <NumberField
-                id={`${idp}-warmup`}
-                label={t("fineTuning:paramsStep.fields.warmupSteps")}
-                tooltip={t("fineTuning:paramsStep.help.warmupSteps")}
-                value={p.warmupSteps}
-                onCommit={setParam("warmupSteps")}
-                error={errorText("warmupSteps")}
-                inputMode="numeric"
-                hint={
-                  warmupTooLong
-                    ? t("fineTuning:paramsStep.optimization.warmupTooLong", {
-                        steps: totalSteps,
-                      })
-                    : null
-                }
-              />
-            </Grid>
-          </Grid>
-        </SectionCard>
-      )}
-
-      {mode === "advanced" && (
-        <SectionCard
-          {...sectionProps}
-          icon={FactCheckOutlinedIcon}
-          title={t("fineTuning:paramsStep.evaluation.title")}
-          subtitle={t("fineTuning:paramsStep.evaluation.subtitle")}
-        >
-          <Grid container spacing={4}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <NumberField
-                id={`${idp}-evalEvery`}
-                label={t("fineTuning:paramsStep.fields.evalEvery")}
-                tooltip={t("fineTuning:paramsStep.help.evalEvery")}
-                value={p.evalEvery}
-                onCommit={setParam("evalEvery")}
-                error={errorText("evalEvery")}
-                inputMode="numeric"
-                hint={
-                  useEval ? null : t("fineTuning:paramsStep.evaluation.noEval")
-                }
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <NumberField
-                id={`${idp}-seed`}
-                label={t("fineTuning:paramsStep.fields.seed")}
-                tooltip={t("fineTuning:paramsStep.help.seed")}
-                value={p.seed}
-                onCommit={setParam("seed")}
-                error={errorText("seed")}
-                inputMode="numeric"
-              />
-            </Grid>
-          </Grid>
-        </SectionCard>
-      )}
-
-      <SectionCard
-        {...sectionProps}
-        icon={MemoryIcon}
-        title={t("fineTuning:paramsStep.memory.title")}
-        subtitle={
-          checkpoint
-            ? t("fineTuning:paramsStep.memory.subtitle", {
-                model: checkpoint.name,
-                method: t(`fineTuning:catalog.methods.${draft.method}.name`),
-              })
-            : t("fineTuning:paramsStep.memory.noModel")
-        }
+      <Hideable
+        id="shared.params.lora"
+        label={t("fineTuning:viewEditing.sections.paramsLora")}
+        level="intermediate"
       >
-        <VramEstimate
-          checkpoint={checkpoint}
-          method={draft.method}
-          parameters={p}
-        />
-      </SectionCard>
+        <SectionCard
+          {...sectionProps}
+          icon={LayersOutlinedIcon}
+          title={t("fineTuning:paramsStep.lora.title")}
+          subtitle={t("fineTuning:paramsStep.lora.subtitle")}
+        >
+          <Grid container spacing={4}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <NumberField
+                id={`${idp}-loraR`}
+                label={t("fineTuning:paramsStep.fields.loraR")}
+                tooltip={t("fineTuning:paramsStep.help.loraR")}
+                value={p.loraR}
+                onCommit={setParam("loraR")}
+                error={errorText("loraR")}
+                inputMode="numeric"
+              />
+              <Slider
+                size="small"
+                value={
+                  Number.isFinite(Number(p.loraR))
+                    ? Math.min(128, Math.max(4, Number(p.loraR)))
+                    : 16
+                }
+                min={4}
+                max={128}
+                step={null}
+                marks={[4, 8, 16, 32, 64, 128].map((v) => ({
+                  value: v,
+                  label: String(v),
+                }))}
+                onChange={(_e, v) => setParam("loraR")(v)}
+                aria-label={t("fineTuning:paramsStep.fields.loraR")}
+                sx={{ mt: -2, mx: 1, width: "calc(100% - 8px)" }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <NumberField
+                id={`${idp}-loraAlpha`}
+                label={t("fineTuning:paramsStep.fields.loraAlpha")}
+                tooltip={t("fineTuning:paramsStep.help.loraAlpha")}
+                value={p.loraAlpha}
+                onCommit={setParam("loraAlpha")}
+                error={errorText("loraAlpha")}
+              />
+              {Number.isFinite(Number(p.loraR)) &&
+                Number(p.loraAlpha) !== 2 * Number(p.loraR) && (
+                  <Button
+                    size="small"
+                    onClick={() => setParam("loraAlpha")(2 * Number(p.loraR))}
+                    sx={{ mt: -2 }}
+                  >
+                    {t("fineTuning:paramsStep.lora.useDoubleR", {
+                      value: 2 * Number(p.loraR),
+                    })}
+                  </Button>
+                )}
+            </Grid>
+            {mode === "advanced" && (
+              <>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FieldLabel
+                    label={t("fineTuning:paramsStep.fields.loraDropout")}
+                    tooltip={t("fineTuning:paramsStep.help.loraDropout")}
+                  />
+                  <Stack direction="row" spacing={3} alignItems="center">
+                    <Slider
+                      size="small"
+                      value={
+                        Number.isFinite(Number(p.loraDropout))
+                          ? Math.min(0.3, Number(p.loraDropout))
+                          : 0.05
+                      }
+                      min={0}
+                      max={0.3}
+                      step={0.01}
+                      onChange={(_e, v) =>
+                        setParam("loraDropout")(Math.round(v * 100) / 100)
+                      }
+                      aria-label={t("fineTuning:paramsStep.fields.loraDropout")}
+                      sx={{ flex: 1 }}
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        minWidth: 40,
+                        fontFamily: '"Geist Mono", monospace',
+                      }}
+                    >
+                      {formatNumber(p.loraDropout)}
+                    </Typography>
+                  </Stack>
+                  {errors.loraDropout && (
+                    <Typography variant="caption" color="error.main">
+                      {errorText("loraDropout")}
+                    </Typography>
+                  )}
+                </Grid>
+                <Hideable
+                  id="shared.params.targetModules"
+                  label={t(
+                    "fineTuning:viewEditing.sections.paramsTargetModules",
+                  )}
+                  level="full"
+                  sx={{ width: "100%" }}
+                >
+                  <Grid size={{ xs: 12 }}>
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      spacing={2}
+                    >
+                      <FieldLabel
+                        label={t("fineTuning:paramsStep.fields.targetModules")}
+                        tooltip={t("fineTuning:paramsStep.help.targetModules")}
+                      />
+                      <Stack direction="row" spacing={1}>
+                        <Chip
+                          size="small"
+                          clickable
+                          color={allModules ? "primary" : "default"}
+                          variant={allModules ? "filled" : "outlined"}
+                          label={t("fineTuning:paramsStep.lora.allLinear")}
+                          onClick={() =>
+                            setParam("targetModules")([...ALL_TARGET_MODULES])
+                          }
+                        />
+                        <Chip
+                          size="small"
+                          clickable
+                          variant="outlined"
+                          label={t("fineTuning:paramsStep.lora.attentionOnly")}
+                          onClick={() =>
+                            setParam("targetModules")([
+                              "q_proj",
+                              "k_proj",
+                              "v_proj",
+                              "o_proj",
+                            ])
+                          }
+                        />
+                      </Stack>
+                    </Stack>
+                    <Box
+                      role="group"
+                      aria-label={t(
+                        "fineTuning:paramsStep.fields.targetModules",
+                      )}
+                      sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}
+                    >
+                      {ALL_TARGET_MODULES.map((m) => {
+                        const on = (p.targetModules || []).includes(m);
+                        return (
+                          <Chip
+                            key={m}
+                            size="small"
+                            clickable
+                            aria-pressed={on}
+                            color={on ? "primary" : "default"}
+                            variant={on ? "filled" : "outlined"}
+                            label={m}
+                            onClick={() => toggleModule(m)}
+                            sx={{ fontFamily: '"Geist Mono", monospace' }}
+                          />
+                        );
+                      })}
+                    </Box>
+                    <Typography
+                      variant="caption"
+                      color={
+                        errors.targetModules ? "error.main" : "text.secondary"
+                      }
+                      component="p"
+                      sx={{ mt: 1 }}
+                    >
+                      {errors.targetModules
+                        ? errorText("targetModules")
+                        : t("fineTuning:paramsStep.lora.modulesHint", {
+                            count: (p.targetModules || []).length,
+                          })}
+                    </Typography>
+                  </Grid>
+                </Hideable>
+              </>
+            )}
+          </Grid>
+          {draft.method === "qlora" && (
+            <Hideable
+              id="shared.params.qloraInfo"
+              label={t("fineTuning:viewEditing.sections.paramsQloraInfo")}
+              level="full"
+            >
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="flex-start"
+                sx={{ mt: 2 }}
+              >
+                <InfoOutlinedIcon
+                  fontSize="small"
+                  sx={{ color: "text.secondary", mt: 0.25 }}
+                />
+                <Typography variant="caption" color="text.secondary">
+                  {t("fineTuning:catalog.quantization")}
+                </Typography>
+              </Stack>
+            </Hideable>
+          )}
+        </SectionCard>
+      </Hideable>
+
+      {mode === "advanced" && (
+        <Hideable
+          id="shared.params.optimization"
+          label={t("fineTuning:viewEditing.sections.paramsOptimization")}
+          level="full"
+        >
+          <SectionCard
+            {...sectionProps}
+            icon={AutoGraphIcon}
+            title={t("fineTuning:paramsStep.optimization.title")}
+            subtitle={t("fineTuning:paramsStep.optimization.subtitle")}
+          >
+            <Grid container spacing={4}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <SelectField
+                  id={`${idp}-optimizer`}
+                  label={t("fineTuning:paramsStep.fields.optimizer")}
+                  tooltip={t("fineTuning:paramsStep.help.optimizer")}
+                  value={p.optimizer}
+                  onChange={setParam("optimizer")}
+                  options={[
+                    {
+                      value: "adamw_8bit",
+                      label: t("fineTuning:paramsStep.optimizers.adamw_8bit"),
+                    },
+                    {
+                      value: "adamw_torch",
+                      label: t("fineTuning:paramsStep.optimizers.adamw_torch"),
+                    },
+                  ]}
+                  hint={errors.optimizer ? errorText("optimizer") : null}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <SelectField
+                  id={`${idp}-scheduler`}
+                  label={t("fineTuning:paramsStep.fields.scheduler")}
+                  tooltip={t("fineTuning:paramsStep.help.scheduler")}
+                  value={p.scheduler}
+                  onChange={setParam("scheduler")}
+                  options={["linear", "cosine", "constant"].map((s) => ({
+                    value: s,
+                    label: t(`fineTuning:paramsStep.schedulers.${s}`),
+                  }))}
+                  hint={errors.scheduler ? errorText("scheduler") : null}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <NumberField
+                  id={`${idp}-warmup`}
+                  label={t("fineTuning:paramsStep.fields.warmupSteps")}
+                  tooltip={t("fineTuning:paramsStep.help.warmupSteps")}
+                  value={p.warmupSteps}
+                  onCommit={setParam("warmupSteps")}
+                  error={errorText("warmupSteps")}
+                  inputMode="numeric"
+                  hint={
+                    warmupTooLong
+                      ? t("fineTuning:paramsStep.optimization.warmupTooLong", {
+                          steps: totalSteps,
+                        })
+                      : null
+                  }
+                />
+              </Grid>
+            </Grid>
+          </SectionCard>
+        </Hideable>
+      )}
+
+      {mode === "advanced" && (
+        <Hideable
+          id="shared.params.evaluation"
+          label={t("fineTuning:viewEditing.sections.paramsEvaluation")}
+          level="full"
+        >
+          <SectionCard
+            {...sectionProps}
+            icon={FactCheckOutlinedIcon}
+            title={t("fineTuning:paramsStep.evaluation.title")}
+            subtitle={t("fineTuning:paramsStep.evaluation.subtitle")}
+          >
+            <Grid container spacing={4}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <NumberField
+                  id={`${idp}-evalEvery`}
+                  label={t("fineTuning:paramsStep.fields.evalEvery")}
+                  tooltip={t("fineTuning:paramsStep.help.evalEvery")}
+                  value={p.evalEvery}
+                  onCommit={setParam("evalEvery")}
+                  error={errorText("evalEvery")}
+                  inputMode="numeric"
+                  hint={
+                    useEval
+                      ? null
+                      : t("fineTuning:paramsStep.evaluation.noEval")
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <NumberField
+                  id={`${idp}-seed`}
+                  label={t("fineTuning:paramsStep.fields.seed")}
+                  tooltip={t("fineTuning:paramsStep.help.seed")}
+                  value={p.seed}
+                  onCommit={setParam("seed")}
+                  error={errorText("seed")}
+                  inputMode="numeric"
+                />
+              </Grid>
+            </Grid>
+          </SectionCard>
+        </Hideable>
+      )}
+
+      <Hideable
+        id="shared.params.vramEstimate"
+        label={t("fineTuning:viewEditing.sections.paramsVramEstimate")}
+        level="intermediate"
+      >
+        <SectionCard
+          {...sectionProps}
+          icon={MemoryIcon}
+          title={t("fineTuning:paramsStep.memory.title")}
+          subtitle={
+            checkpoint
+              ? t("fineTuning:paramsStep.memory.subtitle", {
+                  model: checkpoint.name,
+                  method: t(`fineTuning:catalog.methods.${draft.method}.name`),
+                })
+              : t("fineTuning:paramsStep.memory.noModel")
+          }
+        >
+          <VramEstimate
+            checkpoint={checkpoint}
+            method={draft.method}
+            parameters={p}
+          />
+        </SectionCard>
+      </Hideable>
     </Stack>
   );
 }

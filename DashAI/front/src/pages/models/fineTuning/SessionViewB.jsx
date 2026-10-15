@@ -33,6 +33,7 @@ import RunConfigCard from "./RunConfigCard";
 import BaseModelsPanel from "./BaseModelsPanel";
 import RunConfigDialog, { CONFIG_STEPS } from "./RunConfigDialog";
 import DataPrepDialog from "./DataPrepDialog";
+import Hideable from "../../../components/fineTuning/viewEditing/Hideable";
 
 const TRAIN_REUSE_MS = 1500;
 
@@ -260,23 +261,37 @@ export default function SessionViewB({ sessionId }) {
                 </Typography>
               </Box>
               <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<EditNoteOutlinedIcon />}
-                  onClick={() => setDataOpen(true)}
+                <Hideable
+                  id="b.session.editDataButton"
+                  label={t(
+                    "fineTuning:viewEditing.sections.bSessionEditDataButton",
+                  )}
+                  level="essential"
                 >
-                  {t("fineTuning:shellB.session.editData")}
-                </Button>
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<PlayArrow />}
-                  disabled={notStarted === 0}
-                  onClick={trainAll}
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<EditNoteOutlinedIcon />}
+                    onClick={() => setDataOpen(true)}
+                  >
+                    {t("fineTuning:shellB.session.editData")}
+                  </Button>
+                </Hideable>
+                <Hideable
+                  id="b.session.trainAll"
+                  label={t("fineTuning:viewEditing.sections.bSessionTrainAll")}
+                  level="full"
                 >
-                  {t("fineTuning:shellB.session.trainAll")}
-                </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<PlayArrow />}
+                    disabled={notStarted === 0}
+                    onClick={trainAll}
+                  >
+                    {t("fineTuning:shellB.session.trainAll")}
+                  </Button>
+                </Hideable>
               </Box>
             </Box>
           </Box>
@@ -313,24 +328,30 @@ export default function SessionViewB({ sessionId }) {
             )}
           </Box>
 
-          <Divider sx={{ my: 2 }} />
+          <Hideable
+            id="b.session.comparisonTable"
+            label={t("fineTuning:viewEditing.sections.bSessionComparisonTable")}
+            level="intermediate"
+          >
+            <Divider sx={{ my: 2 }} />
 
-          <Box sx={{ flexShrink: 0, p: 4 }}>
-            <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
-              {t("fineTuning:shellB.session.comparisonTitle")}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              {t("fineTuning:shellB.session.comparisonHelp")}
-            </Typography>
-            <Box sx={{ overflowX: "auto" }}>
-              <RunComparisonTable
-                runs={runs}
-                columns={[...COMPARISON_COLUMNS]}
-                onOpen={openRun}
-                emptyText={t("fineTuning:shellB.session.comparisonEmpty")}
-              />
+            <Box sx={{ flexShrink: 0, p: 4 }}>
+              <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
+                {t("fineTuning:shellB.session.comparisonTitle")}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {t("fineTuning:shellB.session.comparisonHelp")}
+              </Typography>
+              <Box sx={{ overflowX: "auto" }}>
+                <RunComparisonTable
+                  runs={runs}
+                  columns={[...COMPARISON_COLUMNS]}
+                  onOpen={openRun}
+                  emptyText={t("fineTuning:shellB.session.comparisonEmpty")}
+                />
+              </Box>
             </Box>
-          </Box>
+          </Hideable>
         </Box>
       </CenterPanel>
       <RightPanel toggleButtonTop="50%">

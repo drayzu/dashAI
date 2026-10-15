@@ -36,6 +36,7 @@ import {
   gpuBlockCause,
   modelRefStatus,
 } from "./modelAvailability";
+import Hideable from "../viewEditing/Hideable";
 
 const AVATAR_OFFSET = "40px"; // ChatAvatar width + gap, to align captions with bubbles
 
@@ -274,8 +275,19 @@ export default function AdapterChat({ chatId }) {
     });
   };
 
+  // Every per-message snapshot caption shares one view-editing id.
+  const hideableCaption = (node) => (
+    <Hideable
+      id="shared.chat.snapshotCaptions"
+      label={t("fineTuning:viewEditing.sections.chatSnapshotCaptions")}
+      level="full"
+    >
+      {node}
+    </Hideable>
+  );
+
   const renderAssistant = (m) => {
-    const caption = (
+    const caption = hideableCaption(
       <Tooltip title={snapshotTooltip(m)} placement="bottom-start">
         <Typography
           variant="caption"
@@ -292,7 +304,7 @@ export default function AdapterChat({ chatId }) {
         >
           {snapshotCaption(m)}
         </Typography>
-      </Tooltip>
+      </Tooltip>,
     );
     if (m.status === "pending") {
       return (
@@ -373,13 +385,15 @@ export default function AdapterChat({ chatId }) {
               {t("fineTuning:chat.noFallback")}
             </Typography>
           </Alert>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ display: "block", mt: 1, px: 2 }}
-          >
-            {snapshotCaption(m)}
-          </Typography>
+          {hideableCaption(
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mt: 1, px: 2 }}
+            >
+              {snapshotCaption(m)}
+            </Typography>,
+          )}
         </Box>
       );
     }
@@ -424,11 +438,17 @@ export default function AdapterChat({ chatId }) {
           <Typography variant="h6" component="h2" noWrap>
             {chat.name}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {t("fineTuning:chat.messagesCount", {
-              count: messages.filter((m) => m.role === "user").length,
-            })}
-          </Typography>
+          <Hideable
+            id="shared.chat.messageCount"
+            label={t("fineTuning:viewEditing.sections.chatMessageCount")}
+            level="full"
+          >
+            <Typography variant="caption" color="text.secondary">
+              {t("fineTuning:chat.messagesCount", {
+                count: messages.filter((m) => m.role === "user").length,
+              })}
+            </Typography>
+          </Hideable>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Typography variant="body2" color="text.secondary">
@@ -475,34 +495,40 @@ export default function AdapterChat({ chatId }) {
             >
               {t("fineTuning:chat.emptySubtitle")}
             </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                alignItems: "center",
-                maxWidth: 560,
-              }}
+            <Hideable
+              id="shared.chat.suggestions"
+              label={t("fineTuning:viewEditing.sections.chatSuggestions")}
+              level="intermediate"
             >
-              {CHAT_SUGGESTIONS.map((suggestion) => (
-                <Chip
-                  key={suggestion}
-                  label={suggestion}
-                  variant="outlined"
-                  clickable
-                  disabled={!usable}
-                  onClick={() => send(suggestion)}
-                  sx={{
-                    height: "auto",
-                    py: 1.5,
-                    "& .MuiChip-label": {
-                      whiteSpace: "normal",
-                      textAlign: "left",
-                    },
-                  }}
-                />
-              ))}
-            </Box>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  alignItems: "center",
+                  maxWidth: 560,
+                }}
+              >
+                {CHAT_SUGGESTIONS.map((suggestion) => (
+                  <Chip
+                    key={suggestion}
+                    label={suggestion}
+                    variant="outlined"
+                    clickable
+                    disabled={!usable}
+                    onClick={() => send(suggestion)}
+                    sx={{
+                      height: "auto",
+                      py: 1.5,
+                      "& .MuiChip-label": {
+                        whiteSpace: "normal",
+                        textAlign: "left",
+                      },
+                    }}
+                  />
+                ))}
+              </Box>
+            </Hideable>
           </Box>
         ) : (
           rows.map((row) => {
@@ -641,13 +667,19 @@ export default function AdapterChat({ chatId }) {
           </span>
         </Tooltip>
       </Box>
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{ display: "block", mt: 1, px: 1 }}
+      <Hideable
+        id="shared.chat.composerHint"
+        label={t("fineTuning:viewEditing.sections.chatComposerHint")}
+        level="full"
       >
-        {t("fineTuning:chat.composerHint")}
-      </Typography>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: "block", mt: 1, px: 1 }}
+        >
+          {t("fineTuning:chat.composerHint")}
+        </Typography>
+      </Hideable>
     </Box>
   );
 }

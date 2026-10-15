@@ -128,9 +128,7 @@
     "cancelled": {
       "title": "Run cancelled",
       "explanation": "The run was cancelled. It keeps its configuration and log; retrying creates a new run.",
-      "actions": [
-        "Create a new run from this configuration."
-      ]
+      "actions": ["Create a new run from this configuration."]
     },
     "adapter_missing": {
       "title": "Adapter not available",
@@ -159,10 +157,7 @@
     "missing_column": {
       "title": "Missing column",
       "explanation": "The mapping points to a column that does not exist, or a required field is not assigned.",
-      "actions": [
-        "Review the column mapping.",
-        "Confirm the format."
-      ]
+      "actions": ["Review the column mapping.", "Confirm the format."]
     },
     "invalid_json": {
       "title": "Invalid JSON",
@@ -183,10 +178,7 @@
     "no_assistant": {
       "title": "No assistant response",
       "explanation": "Some conversations have no assistant message, so there is nothing to supervise.",
-      "actions": [
-        "Add the expected response.",
-        "Remove those conversations."
-      ]
+      "actions": ["Add the expected response.", "Remove those conversations."]
     },
     "too_long": {
       "title": "Examples too long",
@@ -1968,5 +1960,145 @@
     "empty": "No loss points yet.",
     "notStarted": "The curve will appear when training starts.",
     "lossDisclaimer": "Training loss alone does not prove an improvement: compare the adapter with the base model on held-out cases."
+  },
+  "viewEditing": {
+    "title": "Edit view",
+    "hint": "Hide blocks with the eye icon. When you leave, hidden blocks leave no trace. Shortcut: Ctrl+Shift+E.",
+    "toolbarLabel": "Prototype view editing",
+    "levelLabel": "Level of detail",
+    "levels": {
+      "essential": {
+        "label": "Essential",
+        "description": "Only the core thesis flow: model, data, basic parameters, run and result."
+      },
+      "intermediate": {
+        "label": "Intermediate",
+        "description": "Adds detailed validation, splits, resources and history."
+      },
+      "full": {
+        "label": "Full",
+        "description": "Everything the prototype includes."
+      }
+    },
+    "hiddenHere_one": "{{count}} block hidden on this screen:",
+    "hiddenHere_other": "{{count}} blocks hidden on this screen:",
+    "noneHidden": "No blocks hidden on this screen.",
+    "restore": "Show again",
+    "showAll": "Show all",
+    "done": "Done",
+    "hiddenChip": "Hidden",
+    "hideBlock": "Hide “{{label}}”",
+    "showBlock": "Show “{{label}}”",
+    "menuItem": "Edit view (Ctrl+Shift+E)",
+    "menuItemActive": "Finish editing the view",
+    "sections": {
+      "aHomeOption": {
+        "adapters": "“Adapters” card (home)",
+        "chat": "“Chat” card (home)",
+        "compare": "“Compare” card (home)"
+      },
+      "aHomeRecentRuns": "Recent runs",
+      "aLeftBarNav": {
+        "adapters": "“Adapters” link",
+        "chat": "“Chat” link",
+        "compare": "“Compare” link"
+      },
+      "aChatRecentChats": "Recent chats",
+      "aSessionRunCountCaption": "Run count",
+      "aHistoryCards": "History cards",
+      "aHistoryTable": "Comparison table",
+      "aPreviewReadinessChip": "Readiness status",
+      "aPreviewTraining": "Training summary",
+      "aPreviewData": "Data summary",
+      "aPreviewHardware": "Hardware and VRAM",
+      "aPreviewFiles": "Model files",
+      "aPreviewPending": "Pending items",
+      "aPreviewGpuQueueNote": "GPU queue note",
+      "aReviewModelGroup": "Summary: model",
+      "aReviewDataGroup": "Summary: data",
+      "aReviewTrainingGroup": "Summary: training",
+      "aReviewResourcesGroup": "Summary: resources",
+      "aReviewPreflight": "Preflight checklist",
+      "aReviewGpuQueueNote": "GPU queue note",
+      "aRightHistoryHint": "History note",
+      "aRightModuleHardware": "Detected hardware",
+      "adaptersRegistry": "Adapters registry",
+      "adaptersAvailabilityNote": "Availability note",
+      "adapterResultCompareButton": "“Compare” button",
+      "adapterResultMetrics": "Adapter metrics",
+      "adapterResultFiles": "Adapter files",
+      "bAdaptersTrainedInNote": "“Trained in Models” note",
+      "bAdapterSummaryDetails": "Adapter details",
+      "bAdapterSummaryCompareButton": "“Compare” button",
+      "bBaseModelsMethodChips": "Methods per model",
+      "bBaseModelsVram": "VRAM estimate",
+      "bBaseModelsHint": "Panel hint",
+      "bBaseModelsCatalogNote": "Catalog note",
+      "bCreatePreviewSummary": "Data summary",
+      "bRunInfoConfigGroups": "Frozen configuration",
+      "bRunProvenanceTab": "Provenance tab",
+      "bSessionEditDataButton": "“Edit data prep” button",
+      "bSessionTrainAll": "“Train all” button",
+      "bSessionComparisonTable": "Configuration comparison",
+      "chatSnapshotCaptions": "Per-message details",
+      "chatMessageCount": "Message count",
+      "chatSuggestions": "Message suggestions",
+      "chatComposerHint": "Composer hint",
+      "chatGenerationParams": "Generation parameters",
+      "chatParamsNotes": "Parameter notes",
+      "compareCondition": "Comparison conditions",
+      "compareBlindReview": "Blind review",
+      "compareCsvExport": "CSV export",
+      "compareSummaryCards": "Results summary",
+      "compareManualScoring": "Manual scoring",
+      "dataSummaryCard": "Dataset summary",
+      "dataFormatDetection": "Format detection",
+      "dataSystemPrompt": "System prompt",
+      "dataValidationReport": "Validation report",
+      "dataSplits": "Splits",
+      "dataMaxSamples": "Max samples",
+      "dataSftPreview": "SFT preview",
+      "dataPreviewDialogButton": "“More examples” button",
+      "dataSftLegend": "Token legend",
+      "dataTokenApproxNote": "Approximate tokens note",
+      "modelHardwareChip": "Detected hardware",
+      "modelCatalogNote": "Catalog note",
+      "modelCardVram": "VRAM estimate (catalog)",
+      "modelCardDownloadProgress": "Download progress",
+      "modelFilesStatus": "Files and credential status",
+      "modelMethodDescription": "Method explanation",
+      "modelMethodVram": "VRAM estimate (method)",
+      "modelQuantizationNote": "Quantization note",
+      "paramsModeToggle": "Simple/Advanced toggle",
+      "paramsPresets": "Presets",
+      "paramsEffectiveBatch": "Effective batch",
+      "paramsLora": "LoRA parameters",
+      "paramsTargetModules": "Target modules",
+      "paramsQloraInfo": "QLoRA info",
+      "paramsOptimization": "Optimizer and scheduler",
+      "paramsEvaluation": "Evaluation and seed",
+      "paramsVramEstimate": "VRAM estimate",
+      "provenanceOpenButton": "“Provenance” button",
+      "provenanceJsonButton": "“Show JSON” button",
+      "provenanceSection": {
+        "base": "Provenance: base model",
+        "data": "Provenance: data",
+        "method": "Provenance: method",
+        "config": "Provenance: configuration",
+        "environment": "Provenance: environment",
+        "metrics": "Provenance: metrics",
+        "artifact": "Provenance: artifact",
+        "origin": "Provenance: origin"
+      },
+      "runPhaseTimeline": "Phase timeline",
+      "runDownloadDetails": "Download details",
+      "runHealthWarning": "Health warning (grad norm)",
+      "runMetricsStrip": "Current metrics",
+      "runLossChart": "Loss curve",
+      "runLossDisclaimer": "Loss disclaimer",
+      "runResources": "Resources panel",
+      "runEventLog": "Event log",
+      "runFrozenConfig": "Frozen configuration"
+    }
   }
 }
