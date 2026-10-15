@@ -19,7 +19,6 @@ import Tooltip from "@mui/material/Tooltip";
 import HardwareMonitorButton from "./hardware/HardwareMonitorButton";
 import NavbarTourButton from "./tour/NavbarTourButton";
 import CredentialsButton from "./credentials/CredentialsButton";
-import { fineTuningDemoEnabled } from "../api/fineTuningDemo/config";
 
 function ResponsiveAppBar() {
   const theme = useTheme();
@@ -222,7 +221,7 @@ function ResponsiveAppBar() {
           <LanguageSelector />
           <HardwareMonitorButton />
           <NavbarTourButton />
-          {!fineTuningDemoEnabled && <CredentialsButton />}
+          <CredentialsButton />
           <Tooltip
             title={
               theme.palette.mode === "dark"

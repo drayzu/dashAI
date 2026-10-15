@@ -1,0 +1,1972 @@
+{
+  "events": {
+    "unknown": "Event",
+    "created": "Configuration frozen · run “{{name}}” created",
+    "queued": "Accepted in the queue (single simulated GPU)",
+    "waitingForRun": "Waiting for “{{name}}” to finish",
+    "gpuWaiting": "GPU busy with another process; the run stays queued",
+    "gpuFree": "GPU available; the run starts",
+    "preparing": "Preparing: checking the frozen configuration and dependencies",
+    "checkpointCached": "Checkpoint {{repository}}@{{revision}} available locally; no download needed",
+    "downloadStarted": "Downloading {{repository}}@{{revision}} ({{size}})",
+    "downloadProgress": "Download at {{percent}}% ({{done}} of {{total}})",
+    "downloadDone": "Download complete and verified ({{size}})",
+    "validatingRows": "Validating all {{rows}} rows of the dataset",
+    "fingerprintOk": "Data copy pinned · fingerprint {{fingerprint}}",
+    "splitDone": "Splits fixed (seed {{seed}}): {{train}} training · {{eval}} evaluation",
+    "splitDoneNoEval": "Splits fixed: {{train}} training · no evaluation",
+    "templateApplied": "Template applied to {{examples}} examples · ≈{{supervisedTokens}} supervised tokens (responses only)",
+    "loadingBaseQlora": "Loading {{repository}} in 4-bit (NF4, double quantization, FP16 compute)",
+    "loadingBaseLora": "Loading {{repository}} in FP16",
+    "loraAttached": "LoRA adapter r={{r}}, α={{alpha}} on {{modules}} modules · {{trainable}} trainable parameters",
+    "trainingStarted": "Training started: {{totalSteps}} steps · effective batch {{effectiveBatch}}",
+    "stepLog": "Step {{step}}/{{total}} · loss {{loss}} · LR {{lr}}",
+    "evalLog": "Evaluation at step {{step}} · eval loss {{evalLoss}}",
+    "gradNormWarning": "Non-finite grad_norm (NaN) at step {{step}}; training continues",
+    "evaluating": "Final evaluation on {{examples}} held-out examples",
+    "saving": "Saving the adapter to staging",
+    "verifying": "Verifying adapter files and manifest",
+    "published": "Adapter “{{adapterName}}” published ({{size}})",
+    "adapterMissing": "Adapter file for “{{adapterName}}” not found; availability: Missing",
+    "cancelled": "Run cancelled by the user",
+    "cancelledQueued": "Run cancelled while waiting in the queue",
+    "failed": {
+      "oom": "CUDA out of memory at step {{step}}: {{used}} GB in use of {{available}} GB (estimate {{estimated}} GB)",
+      "incomplete_download": "Download interrupted at {{percent}}% ({{done}} of {{total}}); incomplete files, the revision is not changed",
+      "invalid_data_full": "Full validation: row {{row}} has an empty “{{column}}” column",
+      "mask_invalid": "Truncation to {{maxLength}} tokens removed every supervised token in {{examples}} examples",
+      "nan_loss": "Non-finite loss (NaN) at step {{step}}; run stopped",
+      "interrupted": "DashAI closed during training (step {{step}}); the run was interrupted"
+    }
+  },
+  "failures": {
+    "unknown": {
+      "title": "Error",
+      "explanation": "An unidentified error occurred.",
+      "actions": []
+    },
+    "oom": {
+      "title": "Not enough GPU memory",
+      "explanation": "The run requested more video memory than available and stopped. No adapter was published and resources were released. The preflight estimate is only indicative: it does not guarantee that training fits.",
+      "actions": [
+        "Lower the per-device batch and raise gradient accumulation to keep the effective batch.",
+        "Lower the maximum sequence length.",
+        "Use QLoRA instead of LoRA or choose a smaller base model.",
+        "Create a new run from this configuration with those changes."
+      ]
+    },
+    "incomplete_download": {
+      "title": "Incomplete base model download",
+      "explanation": "The download of the exact revision stopped before finishing. Partial files never count as a ready model and DashAI does not switch to another revision.",
+      "actions": [
+        "Check the internet connection and free disk space.",
+        "If the model needs a credential, make sure it is set in Credentials.",
+        "Start a new run: the download is retried from scratch."
+      ]
+    },
+    "interrupted": {
+      "title": "Run interrupted",
+      "explanation": "DashAI was closed or the training process ended unexpectedly. The run keeps its configuration, log and the phase it reached, but it did not publish an adapter.",
+      "actions": [
+        "Create a new run from this configuration.",
+        "Avoid closing DashAI while training is in progress."
+      ]
+    },
+    "invalid_data_full": {
+      "title": "Invalid data in the full dataset",
+      "explanation": "The preview was validated on a sample, but validating every row found an empty value. DashAI never repairs or drops rows silently.",
+      "actions": [
+        "Fix or remove the reported row in the dataset.",
+        "Re-import the dataset and review the validation in the Data step.",
+        "Create a new run."
+      ]
+    },
+    "mask_invalid": {
+      "title": "Invalid loss mask",
+      "explanation": "Truncating to the maximum length left some examples without response tokens. DashAI does not fall back to training on every token: the loss is computed on responses only.",
+      "actions": [
+        "Increase the maximum sequence length.",
+        "Shorten the instruction or context of those examples.",
+        "Review the SFT examples in the Data step."
+      ]
+    },
+    "nan_loss": {
+      "title": "Non-finite loss (NaN)",
+      "explanation": "The loss stopped being a finite number and the run was stopped so that no corrupted adapter is published.",
+      "actions": [
+        "Lower the learning rate (for example, halve it).",
+        "Check the training data for anomalous examples.",
+        "Repeat a controlled run and review the log."
+      ]
+    },
+    "grad_norm_warning": {
+      "title": "Non-finite gradient norms",
+      "explanation": "The run finished but logged NaN grad_norm at some steps. Finishing does not prove stability: review the result before trusting the adapter.",
+      "actions": [
+        "Review the flagged steps in the log.",
+        "Compare the adapter with the base model on the held-out cases.",
+        "Repeat a controlled run with a lower learning rate."
+      ]
+    },
+    "missing_adapter": {
+      "title": "Adapter missing",
+      "explanation": "The run finished successfully, but the adapter files are no longer available. The run stays Finished; the adapter cannot be used in chat.",
+      "actions": [
+        "Restore the adapter files to their location.",
+        "Train a new run with the same configuration."
+      ]
+    },
+    "gpu_busy": {
+      "title": "GPU busy",
+      "explanation": "Another process is using the GPU. Runs wait in the queue and generation does not run until it is free.",
+      "trainingExplanation": "The GPU is busy with a training run; with a single GPU, generation does not run in parallel. Wait for it to finish or cancel it.",
+      "actions": [
+        "Wait until the GPU is free.",
+        "Check the job queue to identify the active process."
+      ]
+    },
+    "cancelled": {
+      "title": "Run cancelled",
+      "explanation": "The run was cancelled. It keeps its configuration and log; retrying creates a new run.",
+      "actions": [
+        "Create a new run from this configuration."
+      ]
+    },
+    "adapter_missing": {
+      "title": "Adapter not available",
+      "explanation": "The selected adapter is missing or invalid. DashAI does not answer with the base model instead.",
+      "actions": [
+        "Choose another available adapter.",
+        "Restore the adapter files or train it again."
+      ]
+    },
+    "base_missing": {
+      "title": "Base model not available",
+      "explanation": "The required base model is not downloaded or is invalid. Download it before generating.",
+      "actions": [
+        "Download the exact revision of the base model.",
+        "Choose another available model."
+      ]
+    },
+    "empty_value": {
+      "title": "Empty values",
+      "explanation": "Some rows have an empty instruction or response. An example without a response adds nothing to the loss, and DashAI does not drop it silently.",
+      "actions": [
+        "Fill in the reported rows.",
+        "Remove them explicitly from the dataset and re-import it."
+      ]
+    },
+    "missing_column": {
+      "title": "Missing column",
+      "explanation": "The mapping points to a column that does not exist, or a required field is not assigned.",
+      "actions": [
+        "Review the column mapping.",
+        "Confirm the format."
+      ]
+    },
+    "invalid_json": {
+      "title": "Invalid JSON",
+      "explanation": "The messages column does not hold a valid JSON list of turns with role and content.",
+      "actions": [
+        "Fix the JSON of the reported rows.",
+        "Re-import the dataset."
+      ]
+    },
+    "unsupported_role": {
+      "title": "Unsupported role",
+      "explanation": "Only the system, user and assistant roles are supported. Tools and multimodal content are not supported.",
+      "actions": [
+        "Normalize the roles of those conversations.",
+        "Remove the affected conversations."
+      ]
+    },
+    "no_assistant": {
+      "title": "No assistant response",
+      "explanation": "Some conversations have no assistant message, so there is nothing to supervise.",
+      "actions": [
+        "Add the expected response.",
+        "Remove those conversations."
+      ]
+    },
+    "too_long": {
+      "title": "Examples too long",
+      "explanation": "Some examples exceed the maximum length and will be truncated. They keep supervised tokens, so this is only a warning.",
+      "actions": [
+        "Increase the maximum length if memory allows.",
+        "Shorten those examples."
+      ]
+    },
+    "truncation_kills_response": {
+      "title": "Truncation removes the response",
+      "explanation": "With the current maximum length, the response of some examples is cut off entirely and there would be no supervised tokens.",
+      "actions": [
+        "Increase the maximum length.",
+        "Shorten the instruction or context."
+      ]
+    }
+  },
+  "status": {
+    "0": "Created",
+    "1": "Queued",
+    "2": "Running",
+    "3": "Finished",
+    "4": "Error"
+  },
+  "phase": {
+    "queued": "Queue",
+    "preparing": "Preparing",
+    "downloading": "Downloading",
+    "validating": "Validating",
+    "loading": "Loading",
+    "training": "Training",
+    "evaluating": "Evaluating",
+    "saving": "Saving",
+    "published": "Published"
+  },
+  "reason": {
+    "failed": "Failed",
+    "cancelled": "Cancelled",
+    "interrupted": "Interrupted"
+  },
+  "availability": {
+    "checkpoint": {
+      "missing": "Not downloaded",
+      "downloading": "Downloading",
+      "ready": "Ready",
+      "invalid": "Invalid"
+    },
+    "adapter": {
+      "ready": "Available",
+      "missing": "Missing",
+      "invalid": "Invalid"
+    },
+    "credentialRequired": "Credential required",
+    "willDownload": "Will be downloaded on start"
+  },
+  "catalog": {
+    "title": "Trainable catalog",
+    "subtitle": "Transformers checkpoints validated for LoRA and QLoRA. It is separate from the GGUF catalog Generative uses for inference.",
+    "revision": "Exact revision",
+    "revisionIllustrative": "Illustrative revision (prototype)",
+    "repository": "Repository",
+    "parameters": "{{value}}B parameters",
+    "contextLength": "{{value}}-token context",
+    "diskSize": "{{size}} on disk",
+    "license": "License: {{license}}",
+    "gatedHint": "Requires a Hugging Face credential. Set it up in Credentials.",
+    "qloraUnsupported": "QLoRA is not validated for this checkpoint. Use LoRA; DashAI never switches the method automatically.",
+    "quantization": "QLoRA: 4-bit NF4 base, double quantization and FP16 compute.",
+    "methods": {
+      "lora": {
+        "name": "LoRA",
+        "description": "Trains low-rank matrices on top of the base model loaded in FP16."
+      },
+      "qlora": {
+        "name": "QLoRA",
+        "description": "Like LoRA, but with the base quantized to 4 bits: uses less GPU memory."
+      }
+    },
+    "models": {
+      "qwen25_05b": {
+        "description": "Small and fast; a good first test on an 8 GB GPU."
+      },
+      "qwen25_15b": {
+        "description": "Better quality than the 0.5B version; downloaded when the first run starts."
+      },
+      "llama32_1b": {
+        "description": "Gated model: requires accepting its license and a Hugging Face credential."
+      },
+      "smollm2_360m": {
+        "description": "Very light. QLoRA is not validated for this checkpoint: LoRA only."
+      },
+      "phi35_mini": {
+        "description": "3.8B model: with LoRA it exceeds 8 GB of VRAM; with QLoRA and batch 1 it fits."
+      }
+    }
+  },
+  "datasets": {
+    "groups": {
+      "dashai": "DashAI datasets",
+      "sample": "Prototype samples"
+    },
+    "source": {
+      "dashai": "DashAI",
+      "sample": "Sample"
+    },
+    "rowsCols": "{{rows}} rows × {{cols}} columns",
+    "heldOut": "Held-out cases (never used for training)",
+    "sampleNote": "Validated on a sample of {{rows}} rows",
+    "samples": {
+      "fichasSoporte": {
+        "name": "DashAI support tickets",
+        "description": "Reference case: support requests turned into JSON tickets (categoria, resumen, siguiente_paso). Content in Spanish."
+      },
+      "qaPares": {
+        "name": "Frequent questions (pairs)",
+        "description": "Question/answer pairs about using DashAI; the mapping must be confirmed. Content in Spanish."
+      },
+      "conversacionesSoporte": {
+        "name": "Support conversations",
+        "description": "Conversations in messages format with system, user and assistant roles; some are multi-turn. Content in Spanish."
+      },
+      "instruccionesConErrores": {
+        "name": "Instructions with errors",
+        "description": "Alpaca format with empty responses and one overly long response, to show the diagnostics. Content in Spanish."
+      },
+      "soloTexto": {
+        "name": "Plain text corpus",
+        "description": "A single text column: outside the scope of response-only supervised fine-tuning. Content in Spanish."
+      }
+    },
+    "formats": {
+      "alpaca": "Alpaca (instruction, input, output)",
+      "prompt_completion": "Prompt / completion",
+      "messages": "Messages (conversation)",
+      "none": "No format"
+    },
+    "fields": {
+      "instruction": "Instruction",
+      "input": "Input (optional)",
+      "output": "Response",
+      "prompt": "Prompt",
+      "completion": "Completion",
+      "messages": "Messages"
+    },
+    "confidence": {
+      "high": "Format detected",
+      "medium": "Mapping must be confirmed",
+      "none": "Format not detected"
+    },
+    "detection": {
+      "alpaca_columns": "The instruction and output columns were detected.",
+      "prompt_completion_columns": "The prompt and completion columns were detected.",
+      "synonym_columns": "Equivalent columns were detected (for example, question and answer); confirm the mapping.",
+      "messages_column": "A messages column with roles was detected.",
+      "sharegpt_column": "Conversations in ShareGPT format (from/value) were detected; confirm the mapping.",
+      "text_only": "Plain text only: the response cannot be separated, so a response-only loss is impossible. Out of scope.",
+      "no_match": "No known format was recognized; assign the columns manually.",
+      "empty": "The dataset has no columns."
+    }
+  },
+  "presets": {
+    "quick_test": {
+      "name": "Quick test",
+      "description": "10 steps, length 256, batch 1 × 1, r 8. To check that everything works."
+    },
+    "balanced": {
+      "name": "Balanced",
+      "description": "60 steps, length 512, batch 2 × 4, r 16, α 32. A useful first adapter."
+    },
+    "qlora_8gb": {
+      "name": "QLoRA 8 GB",
+      "description": "120 steps, length 1024, batch 1 × 8, r 16, α 32, AdamW 8-bit. Meant for an 8 GB GPU."
+    },
+    "custom": {
+      "name": "Custom",
+      "description": "Manually edited values."
+    }
+  },
+  "validation": {
+    "blocking": "Blocking",
+    "warning": "Warning",
+    "allValid": "All rows are valid",
+    "rows": "Rows: {{rows}}",
+    "sampled": "Validated on a sample of {{rows}} rows; full validation happens when the run starts.",
+    "issue": {
+      "empty_value_one": "{{count}} row with empty values ({{column}})",
+      "empty_value_other": "{{count}} rows with empty values ({{column}})",
+      "missing_column_one": "Missing column: {{column}}",
+      "missing_column_other": "Missing column: {{column}}",
+      "invalid_json_one": "{{count}} row with invalid JSON",
+      "invalid_json_other": "{{count}} rows with invalid JSON",
+      "unsupported_role_one": "{{count}} conversation with an unsupported role",
+      "unsupported_role_other": "{{count}} conversations with an unsupported role",
+      "no_assistant_one": "{{count}} conversation without an assistant response",
+      "no_assistant_other": "{{count}} conversations without an assistant response",
+      "too_long_one": "{{count}} example exceeds the maximum length (will be truncated)",
+      "too_long_other": "{{count}} examples exceed the maximum length (will be truncated)",
+      "truncation_kills_response_one": "{{count}} example loses its whole response when truncated",
+      "truncation_kills_response_other": "{{count}} examples lose their whole response when truncated"
+    },
+    "start": {
+      "unknown": "The run cannot be started.",
+      "session_not_found": "The session does not exist.",
+      "run_not_found": "The run does not exist.",
+      "no_checkpoint": "Choose a base model.",
+      "checkpoint_unknown": "The base model is not in the trainable catalog.",
+      "method_unsupported": "The chosen method is not available for this checkpoint.",
+      "credential_required": "The model requires a configured Hugging Face credential.",
+      "download_not_confirmed": "Confirm the base model download before starting.",
+      "no_dataset": "Choose a dataset.",
+      "format_text_only": "The dataset only has plain text: it does not support a response-only loss.",
+      "format_missing": "Choose the dataset format.",
+      "mapping_incomplete": "Complete the column mapping.",
+      "format_not_confirmed": "Confirm the detected format and mapping.",
+      "invalid_parameters": "Fix the highlighted parameters.",
+      "data_unavailable": "No rows are available to validate the dataset.",
+      "data_invalid": "The data has blocking errors.",
+      "insufficient_rows": "At least 2 training examples are needed.",
+      "not_editable": "Only a configuration that has not been trained can be edited.",
+      "run_active": "The run is active.",
+      "run_not_active": "The run is not active.",
+      "session_has_active_run": "The session has an active run.",
+      "model_required": "Choose a model.",
+      "adapter_not_found": "The adapter does not exist.",
+      "chat_not_found": "The chat does not exist.",
+      "empty_message": "Write a message."
+    },
+    "warn": {
+      "vram_exceeds": "The VRAM estimate exceeds the available memory: the run will probably fail with out-of-memory.",
+      "vram_tight": "The VRAM estimate is close to the GPU limit.",
+      "download_required": "The base model will be downloaded when the run starts.",
+      "data_too_long": "Some examples exceed the maximum length and will be truncated.",
+      "validated_on_sample": "Validated on a sample; full validation happens when the run starts.",
+      "no_eval": "No evaluation split: there will be no evaluation loss."
+    },
+    "params": {
+      "required": "Required field",
+      "not_integer": "Must be an integer",
+      "out_of_range": "Outside the allowed range",
+      "empty_modules": "Choose at least one target module",
+      "invalid_choice": "Invalid option"
+    }
+  },
+  "jobs": {
+    "sourceLabel": "Fine-tuning (prototype {{prototype}})",
+    "queued": "Queued",
+    "waitingGpu": "Waiting for the GPU",
+    "trainingStep": "{{phase}} · step {{step}}/{{total}}",
+    "finished": "Adapter published",
+    "cancelled": "Cancelled"
+  },
+  "shellA": {
+    "otherPrototype": "Prototype B (in Models)",
+    "tabs": {
+      "configure": "Configure",
+      "current": "Current run",
+      "history": "History"
+    },
+    "crumbs": {
+      "label": "Breadcrumb",
+      "back": "Go back",
+      "module": "Fine-tuning",
+      "unknownSession": "Session not found",
+      "unknownRun": "Run not found",
+      "unknownAdapter": "Adapter not found",
+      "unknownChat": "Chat not found",
+      "configureStep": "Configure · {{step}}",
+      "adapters": "Adapters",
+      "chat": "Adapter chat",
+      "compare": "Compare with base",
+      "notFound": "Page not found"
+    },
+    "leftBar": {
+      "title": "Fine-tuning sessions",
+      "sessionsGroup": "Sessions",
+      "newSession": "New session",
+      "created": "Session \"{{name}}\" created",
+      "deleted": "Session \"{{name}}\" deleted",
+      "deleteConfirm": "Delete the session \"{{name}}\"? Its runs and adapters will be deleted too.",
+      "deleteWarning": "This action cannot be undone. Chats using its adapters will show the adapter as missing.",
+      "deleteActiveWarning": "The session has a run in progress: cancel it before deleting the session.",
+      "deleteErrors": {
+        "active": "Cannot delete: the session has a running or queued run.",
+        "generic": "The session could not be deleted."
+      },
+      "renameEmpty": "The session name cannot be empty.",
+      "runCount_one": "{{count}} run",
+      "runCount_other": "{{count}} runs",
+      "navLabel": "Fine-tuning module sections",
+      "adapters": "Adapters ({{count}})",
+      "chat": "Adapter chat",
+      "compare": "Compare with base"
+    },
+    "home": {
+      "title": "Local fine-tuning of language models",
+      "subtitle": "Adapt a small base model to your data with LoRA or QLoRA, follow the run and try the resulting adapter.",
+      "options": {
+        "newSession": {
+          "title": "New fine-tuning session",
+          "description": "Pick a base model, prepare an SFT dataset, set the parameters and start a run."
+        },
+        "adapters": {
+          "title": "Trained adapters",
+          "description": "Review published adapters, their provenance and availability ({{count}} in total)."
+        },
+        "chat": {
+          "title": "Try an adapter in chat",
+          "description": "Chat with an adapter or a base model; each answer keeps the model it was generated with."
+        },
+        "compare": {
+          "title": "Compare with the base model",
+          "description": "Evaluate the adapter against its base model on held-out cases ({{count}} adapters available)."
+        }
+      },
+      "recentTitle": "Recent runs",
+      "recentSubtitle_one": "{{count}} run in this prototype.",
+      "recentSubtitle_other": "{{count}} runs in this prototype."
+    },
+    "session": {
+      "rename": "Rename session",
+      "renameLabel": "Session name",
+      "caption_one": "Editable draft · {{count}} run",
+      "caption_other": "Editable draft · {{count}} runs",
+      "tabsLabel": "Session views",
+      "startRun": "Start run",
+      "noRunsTitle": "This session has no runs yet",
+      "noRunsDescription": "Complete the configuration and start the first run from the Review step.",
+      "goToReview": "Go to Review",
+      "runNotFoundTitle": "Run not found",
+      "runNotFoundDescription": "The run does not exist or was deleted.",
+      "goToHistory": "View history",
+      "notFoundTitle": "Session not found",
+      "notFoundDescription": "The session does not exist in this prototype or was deleted.",
+      "backHome": "Back to Fine-tuning"
+    },
+    "views": {
+      "adapterNotFound": "The requested adapter does not exist or was deleted.",
+      "clearSelection": "Clear selection",
+      "chatNotFoundTitle": "Chat not found",
+      "chatNotFoundDescription": "The chat does not exist or was deleted.",
+      "newChat": "New chat",
+      "recentChats": "Recent chats",
+      "compareAdapter": "Adapter to compare",
+      "compareTitle": "Compare with the base model",
+      "compareSubtitle": "Pick an adapter to compare it with its base model using the same instructions and parameters.",
+      "compareEmptyTitle": "No adapters yet",
+      "compareEmptyDescription": "Complete a run to publish an adapter you can compare.",
+      "goHome": "Go to Fine-tuning"
+    },
+    "right": {
+      "moduleTitle": "Summary",
+      "runTitle": "Run information",
+      "sessionTitle": "Session summary",
+      "adapterTitle": "Adapter",
+      "moduleGroup": "Prototype",
+      "hardwareGroup": "Hardware",
+      "hardwareSource": {
+        "detected": "detected",
+        "simulated": "simulated"
+      },
+      "frozenConfig": "Frozen configuration",
+      "provenance": "View provenance",
+      "openAdapter": "View in adapters",
+      "adapterMissing": "The adapter no longer exists.",
+      "adapterEmpty": "Select an adapter to see its summary.",
+      "runEmpty": "No run selected.",
+      "sessionEmpty": "No session selected.",
+      "historyHint": "The best evaluation loss is marked with ★ in the history.",
+      "fields": {
+        "baseModel": "Base model",
+        "method": "Method",
+        "size": "Size",
+        "finalLoss": "Final loss",
+        "finalEvalLoss": "Final eval loss",
+        "sourceRun": "Source run",
+        "created": "Created",
+        "elapsed": "Duration",
+        "steps": "Steps",
+        "peakVram": "Peak VRAM (simulated)",
+        "sessions": "Sessions",
+        "runs": "Runs",
+        "finished": "Finished",
+        "failed": "With error",
+        "active": "Running or queued",
+        "adapters": "Adapters",
+        "readyCheckpoints": "Ready base models",
+        "bestEval": "Best eval loss",
+        "lastDuration": "Last run duration",
+        "gpu": "GPU",
+        "vram": "VRAM",
+        "ram": "RAM"
+      }
+    },
+    "datasetReturn": {
+      "selected": "Dataset \"{{name}}\" selected in the session",
+      "loadFailed": "Could not read the sample of dataset \"{{name}}\".",
+      "processing": "Dataset \"{{name}}\" is still being processed: select it when it is ready.",
+      "failed": "Dataset \"{{name}}\" ended with an error and cannot be used.",
+      "notFound": "The uploaded dataset was not found. Select it from the list when it is available.",
+      "noSession": "The session the dataset should return to was not found."
+    },
+    "notFound": {
+      "title": "Page not found",
+      "description": "This path does not exist in the fine-tuning module."
+    }
+  },
+  "shellB": {
+    "prototypeChip": "Prototype {{prototype}}",
+    "taskCard": {
+      "title": "LLM fine-tuning (SFT)",
+      "description": "Prepare a dataset for supervised fine-tuning and compare base model, method and hyper-parameter configurations as runs of one session."
+    },
+    "generativeCard": {
+      "title": "Adapted models",
+      "description": "Chat with the adapters trained in Models › LLM fine-tuning and compare them with their base model."
+    },
+    "header": {
+      "back": "Back",
+      "breadcrumbs": "Breadcrumb",
+      "otherPrototype": "Prototype A (in Generative)"
+    },
+    "crumbs": {
+      "fineTuning": "LLM fine-tuning",
+      "generative": "Generative",
+      "adapters": "Adapted models",
+      "chat": "Chat",
+      "compare": "Compare with base"
+    },
+    "leftBar": {
+      "group": "LLM fine-tuning (prototype)",
+      "empty": "No fine-tuning sessions yet.",
+      "confirmDelete": "Delete the session \"{{name}}\"? Its runs and adapters will be deleted. This action cannot be undone.",
+      "itemDescription_one": "{{count}} run · {{dataset}}",
+      "itemDescription_other": "{{count}} runs · {{dataset}}",
+      "itemDescriptionNoData_one": "{{count}} run · no dataset",
+      "itemDescriptionNoData_other": "{{count}} runs · no dataset"
+    },
+    "messages": {
+      "renameEmpty": "The name cannot be empty.",
+      "deleteActive": "Cannot delete: the session has a running or queued run.",
+      "deleteFailed": "The session could not be deleted.",
+      "sessionDeleted": "Session deleted."
+    },
+    "create": {
+      "title": "Prepare dataset for SFT",
+      "subtitle": "The session fixes the dataset and its preparation (format, mapping and splits). Then you add training configurations from the right panel.",
+      "defaultName": "SFT session {{n}}",
+      "nameTitle": "Session name",
+      "nameHelp": "Identifies the session in the Models left panel.",
+      "nameLabel": "Name",
+      "nameRequired": "Enter a name for the session.",
+      "loading": "Loading the dataset rows…",
+      "submit": "Create session",
+      "created": "Session \"{{name}}\" created.",
+      "failed": "The session could not be created."
+    },
+    "preview": {
+      "title": "SFT preview",
+      "emptyTitle": "No dataset",
+      "emptyDescription": "Choose a dataset to see what the training examples will look like.",
+      "dataset": "Dataset",
+      "format": "Format",
+      "rows": "Rows used",
+      "rowsValue": "{{used}} of {{total}}",
+      "train": "Training",
+      "eval": "Evaluation",
+      "fingerprint": "Data fingerprint",
+      "noExamples": "No valid examples yet: confirm the format and mapping.",
+      "example": "Example {{n}} · row {{row}}",
+      "approxNote": "Approximate token count; the final template depends on the base model."
+    },
+    "session": {
+      "notFound": "Session not found",
+      "notFoundHelp": "It may have been deleted, or the prototype data may have been reset.",
+      "notFoundCrumb": "Session not found",
+      "newSession": "New SFT session",
+      "dataset": "Dataset {{name}}",
+      "noDataset": "No dataset",
+      "fingerprint": "fingerprint {{value}}",
+      "editData": "Edit data preparation",
+      "trainAll": "Train all",
+      "emptyTitle": "Add configurations from the right panel",
+      "emptyDescription": "Click a model in \"Trainable base models\" to configure method and parameters. Configurations are not trained until you click Train.",
+      "comparisonTitle": "Configuration comparison",
+      "comparisonHelp": "Training loss alone does not prove an improvement; ★ marks the lowest evaluation loss.",
+      "comparisonEmpty": "No configurations to compare yet.",
+      "trainQueued": "\"{{name}}\" was queued for training.",
+      "retrainQueued": "A new run was created from \"{{name}}\" and queued.",
+      "deleted": "\"{{name}}\" deleted.",
+      "configCount_one": "{{count}} configuration",
+      "configCount_other": "{{count}} configurations",
+      "trainAllQueued_one": "{{count}} configuration queued (one at a time on the GPU).",
+      "trainAllQueued_other": "{{count}} configurations queued (one at a time on the GPU).",
+      "trainAllSkipped_one": "{{count}} configuration could not be queued: {{reason}}",
+      "trainAllSkipped_other": "{{count}} configurations could not be queued: {{reason}}"
+    },
+    "card": {
+      "open": "Open {{name}}",
+      "train": "Train",
+      "retrain": "Retrain (new run)",
+      "running": "Running",
+      "editLocked": "Only not-started configurations can be edited",
+      "deleteLocked": "Cannot be deleted while running",
+      "best": "★ Best eval",
+      "queued": "Queued · waiting for the GPU",
+      "stepProgress": "Step {{step}}/{{total}}",
+      "sparkline": "Loss curve",
+      "finalLoss": "Loss {{loss}} · eval {{evalLoss}}",
+      "notStarted": "Configuration created, not started",
+      "footer": "Metrics | Provenance",
+      "confirmDelete": "Delete \"{{name}}\"? This action cannot be undone.",
+      "confirmDeleteAdapter": "Delete \"{{name}}\" and its adapter? Chats using it will show it as missing.",
+      "steps_one": "{{count}} step",
+      "steps_other": "{{count}} steps",
+      "epochs_one": "{{count}} epoch",
+      "epochs_other": "{{count}} epochs"
+    },
+    "baseModels": {
+      "title": "Trainable base models",
+      "search": "Search base models",
+      "hint": "Click a model to create a training configuration.",
+      "noMatch": "No model matches the search.",
+      "rowAria": "Configure training with {{name}}",
+      "credentialTooltip": "Requires a Hugging Face credential (Credentials).",
+      "meta": "{{params}} B parameters · {{size}}",
+      "vram": "Estimated VRAM ≈ {{estimated}} GB of {{available}} GB ({{method}})",
+      "catalogNote": "Trainable catalog of the prototype, separate from the GGUF inference catalog. Estimates are indicative.",
+      "state": {
+        "ready": "Ready",
+        "willDownload": "Will be downloaded",
+        "credential": "Requires credential",
+        "downloading": "Downloading",
+        "downloadingPct": "Downloading {{pct}} %",
+        "invalid": "Invalid"
+      }
+    },
+    "dialog": {
+      "title": "Add training configuration",
+      "editTitle": "Edit configuration",
+      "steps": {
+        "model": "Model and method",
+        "parameters": "Parameters",
+        "review": "Review"
+      },
+      "nameLabel": "Configuration name",
+      "nameHelp": "Used as the name of the run and of the adapter.",
+      "nameRequired": "Enter a name for the configuration.",
+      "create": "Create configuration",
+      "save": "Save changes",
+      "created": "Configuration \"{{name}}\" created (not started).",
+      "updated": "Configuration \"{{name}}\" updated.",
+      "credentialLater": "You can create the configuration, but training it requires a Hugging Face credential.",
+      "notStartedNote": "The configuration is created without starting; training begins when you click Train on its card.",
+      "review": {
+        "model": "Model",
+        "checkpoint": "Base model",
+        "repository": "Repository",
+        "revision": "Exact revision",
+        "method": "Method",
+        "download": "Files",
+        "data": "Data",
+        "dataFixed": "Fixed by the session",
+        "dataset": "Dataset",
+        "format": "Format",
+        "split": "Splits",
+        "fingerprint": "Data fingerprint",
+        "training": "Training",
+        "preset": "Preset",
+        "duration": "Duration",
+        "learningRate": "Learning rate",
+        "maxLength": "Max length",
+        "effectiveBatch": "Effective batch",
+        "lora": "LoRA",
+        "vram": "Estimated / available VRAM",
+        "checksTitle": "Pre-flight checks",
+        "checksSubtitle": "Download and credential are checked when training starts."
+      }
+    },
+    "dataDialog": {
+      "title": "Edit data preparation",
+      "frozenNote": "Changes apply to new configurations. Existing runs keep their frozen data.",
+      "saved": "Data preparation updated."
+    },
+    "runInfo": {
+      "title": "Run information",
+      "empty": "No run selected.",
+      "adapter": "Adapter",
+      "useInGenerative": "Use in Generative",
+      "editConfig": "Edit configuration",
+      "notFound": "Run not found",
+      "notFoundCrumb": "Run not found",
+      "backToSession": "Back to the session"
+    },
+    "adapters": {
+      "trainedIn": "Adapters are trained in",
+      "trainedInLink": "Models › LLM fine-tuning",
+      "newChat": "New chat",
+      "navAria": "Adapted models sections",
+      "navRegistry": "Adapted models ({{count}})",
+      "navChat": "Chat with models",
+      "listTitle": "Adapters",
+      "chatsTitle": "Chats",
+      "confirmDelete": "Delete the adapter \"{{name}}\"? The base model is kept; chats using it will show it as missing.",
+      "confirmDeleteChat": "Delete the chat \"{{name}}\"?",
+      "deleted": "Adapter \"{{name}}\" deleted.",
+      "deleteFailed": "The adapter could not be deleted.",
+      "chatDeleted": "Chat deleted.",
+      "summaryTitle": "Provenance",
+      "summaryEmpty": "Select an adapter",
+      "summaryEmptyHelp": "You will see its base model, data, method and source run.",
+      "fields": {
+        "base": "Base model",
+        "revision": "Exact revision",
+        "method": "Method",
+        "dataset": "Dataset",
+        "fingerprint": "Data fingerprint",
+        "run": "Source run",
+        "evalLoss": "Final eval loss",
+        "size": "Size",
+        "created": "Created"
+      },
+      "runDeleted": "Run deleted",
+      "chat": "Try in chat",
+      "compare": "Compare with base",
+      "fullProvenance": "View full provenance",
+      "openRun": "View run in Models",
+      "openChatFailed": "The chat could not be opened.",
+      "chatDescription_one": "{{count}} message",
+      "chatDescription_other": "{{count}} messages"
+    }
+  },
+  "prototype": {
+    "badge": "Prototype · simulated data",
+    "badgeWithVariant": "Prototype {{prototype}} · simulated data",
+    "tooltipTitle": "What this prototype simulates",
+    "tooltip": {
+      "simulated": "Training, downloads, metrics, GPU usage and chat responses are simulated in the browser.",
+      "realData": "Real DashAI datasets are only read for previews; they are never modified.",
+      "noBackend": "The fine-tuning API is not used and nothing is saved on the server.",
+      "storage": "Sessions, runs and adapters are stored only in this browser."
+    },
+    "storageError": "Could not save in this browser: changes will be lost on reload."
+  },
+  "demo": {
+    "button": "Demo controls",
+    "buttonArmed": "Demo controls · next failure: {{failure}}",
+    "title": "Demo controls",
+    "subtitle": "They only affect this prototype's simulated data.",
+    "nextFailure": "Failure in the next run",
+    "noFailure": "None",
+    "noFailureHint": "The next run finishes successfully.",
+    "failures": {
+      "gpu_busy": "GPU busy with another process",
+      "incomplete_download": "Incomplete base model download",
+      "invalid_data_full": "Invalid data in the full dataset",
+      "mask_invalid": "No supervised tokens after truncation",
+      "oom": "Out of GPU memory (OOM)",
+      "nan_loss": "Non-finite loss (NaN)",
+      "grad_norm_warning": "grad_norm warning (NaN)",
+      "interrupted": "Interruption (DashAI closes)",
+      "missing_adapter": "Adapter missing after publishing"
+    },
+    "failureHints": {
+      "gpu_busy": "The run waits in the queue for a few seconds and then continues.",
+      "incomplete_download": "Fails at 60% of the download (only if the base model is not downloaded).",
+      "invalid_data_full": "Fails during validation: row 17 has an empty \"output\" column.",
+      "mask_invalid": "Fails during validation: truncation removes the response in 3 examples.",
+      "oom": "Fails at 35% of training.",
+      "nan_loss": "Fails at 50% of training.",
+      "grad_norm_warning": "Finishes, with health warnings at a few steps.",
+      "interrupted": "Interrupted at 55% of training.",
+      "missing_adapter": "Finishes, but the adapter files go missing afterwards."
+    },
+    "speed": "Simulation speed",
+    "speedOption": {
+      "x1": "1× (normal)",
+      "x4": "4× (fast)",
+      "x20": "20× (very fast)"
+    },
+    "gpuBusy": "Simulate busy GPU",
+    "gpuBusyHint": "Another process on this machine is using the GPU.",
+    "hfCredential": "Hugging Face credential configured",
+    "hfCredentialHint": "Allows using gated base models.",
+    "otherPrototype": "View the other prototype",
+    "reset": "Reset prototype data",
+    "resetConfirmTitle": "Reset prototype data?",
+    "resetConfirmBody": "This prototype's sessions, runs, adapters, chats and comparisons will be deleted and the sample data restored. Real DashAI data is not modified.",
+    "resetConfirm": "Reset",
+    "resetDone": "Prototype data reset"
+  },
+  "dataStep": {
+    "title": "Data",
+    "subtitle": "Choose the dataset, confirm its format and check which parts of each example count toward the loss.",
+    "noSession": "No session selected."
+  },
+  "dataPrep": {
+    "sections": {
+      "dataset": "Dataset",
+      "datasetHelp": "A DashAI dataset or one of the prototype samples.",
+      "mapping": "Format and column mapping",
+      "mappingHelp": "The detected format is a suggestion: confirm or correct it.",
+      "validation": "Data validation",
+      "validationHelp": "All available rows are checked with the current max length ({{maxLength}} tokens). Nothing is fixed or dropped silently.",
+      "splits": "Splits",
+      "splitsHelp": "Reproducible train/eval split (fixed seed).",
+      "preview": "Preview",
+      "previewHelp": "How the model will see each example with the chat template; max length {{maxLength}} tokens (set in Parameters).",
+      "previewMore": "See more examples"
+    },
+    "picker": {
+      "label": "Dataset",
+      "placeholder": "Search a dataset",
+      "noOptions": "No datasets available",
+      "loadingList": "Loading datasets…",
+      "upload": "Upload dataset",
+      "uploadUnavailable": "Uploading datasets requires a connection to DashAI.",
+      "backendDown": "Could not connect to DashAI: only the prototype samples are shown.",
+      "noDashai": "No DashAI datasets are ready; upload one or use a prototype sample.",
+      "empty": "No dataset selected yet."
+    },
+    "summary": {
+      "view": "View dataset",
+      "remove": "Remove",
+      "retry": "Retry",
+      "columns": "Columns",
+      "loadingRows": "Reading dataset rows…",
+      "loadError": "Could not read the dataset rows. Check the connection to DashAI and try again.",
+      "dashaiSubtitle": "DashAI dataset (read-only)",
+      "dashaiSample": "DashAI only exposes a sample: {{rows}} of {{total}} rows were read to detect the format and validate.",
+      "offlineSample": "No connection to DashAI: using the stored sample of {{rows}} rows."
+    },
+    "mapping": {
+      "format": "Format",
+      "chooseFormat": "Choose a format",
+      "suggested": "Suggested",
+      "formatHelp": {
+        "alpaca": "User = instruction (+ input); assistant = output.",
+        "prompt_completion": "User = prompt; assistant = completion.",
+        "messages": "JSON list of turns with role (system, user, assistant) and content."
+      },
+      "detectedHigh": "Detected format: {{format}} · columns {{columns}}. Correct it if it does not match.",
+      "detectedMedium": "Suggested format: {{format}} · columns {{columns}} · confirm or correct it.",
+      "textOnlyTitle": "Plain text: out of scope",
+      "textOnlyBody": "This dataset only has a text column. Without separating context and response, the loss cannot be computed on the assistant responses only, which is what this supervised fine-tuning does. Use a dataset with instruction/output, prompt/completion pairs or conversations.",
+      "columnsTitle": "Columns",
+      "chooseColumn": "Choose a column",
+      "noColumn": "None",
+      "required": "Required field",
+      "example": "E.g.: {{value}}",
+      "sameColumn": "Several fields use the same column: check the mapping.",
+      "systemPrompt": "System prompt (optional)",
+      "systemPromptPlaceholder": "For example: You are DashAI's support assistant.",
+      "systemPromptHelp": "Prepended to every example as a system turn; it does not count toward the loss.",
+      "systemPromptHelpMessages": "Prepended only to conversations without a system message; it does not count toward the loss.",
+      "confirm": "Confirm format",
+      "confirmed": "Format confirmed",
+      "autoConfirmed": "High-confidence detection",
+      "confirmHelp": "Confirm the format and mapping before continuing.",
+      "confirmMissing": "Assign the required columns to confirm.",
+      "confirmedHelp": "Changing the format or the mapping requires confirming again."
+    },
+    "validation": {
+      "loading": "Validating rows…",
+      "pending": "Choose the format and assign the columns to validate the data.",
+      "noRows": "No rows available to validate.",
+      "summary": "{{valid}} of {{total}} rows valid",
+      "blockingCount_one": "{{count}} blocking issue",
+      "blockingCount_other": "{{count}} blocking issues",
+      "noBlocking": "No blocking issues",
+      "exampleRows": "Rows: {{rows}}",
+      "exampleRowsMore": "Rows: {{rows}}, …",
+      "noSilentFix": "Fix the dataset or the mapping: rows with errors are not dropped automatically.",
+      "sampledOf": "{{rows}} of {{total}} rows were checked."
+    },
+    "split": {
+      "evalFraction": "Evaluation: {{percent}}%",
+      "noEval": "No evaluation",
+      "noEvalHelp": "All rows are used for training; there will be no eval loss.",
+      "seed": "Split seed",
+      "seedHelp": "The same seed produces the same split.",
+      "maxSamples": "Max examples",
+      "allRows": "All rows",
+      "maxSamplesHelp": "Empty = all ({{total}} rows).",
+      "used": "Examples used",
+      "train": "Training",
+      "eval": "Evaluation"
+    },
+    "example": {
+      "title": "Example {{n}} · row {{row}}",
+      "roles": {
+        "system": "System",
+        "user": "User",
+        "assistant": "Assistant"
+      },
+      "supervised": "Counts toward loss",
+      "context": "No loss (context)",
+      "legendContext": "No loss (context)",
+      "legendSupervised": "Counts toward loss (assistant response)",
+      "legendSpecial": "template special tokens",
+      "tokens_one": "≈ {{count}} token (approx.)",
+      "tokens_other": "≈ {{count}} tokens (approx.)",
+      "supervisedTokens_one": "{{count}} counts toward loss",
+      "supervisedTokens_other": "{{count}} count toward loss",
+      "truncated": "Truncated to {{maxLength}} tokens",
+      "truncatedAt": "Truncated here: the rest exceeds the max length ({{maxLength}} tokens) and is not trained",
+      "empty": "Nothing to show.",
+      "noneValid": "No valid row to show with the current mapping.",
+      "approxNote": "Illustrative ChatML-like template; tokens are estimated (≈ 3.6 characters per token)."
+    },
+    "preview": {
+      "title": "Dataset preview",
+      "close": "Close",
+      "source": "Source",
+      "format": "Detected format",
+      "totalRows": "Total rows",
+      "columnCount": "Columns",
+      "ready": "Ready to train · {{format}} format",
+      "needsMapping": "The mapping must be confirmed or blocking errors fixed.",
+      "noFormat": "Choose a format and assign the columns.",
+      "tabRaw": "Original data",
+      "tabSft": "SFT examples",
+      "noRows": "No rows to show.",
+      "empty": "(empty)",
+      "footer": "Showing {{shown}} of {{total}} rows",
+      "footerSft": "Showing {{shown}} of {{total}} valid examples",
+      "sampledNote": "DashAI sample"
+    }
+  },
+  "adapters": {
+    "title": "Trained adapters",
+    "subtitle": "Adapted models published by finished runs. An adapter's availability is independent of its run's historical result.",
+    "tableAria": "Adapter registry",
+    "columns": {
+      "name": "Name",
+      "base": "Base model",
+      "dataset": "Dataset",
+      "method": "Method",
+      "created": "Created",
+      "size": "Size",
+      "availability": "Availability",
+      "actions": "Actions"
+    },
+    "origin": "Run #{{number}} · {{session}}",
+    "methodRank": "{{method}} · r {{r}}",
+    "baseNotReady": "The base model is not ready; download it before using this adapter.",
+    "availabilityNote": "A missing or invalid adapter is never replaced by the base model: chat and comparison report it explicitly.",
+    "empty": "There are no adapters yet. Finish a fine-tuning run to publish one.",
+    "emptyAction": "Go to fine-tuning",
+    "openChatFailed": "Could not open the chat with this adapter.",
+    "actions": {
+      "chat": "Try in chat",
+      "compare": "Compare with base model",
+      "provenance": "Provenance",
+      "rename": "Rename",
+      "delete": "Delete"
+    },
+    "rename": {
+      "title": "Rename adapter",
+      "label": "Adapter name",
+      "empty": "The name cannot be empty.",
+      "done": "Adapter renamed."
+    },
+    "delete": {
+      "content": "Delete the adapter \"{{name}}\"? Its (simulated) files will be removed.",
+      "chatsWarning_one": "{{count}} chat uses this adapter and will show it as unavailable.",
+      "chatsWarning_other": "{{count}} chats use this adapter and will show it as unavailable.",
+      "comparisonsWarning_one": "{{count}} related comparison will be deleted.",
+      "comparisonsWarning_other": "{{count}} related comparisons will be deleted.",
+      "baseKept": "The base model {{base}} is not deleted.",
+      "done": "Adapter \"{{name}}\" deleted.",
+      "failed": "Could not delete the adapter."
+    },
+    "provenance": {
+      "title": "Adapter provenance",
+      "unavailableNote": "This adapter is currently unavailable. Its provenance is kept, but it cannot be used to generate.",
+      "sections": {
+        "base": "Base model",
+        "data": "Data",
+        "method": "Method",
+        "config": "Frozen configuration",
+        "environment": "Environment",
+        "metrics": "Times and metrics",
+        "artifact": "Artifact",
+        "origin": "Origin"
+      },
+      "baseName": "Model",
+      "repository": "Repository",
+      "revision": "Exact revision",
+      "revisionIllustrative": "Illustrative revision in the prototype.",
+      "parameters": "Parameters",
+      "billions": "{{value}} billion",
+      "license": "License",
+      "baseAvailability": "Base model availability",
+      "dataset": "Dataset",
+      "source": "Source",
+      "sourceKind": {
+        "dashai": "DashAI dataset",
+        "sample": "Prototype example"
+      },
+      "format": "Format",
+      "mapping": "Column mapping",
+      "fingerprint": "Data fingerprint",
+      "partitions": "Splits",
+      "partitionsValue": "{{train}} training · {{eval}} evaluation · seed {{seed}}",
+      "rows": "Rows used",
+      "rowsValue": "{{used}} of {{total}}",
+      "systemPrompt": "System prompt",
+      "method": "Method",
+      "precision": "Precision",
+      "precisionQlora": "4-bit base weights (NF4, double quantization) · FP16 compute",
+      "precisionLora": "FP16 base weights · FP16 compute",
+      "lora": "LoRA",
+      "loraValue": "r {{r}} · α {{alpha}} · dropout {{dropout}}",
+      "targetModules": "Target modules",
+      "lossPolicy": "Loss",
+      "lossPolicyValue": "Only assistant responses count toward the loss",
+      "duration": "Duration",
+      "durationSteps_one": "{{count}} step",
+      "durationSteps_other": "{{count}} steps",
+      "durationEpochs_one": "{{count}} epoch (≈ {{steps}} steps)",
+      "durationEpochs_other": "{{count}} epochs (≈ {{steps}} steps)",
+      "learningRate": "Learning rate",
+      "batch": "Batch",
+      "batchValue": "{{batch}} × {{accum}} = {{effective}} (effective batch)",
+      "maxLength": "Max length",
+      "optimizer": "Optimizer",
+      "scheduler": "Scheduler",
+      "warmup": "Warmup steps",
+      "evalEvery": "Evaluate every N steps",
+      "seed": "Seed",
+      "hardware": "Hardware",
+      "hardwareValue": "{{gpu}} · {{vram}} GB VRAM ({{source}})",
+      "hardwareSource": {
+        "detected": "detected",
+        "simulated": "simulated"
+      },
+      "versionsNote": "Versions",
+      "versionsNoteValue": "Library versions are simulated in the prototype.",
+      "startedAt": "Start",
+      "endedAt": "End",
+      "durationReal": "Duration",
+      "minutesSeconds": "{{minutes}} min {{seconds}} s",
+      "steps": "Completed steps",
+      "finalLoss": "Final loss",
+      "finalEvalLoss": "Final eval loss",
+      "peakVram": "Peak VRAM",
+      "peakRam": "Peak RAM",
+      "gb": "{{value}} GB",
+      "size": "Size",
+      "files": "Files",
+      "manifestHash": "Manifest hash",
+      "availability": "Availability",
+      "dependency": "Dependency",
+      "dependencyValue": "Requires the base model at the exact revision shown.",
+      "run": "Source run",
+      "runValue": "#{{number}} · {{name}}",
+      "runMissing": "The source run was deleted.",
+      "runId": "Run ID",
+      "session": "Session",
+      "adapterId": "Adapter ID",
+      "showJson": "Show JSON",
+      "hideJson": "Hide JSON",
+      "viewRun": "View run"
+    }
+  },
+  "chat": {
+    "noChatTitle": "Chat with adapters",
+    "noChatSubtitle": "Choose a base model or an adapter to start a conversation. Answers are simulated in this prototype.",
+    "notFound": "Chat not found",
+    "openFailed": "Could not open the chat.",
+    "sendFailed": "Could not send the message.",
+    "messagesCount_one": "{{count}} message",
+    "messagesCount_other": "{{count}} messages",
+    "messagesAria": "Chat messages",
+    "you": "You",
+    "emptyTitle": "Try the model on a real case",
+    "emptySubtitle": "Write a support request or pick an example. An adapter trained on the support tickets should answer with a JSON ticket.",
+    "snapshot": "{{model}} · temperature {{temperature}}",
+    "snapshotTooltip": "Generated with temperature {{temperature}}, top_p {{topP}} and up to {{maxNewTokens}} new tokens.",
+    "latency": "{{seconds}} s (simulated)",
+    "modelChanged": "Model changed to {{model}}",
+    "retry": "Retry",
+    "noFallback": "No other model was used instead.",
+    "downloadBase": "Download base model",
+    "downloadStarted": "Base model download started.",
+    "downloadFailed": "Could not start the download.",
+    "credentialRequired": "This model requires a Hugging Face credential. Configure it in Credentials.",
+    "viewAdapters": "View adapters",
+    "blockedHint": "Choose another model with the selector or fix the problem to continue.",
+    "placeholder": "Write a message…",
+    "placeholderBlocked": "The selected model is not available",
+    "inputAria": "Message for the model",
+    "waiting": "Waiting for the answer…",
+    "composerHint": "Enter sends · Shift+Enter adds a line. Answers are simulated.",
+    "picker": {
+      "label": "Model",
+      "choose": "Choose model",
+      "none": "none",
+      "ariaLabel": "Current model: {{model}}. Change model",
+      "baseSection": "Base models",
+      "adaptedSection": "Adapted",
+      "catalogNote": "Catalog of trainable checkpoints (separate from the GGUF inference catalog).",
+      "noAdapters": "No adapters yet",
+      "adapterOn": "On {{base}}",
+      "reason": {
+        "adapterDeleted": "The adapter was deleted",
+        "adapterMissing": "Missing adapter: its files are gone",
+        "adapterInvalid": "Invalid adapter: its files do not match the manifest",
+        "baseDownloading": "Downloading base model ({{percent}}%)",
+        "baseInvalid": "Invalid base model: download it again",
+        "baseMissing": "Base model not downloaded",
+        "adapterBaseMissing": "Requires the base model {{base}}, which is not downloaded",
+        "credential": "Requires a Hugging Face credential",
+        "unavailable": "Not available"
+      }
+    },
+    "params": {
+      "title": "Generation parameters",
+      "empty": "Open a chat to adjust its generation parameters.",
+      "currentModel": "Current model",
+      "range": "{{min}}–{{max}}",
+      "outOfRange": "Value between {{min}} and {{max}}.",
+      "reset": "Reset values",
+      "futureOnly": "Changes apply only to upcoming messages; each answer keeps the parameters it was generated with.",
+      "simulatedNote": "In the prototype answers are simulated: parameters only introduce illustrative variations.",
+      "temperature": {
+        "label": "Temperature",
+        "help": "Controls randomness. Lower values give more deterministic answers."
+      },
+      "topP": {
+        "label": "Top-p",
+        "help": "Nucleus sampling: only tokens whose cumulative probability reaches this value are considered."
+      },
+      "maxNewTokens": {
+        "label": "Max new tokens",
+        "help": "Maximum length of the generated answer."
+      }
+    }
+  },
+  "compare": {
+    "title": "Compare with base model",
+    "subtitle": "{{adapter}} versus its base model {{base}} on held-out cases from the reference case.",
+    "adapterNotFound": "Adapter not found",
+    "condition": {
+      "title": "Comparison condition",
+      "description": "Both models receive the same instructions, the same inputs and the same generation parameters.",
+      "instruction": "Instruction",
+      "temperature": "Temperature {{value}}",
+      "topP": "Top-p {{value}}",
+      "maxNewTokens": "Max {{value}} tokens",
+      "cases_one": "{{count}} held-out case",
+      "cases_other": "{{count}} held-out cases"
+    },
+    "blockedHint": "The comparison needs the adapter and its base model available; no other model is used instead.",
+    "generate": "Generate comparison",
+    "regenerate": "Generate new comparison",
+    "pendingTooltip": "Wait for the current comparison to finish",
+    "createFailed": "Could not create the comparison.",
+    "history": "Previous comparisons",
+    "historyItem": "Comparison of {{date}}",
+    "blind": "Blind review",
+    "blindInfo": "Blind review on: answers appear as \"Answer A\" and \"Answer B\" in random order, and the summary is hidden so it does not reveal which model is which.",
+    "exportCsv": "Export CSV",
+    "exported": "CSV exported.",
+    "exportFailed": "Could not export the CSV.",
+    "empty": "Generate a comparison to see the base and adapted answers on the 12 held-out cases.",
+    "progress": "Generating answers: {{done}} of {{total}}",
+    "generating": "Generating…",
+    "tableAria": "Comparison between base and adapted model",
+    "columns": {
+      "input": "Input",
+      "reference": "Reference",
+      "base": "Base model ({{name}})",
+      "adapted": "Adapted ({{name}})",
+      "answerA": "Answer A",
+      "answerB": "Answer B"
+    },
+    "checks": {
+      "json": "Valid JSON",
+      "category": "Category"
+    },
+    "score": {
+      "label": "Score",
+      "aria": "Content score for {{answer}}",
+      "value0": "0: incorrect",
+      "value1": "1: partially correct",
+      "value2": "2: correct",
+      "legend": "Manual content score: 0 = incorrect, 1 = partially correct, 2 = correct. Automatic checks only verify format and category."
+    },
+    "categories": {
+      "datos": "Data",
+      "entrenamiento": "Training",
+      "inferencia": "Inference"
+    },
+    "summary": {
+      "base": "Base model",
+      "adapted": "Adapted",
+      "jsonValid": "Valid format (JSON)",
+      "category": "Correct category",
+      "byCategory": "By category (base · adapted)",
+      "categoryPair": "{{base}} · {{adapted}}",
+      "score": "Mean content score",
+      "scoreValue_one": "{{value}} ({{count}} scored)",
+      "scoreValue_other": "{{value}} ({{count}} scored)",
+      "latency": "Mean latency (simulated)",
+      "seconds": "{{value}} s"
+    },
+    "honestCaption": "The answers in this comparison are simulated by the prototype. A real evaluation requires running both models and a blind human review of the answers; automatic checks are not enough to claim an improvement.",
+    "csv": {
+      "yes": "yes",
+      "no": "no",
+      "case": "case",
+      "category": "category",
+      "input": "input",
+      "reference": "reference",
+      "baseOutput": "base_output",
+      "baseJsonValid": "base_json_valid",
+      "baseCategoryOk": "base_category_ok",
+      "baseScore": "base_score",
+      "baseLatencyMs": "base_latency_ms",
+      "baseError": "base_error",
+      "adaptedOutput": "adapted_output",
+      "adaptedJsonValid": "adapted_json_valid",
+      "adaptedCategoryOk": "adapted_category_ok",
+      "adaptedScore": "adapted_score",
+      "adaptedLatencyMs": "adapted_latency_ms",
+      "adaptedError": "adapted_error",
+      "baseBlindLabel": "base_blind_label"
+    }
+  },
+  "modelStep": {
+    "catalog": {
+      "title": "Base model",
+      "subtitle": "Transformers checkpoints validated for LoRA and QLoRA.",
+      "separateNote": "This trainable catalog is separate from the GGUF catalog Generative uses for inference.",
+      "estimateNote": "VRAM figures are orientative estimates, not guarantees.",
+      "nonePicked": "Pick a base model to continue."
+    },
+    "selected": {
+      "title": "Selected base model"
+    },
+    "hardware": {
+      "chip": "{{gpu}} · {{vram}} GB ({{source}})",
+      "detectedTooltip": "GPU detected by DashAI's hardware monitor.",
+      "simulatedTooltip": "No GPU was detected: estimates use a simulated machine."
+    },
+    "card": {
+      "meta": "{{params}} B parameters · {{size}}",
+      "revision": "rev. {{revision}}",
+      "revisionTooltip": "Exact revision (illustrative in the prototype): {{revision}}",
+      "willDownload": "Will download ({{size}})",
+      "vramLabel": "Estimated VRAM ({{method}})"
+    },
+    "gated": {
+      "locked": "Gated: credential required",
+      "unlocked": "Gated: credential configured",
+      "lockedTooltip": "Gated model. Configure the Hugging Face credential in Credentials.",
+      "unlockedTooltip": "Gated model. The Hugging Face credential is configured.",
+      "title": "Requires a Hugging Face credential",
+      "body": "Accept the model license on Hugging Face and configure the credential in Credentials (key icon in the top bar). DashAI never stores the token in the configuration or logs.",
+      "demoHint": "In this prototype you can mark it as configured from the demo controls.",
+      "downloadBlocked": "Cannot download: the Hugging Face credential is missing."
+    },
+    "download": {
+      "willDownload": "Will be downloaded at start ({{size}})",
+      "missing": "The weights are not on this machine. Download them now or let the run download them.",
+      "invalid": "The local files are incomplete or corrupted; they will be downloaded again.",
+      "now": "Download now",
+      "confirm": "I confirm downloading {{size}} when the run starts",
+      "downloading": "Downloading… {{done}} of {{total}} ({{percent}} %)",
+      "percent": "{{percent}} % downloaded",
+      "progressLabel": "Download progress",
+      "ownedByRun": "This download is part of a run; it is cancelled together with the run.",
+      "ready": "Ready: the weights are on this machine.",
+      "path": "~/.DashAI/llm_models/{{repository}}@{{revision}}",
+      "started": "Download of {{name}} started (simulated).",
+      "failed": "The download could not be started."
+    },
+    "method": {
+      "title": "Method",
+      "subtitle": "LoRA and QLoRA train a small adapter; the base model is not modified.",
+      "lowMemory": "Less memory",
+      "useLora": "Use LoRA",
+      "unsupportedSelected": "{{method}} is not available for {{model}}. Choose another method to continue; DashAI does not change it automatically.",
+      "pickModelForEstimate": "Pick a base model to see the estimated VRAM."
+    }
+  },
+  "paramsStep": {
+    "intro": "Start from a preset and change only what you need. Any manual edit turns it into \"Custom\".",
+    "mode": {
+      "label": "Level of detail",
+      "simple": "Simple",
+      "advanced": "Advanced"
+    },
+    "advancedErrors": "Some advanced options have invalid values.",
+    "showAdvanced": "Show advanced",
+    "range": "between {{min}} and {{max}}",
+    "tokens_one": "{{count}} token",
+    "tokens_other": "{{count}} tokens",
+    "presets": {
+      "title": "Preset",
+      "subtitle": "Tested starting values for an 8 GB GPU.",
+      "recommendedQlora": "Designed for QLoRA."
+    },
+    "duration": {
+      "title": "Duration",
+      "subtitle": "Choose epochs or a maximum number of steps, not both.",
+      "modeLabel": "Duration mode",
+      "steps": "Steps",
+      "epochs": "Epochs",
+      "exclusive": "Only the active limit is used; the other one is not stored in the frozen configuration.",
+      "derivedSteps": "≈ {{steps}} steps ({{train}} training examples ÷ effective batch {{batch}} × {{epochs}} epochs)",
+      "derivedEpochs": "≈ {{epochs}} epochs over {{train}} training examples",
+      "needDataset": "Pick a dataset to estimate the number of steps."
+    },
+    "training": {
+      "title": "Training",
+      "subtitle": "Sequence length, learning rate and batch size.",
+      "maxLengthHint": "Longer examples are truncated. The model supports up to {{context}} tokens.",
+      "maxLengthHintNoModel": "Longer examples are truncated.",
+      "lrHint": "= {{value}} · scientific notation accepted (2e-4)",
+      "effectiveBatch": "Effective batch",
+      "effectiveBatchValue": "{{batch}} × {{accum}} = {{total}}"
+    },
+    "lora": {
+      "title": "LoRA",
+      "subtitle": "Adapter size and scale.",
+      "useDoubleR": "Use 2 × r = {{value}}",
+      "allLinear": "All linear",
+      "attentionOnly": "Attention only",
+      "modulesHint_one": "{{count}} module selected.",
+      "modulesHint_other": "{{count}} modules selected."
+    },
+    "optimization": {
+      "title": "Optimization",
+      "subtitle": "Optimizer, scheduler and warmup.",
+      "warmupTooLong": "Warmup covers the whole run ({{steps}} steps)."
+    },
+    "evaluation": {
+      "title": "Evaluation and reproducibility",
+      "subtitle": "Evaluation frequency and seed.",
+      "noEval": "This session does not use an evaluation split."
+    },
+    "memory": {
+      "title": "Estimated memory",
+      "subtitle": "{{model}} with {{method}}",
+      "noModel": "Pick a base model to estimate VRAM."
+    },
+    "fields": {
+      "maxSteps": "Maximum steps",
+      "epochs": "Epochs",
+      "maxLength": "Maximum length",
+      "learningRate": "Learning rate",
+      "batchSize": "Per-device batch",
+      "gradAccum": "Gradient accumulation",
+      "loraR": "Rank (r)",
+      "loraAlpha": "Alpha (α)",
+      "loraDropout": "LoRA dropout",
+      "targetModules": "Target modules",
+      "optimizer": "Optimizer",
+      "scheduler": "Scheduler",
+      "warmupSteps": "Warmup steps",
+      "evalEvery": "Evaluate every N steps",
+      "seed": "Seed"
+    },
+    "help": {
+      "maxSteps": "Number of optimizer updates. Each step processes one effective batch.",
+      "epochs": "Full passes over the training split.",
+      "maxLength": "Tokens per example after applying the chat template. Longer sequences use more memory.",
+      "learningRate": "Size of each update. Typical values for LoRA: 1e-4 to 3e-4.",
+      "batchSize": "Examples processed at once on the GPU. It has the largest effect on memory.",
+      "gradAccum": "Accumulates gradients over several batches before updating; does not increase memory.",
+      "loraR": "Rank of the adapter matrices: higher rank, more trainable parameters.",
+      "loraAlpha": "Adapter scaling factor. Usually 2 × r.",
+      "loraDropout": "Dropout applied to the LoRA layers during training.",
+      "targetModules": "Linear layers of the model that receive the adapter.",
+      "optimizer": "AdamW 8-bit reduces the memory of the optimizer state.",
+      "scheduler": "How the learning rate changes during the run.",
+      "warmupSteps": "Initial steps during which the learning rate ramps up from zero.",
+      "evalEvery": "How often (in steps) the evaluation loss is computed.",
+      "seed": "Seed for the adapter initialization and the data order."
+    },
+    "optimizers": {
+      "adamw_8bit": "AdamW 8-bit",
+      "adamw_torch": "AdamW (PyTorch)"
+    },
+    "schedulers": {
+      "linear": "Linear",
+      "cosine": "Cosine",
+      "constant": "Constant"
+    }
+  },
+  "common": {
+    "vram": {
+      "label": "Estimated VRAM",
+      "labelShort": "Estimated VRAM",
+      "value": "{{estimated}} / {{available}} GB",
+      "hardware": "{{gpu}} · {{vram}} GB VRAM",
+      "detected": "detected",
+      "simulated": "simulated",
+      "caption": "Orientative estimate: actual usage may vary.",
+      "noEstimate": "No VRAM estimate.",
+      "exceedsChip": "OOM risk",
+      "tightChip": "Tight memory",
+      "exceedsTooltip": "Orientative estimate: {{estimated}} GB exceeds the {{available}} GB available. The run will likely fail with out-of-memory.",
+      "tightTooltip": "Orientative estimate: {{estimated}} GB uses more than 90 % of the {{available}} GB available.",
+      "exceedsAdvice": "Exceeds the available VRAM: the run will likely fail with out-of-memory. Try QLoRA, batch 1 or a shorter maximum length.",
+      "tightAdvice": "Close to the VRAM limit: if it fails, reduce the batch or the maximum length."
+    }
+  },
+  "reviewStep": {
+    "title": "Review",
+    "subtitle": "Check the configuration that will be frozen when the run starts, and the preflight checks.",
+    "noSession": "No session selected.",
+    "simulatedNote": "Hardware and estimates (simulated)",
+    "preflightTitle": "Preflight checks",
+    "preflightSubtitle": "Checks before starting; the full dataset validation happens when the run executes.",
+    "runName": "Run name (optional)",
+    "runNameHelp": "If empty, the session name and run number are used.",
+    "start": "Start run",
+    "started": "Run \"{{name}}\" started.",
+    "startedQueued": "Run \"{{name}}\" created: it waits in the queue until the GPU is free.",
+    "queuedHint": "The GPU is busy: the run will be queued and start when it is free.",
+    "moreBlockers_one": "(and {{count}} more issue)",
+    "moreBlockers_other": "(and {{count}} more issues)",
+    "groups": {
+      "model": "Model",
+      "data": "Data",
+      "training": "Training",
+      "resources": "Resources"
+    },
+    "fields": {
+      "checkpoint": "Base model / checkpoint",
+      "repository": "Repository",
+      "revision": "Exact revision",
+      "method": "Method",
+      "availability": "Availability",
+      "dataset": "Dataset",
+      "source": "Source",
+      "format": "Format",
+      "rows": "Rows used",
+      "split": "Splits",
+      "fingerprint": "Data fingerprint",
+      "systemPrompt": "System prompt",
+      "preset": "Preset",
+      "duration": "Duration",
+      "learningRate": "Learning rate",
+      "maxLength": "Max length",
+      "effectiveBatch": "Effective batch",
+      "lora": "LoRA",
+      "targetModules": "Target modules",
+      "optimizer": "Optimizer",
+      "scheduler": "Scheduler",
+      "warmup": "Warmup steps",
+      "evalEvery": "Evaluate every (steps)",
+      "gpu": "GPU",
+      "vramAvailable": "Available VRAM",
+      "vramEstimated": "Estimated VRAM",
+      "ram": "RAM",
+      "download": "Download"
+    },
+    "hints": {
+      "revision": "Illustrative revision: {{revision}}",
+      "seed": "Split seed {{seed}}",
+      "fingerprint": "Computed over the available normalized rows; recomputed on the full dataset when the run starts.",
+      "effectiveBatch": "Per-step batch × gradient accumulation",
+      "vram": "Rough estimate"
+    },
+    "values": {
+      "steps_one": "{{count}} step",
+      "steps_other": "{{count}} steps",
+      "epochs_one": "{{count}} epoch · ≈ {{steps}} steps",
+      "epochs_other": "{{count}} epochs · ≈ {{steps}} steps",
+      "tokens_one": "{{count}} token",
+      "tokens_other": "{{count}} tokens",
+      "modules_one": "{{count}} module",
+      "modules_other": "{{count}} modules",
+      "source": {
+        "sample": "Prototype sample",
+        "dashai": "DashAI dataset"
+      },
+      "rows": "{{used}} of {{total}}",
+      "split": "{{train}} train · {{eval}} eval",
+      "yes": "Yes",
+      "no": "No",
+      "lora": "r {{r}} · α {{alpha}} · dropout {{dropout}}",
+      "optimizer": {
+        "adamw_8bit": "AdamW 8-bit",
+        "adamw_torch": "AdamW"
+      },
+      "scheduler": {
+        "linear": "Linear",
+        "cosine": "Cosine",
+        "constant": "Constant"
+      },
+      "noEval": "No evaluation",
+      "hardwareSource": {
+        "detected": "Detected",
+        "simulated": "Simulated"
+      },
+      "willDownload": "Will be downloaded on start ({{size}})",
+      "cached": "Available locally"
+    },
+    "checkStatus": {
+      "valid": "OK",
+      "warning": "Warning",
+      "error": "Blocking",
+      "pending": "Pending"
+    },
+    "checks": {
+      "catalog": {
+        "title": "Checkpoint in the trainable catalog",
+        "pending": "Pending: choose a base model in the Model step.",
+        "ok": "{{name}} ({{repository}}) · Transformers checkpoint, separate from the GGUF inference catalog."
+      },
+      "method": {
+        "title": "Compatible method",
+        "pending": "Pending: depends on the base model.",
+        "ok": "{{method}} is validated for this checkpoint.",
+        "unsupported": "{{method}} is not validated for {{name}}. Change the method in the Model step (it is never switched automatically)."
+      },
+      "dependencies": {
+        "title": "Dependencies (simulated)",
+        "qlora": "PEFT {{peft}} · TRL {{trl}} · bitsandbytes {{bitsandbytes}} · Transformers {{transformers}}",
+        "lora": "PEFT {{peft}} · TRL {{trl}} · Transformers {{transformers}} · bitsandbytes not required (LoRA)"
+      },
+      "availability": {
+        "title": "Checkpoint availability",
+        "ready": "Available locally ({{size}}); no download needed.",
+        "downloading": "Downloading: {{done}} of {{total}}. The run will continue the download.",
+        "invalid": "The local files are invalid; it will be downloaded again ({{size}}).",
+        "missing": "Not downloaded: it will be downloaded on start ({{size}}).",
+        "confirm": "I confirm downloading {{repository}} ({{size}})"
+      },
+      "credential": {
+        "title": "Hugging Face credential",
+        "ok": "Credential configured for this gated model.",
+        "missing": "This model is gated. Configure the credential in Credentials."
+      },
+      "data": {
+        "title": "Valid data (sample)",
+        "pending": "Pending: choose a dataset in the Data step.",
+        "ok": "{{valid}} of {{checked}} rows valid",
+        "sampled": "validated on a sample of {{rows}} rows; full validation happens on start"
+      },
+      "mask": {
+        "title": "Loss mask",
+        "pending": "Pending: requires a dataset with a confirmed format.",
+        "ok": "Only assistant answers count toward the loss · ≈ {{tokens}} supervised tokens per example",
+        "kills_one": "{{count}} example loses its whole answer when truncated to {{maxLength}} tokens; increase the max length.",
+        "kills_other": "{{count}} examples lose their whole answer when truncated to {{maxLength}} tokens; increase the max length.",
+        "tooLong_one": "{{count}} example will be truncated",
+        "tooLong_other": "{{count}} examples will be truncated"
+      },
+      "splits": {
+        "title": "Splits",
+        "ok": "{{train}} train · {{eval}} eval (seed {{seed}})",
+        "noEval": "{{train}} train · no evaluation: there will be no eval loss."
+      },
+      "memory": {
+        "title": "Estimated vs available memory",
+        "ok": "≈ {{estimated}} GB estimated of {{available}} GB VRAM available.",
+        "tight": "≈ {{estimated}} GB estimated of {{available}} GB: close to the GPU limit.",
+        "exceeds": "≈ {{estimated}} GB estimated exceeds the {{available}} GB available: the run will likely fail with out-of-memory. Try QLoRA, a smaller batch or a shorter max length."
+      },
+      "parameters": {
+        "title": "Training parameters",
+        "ok": "All parameters are within the allowed ranges.",
+        "invalid_one": "{{count}} field out of range; fix it in the Parameters step.",
+        "invalid_other": "{{count}} fields out of range; fix them in the Parameters step."
+      }
+    },
+    "gpu": {
+      "external": "The GPU is busy with another process. The run will be created and wait in the queue (position {{position}}) until it is free.",
+      "training": "The GPU is busy with \"{{name}}\". The run will be created and wait in the queue (position {{position}}).",
+      "queue": "Runs are waiting for the GPU. The new run will be queued (position {{position}})."
+    }
+  },
+  "stepNav": {
+    "ariaLabel": "Configuration steps",
+    "locked": "Complete the previous steps first",
+    "invalid": "This step needs attention",
+    "status": {
+      "valid": "complete",
+      "invalid": "needs attention",
+      "pending": "pending"
+    },
+    "steps": {
+      "model": "Model",
+      "data": "Data",
+      "parameters": "Parameters",
+      "review": "Review"
+    }
+  },
+  "runPreview": {
+    "title": "Run summary",
+    "empty": "Select or create a session to see the summary.",
+    "noDataset": "No dataset",
+    "readiness": {
+      "ready": "Ready",
+      "incomplete": "Incomplete",
+      "blocked": "Blocked"
+    },
+    "sections": {
+      "training": "Training",
+      "data": "Data",
+      "hardware": "Hardware",
+      "files": "Files",
+      "pending": "Before starting"
+    },
+    "loraShort": "LoRA",
+    "trainEval": "Train / eval",
+    "download": "Model: will be downloaded on start ({{size}})",
+    "cached": "Model: available locally ({{size}})",
+    "viewCurrent": "View current run"
+  },
+  "runs": {
+    "notFound": "Run not found.",
+    "header": {
+      "created": "Created {{when}}",
+      "elapsed": "Elapsed: {{value}}",
+      "duration": "Duration: {{value}}"
+    },
+    "actions": {
+      "cancel": "Cancel run",
+      "newFromConfig": "New run from this configuration",
+      "chat": "Try in chat",
+      "compare": "Compare with base model",
+      "provenance": "View provenance",
+      "adapterProvenance": "View adapter provenance",
+      "train": "Train",
+      "retrain": "Retrain",
+      "useInGenerative": "Use in Generative"
+    },
+    "confirm": {
+      "cancelTitle": "Cancel the run?",
+      "cancelBody": "Run “{{name}}” will stop and end as Error · Cancelled. No adapter will be published.",
+      "newTitle": "Replace the session draft?",
+      "newBody": "The frozen configuration of “{{name}}” will be copied into the session's editable draft. Unsaved changes in the current draft will be lost.",
+      "newConfirm": "Replace draft",
+      "deleteTitle": "Delete the run?",
+      "deleteBody": "“{{name}}” and its log will be deleted. This cannot be undone.",
+      "deleteBodyAdapter": "“{{name}}”, its log and its published adapter will be deleted. Chats using it will show the adapter as missing. This cannot be undone."
+    },
+    "messages": {
+      "cancelled": "Run cancelled",
+      "draftReplaced": "Draft replaced with the run's configuration",
+      "queued": "Run queued",
+      "deleted": "Run deleted"
+    },
+    "status": {
+      "waitingGpu": "Waiting for GPU"
+    },
+    "progress": {
+      "notStarted": "Configuration created, not trained yet",
+      "queued": "Queued",
+      "queuedPosition": "Queued · position {{position}}",
+      "waitingGpu": "Waiting for the GPU to become free",
+      "step": "Step {{step}} / {{total}}",
+      "preparingPhase": "Preparing training",
+      "finished": "Completed · {{step}} / {{total}} steps",
+      "stopped": "Stopped at step {{step}} / {{total}}",
+      "ariaLabel": "Run progress",
+      "elapsed": "Elapsed: {{value}}",
+      "eta": "Estimated time left: {{value}}",
+      "effectiveBatch": "Effective batch: {{value}}",
+      "downloading": "Downloading {{name}}",
+      "downloadPathNote": "Illustrative path (simulated)"
+    },
+    "metrics": {
+      "loss": "Loss",
+      "evalLoss": "Eval loss",
+      "lr": "Learning rate",
+      "gradNorm": "Gradient norm",
+      "step": "Step",
+      "finalLoss": "Final loss",
+      "finalEvalLoss": "Final eval loss",
+      "duration": "Duration",
+      "peakVram": "Peak VRAM"
+    },
+    "health": {
+      "steps_one": "A non-finite gradient norm was detected at step {{steps}}.",
+      "steps_other": "Non-finite gradient norms were detected at {{count}} steps: {{steps}}."
+    },
+    "tabs": {
+      "ariaLabel": "Run sections",
+      "metrics": "Live metrics",
+      "data": "SFT data",
+      "resources": "Resources",
+      "log": "Log",
+      "provenance": "Provenance"
+    },
+    "timing": {
+      "title": "Timing",
+      "created": "Created",
+      "queued": "Queued at",
+      "started": "Started",
+      "ended": "Ended",
+      "duration": "Duration"
+    },
+    "timeline": {
+      "ariaLabel": "Run phases",
+      "state": {
+        "done": "done",
+        "current": "in progress",
+        "pending": "pending",
+        "skipped": "not applicable",
+        "failed": "failed",
+        "cancelled": "stopped"
+      }
+    },
+    "error": {
+      "phaseReached": "Phase reached: {{phase}}",
+      "neverStarted": "Never started",
+      "stepReached": "Step {{step}} / {{total}}",
+      "noAdapter": "No adapter published",
+      "whatToDo": "What to do"
+    },
+    "adapter": {
+      "title": "Published adapter",
+      "dependsOn": "Requires base model {{base}}",
+      "deleted": "This run's adapter was deleted.",
+      "size": "Size",
+      "files": "Files",
+      "manifestHash": "Manifest hash",
+      "blocked": {
+        "missing": "The adapter is missing: its files can no longer be found. The run stays Finished.",
+        "invalid": "The adapter is invalid: its files do not match the manifest.",
+        "base": "The adapter's base model is not downloaded or is invalid."
+      }
+    },
+    "resources": {
+      "title": "Resources",
+      "vram": "VRAM",
+      "vramPeak": "Peak VRAM",
+      "ram": "RAM",
+      "ramPeak": "Peak RAM",
+      "peak": "Peak",
+      "peakValue": "Peak: {{value}}",
+      "estimate": "Estimated VRAM",
+      "available": "Available VRAM",
+      "estimateNote": "The estimate is orientative; the observed peak depends on the actual length of the examples.",
+      "source": {
+        "detected": "detected",
+        "simulated": "simulated"
+      }
+    },
+    "log": {
+      "title": "Event log",
+      "empty": "No events yet.",
+      "count_one": "{{count}} event",
+      "count_other": "{{count}} events"
+    },
+    "data": {
+      "previewTitle": "Frozen SFT examples",
+      "previewCaption": "Up to 3 prepared examples stored with the run",
+      "legendLoss": "Counts toward loss",
+      "legendContext": "No loss (context)",
+      "noPreview": "This run did not store prepared examples.",
+      "exampleLabel": "Row {{row}}",
+      "tokens_one": "≈ {{count}} token (approx.)",
+      "tokens_other": "≈ {{count}} tokens (approx.)",
+      "supervised_one": "{{count}} token counts toward loss",
+      "supervised_other": "{{count}} tokens count toward loss",
+      "truncated": "Truncated by max length"
+    },
+    "config": {
+      "title": "Frozen configuration",
+      "subtitle": "Immutable since the run was created",
+      "unavailable": "The frozen configuration is not available.",
+      "showJson": "View JSON",
+      "hideJson": "Hide JSON",
+      "groups": {
+        "model": "Model",
+        "data": "Data",
+        "training": "Training",
+        "environment": "Environment"
+      },
+      "baseModel": "Base model",
+      "repository": "Repository",
+      "revision": "Exact revision",
+      "method": "Method",
+      "precision": "Precision",
+      "precisionQlora": "4-bit base (NF4, double quantization) · {{compute}} compute",
+      "precisionLora": "{{compute}} base",
+      "dataset": "Dataset",
+      "source": "Source",
+      "format": "Format",
+      "mapping": "Column mapping",
+      "systemPrompt": "System prompt",
+      "systemPromptYes": "Yes",
+      "systemPromptNo": "No",
+      "rows": "Rows used",
+      "rowsValue": "{{used}} of {{total}}",
+      "split": "Splits",
+      "splitValue": "{{train}} train · {{eval}} eval (seed {{seed}})",
+      "splitNoEval": "{{train}} train · no evaluation",
+      "fingerprint": "Data fingerprint",
+      "sampled": "Validation",
+      "sampledValue_one": "Validated on a sample of {{count}} row",
+      "sampledValue_other": "Validated on a sample of {{count}} rows",
+      "lossPolicy": "Loss",
+      "lossPolicyValue": "Only assistant responses count toward the loss",
+      "preset": "Preset",
+      "duration": "Duration",
+      "durationSteps_one": "{{count}} step",
+      "durationSteps_other": "{{count}} steps",
+      "durationEpochs_one": "{{count}} epoch (≈ {{steps}} steps)",
+      "durationEpochs_other": "{{count}} epochs (≈ {{steps}} steps)",
+      "totalSteps": "Total steps",
+      "batch": "Batch",
+      "batchValue": "{{batch}} × {{accum}} = {{effective}}",
+      "maxLength": "Max length",
+      "learningRate": "Learning rate",
+      "lora": "LoRA",
+      "loraValue": "r {{r}} · α {{alpha}} · dropout {{dropout}}",
+      "targetModules": "Target modules",
+      "optimizer": "Optimizer",
+      "scheduler": "Scheduler",
+      "schedulers": {
+        "linear": "Linear",
+        "cosine": "Cosine",
+        "constant": "Constant"
+      },
+      "warmup": "Warmup steps",
+      "evalEvery": "Evaluate every",
+      "seed": "Seed",
+      "gpu": "GPU",
+      "ram": "RAM",
+      "hardwareSource": "Hardware source",
+      "estimatedVram": "Estimated VRAM",
+      "versions": "Library versions",
+      "versionsSimulated": "Simulated versions (prototype)",
+      "frozenAt": "Frozen at",
+      "runId": "Run ID"
+    }
+  },
+  "history": {
+    "cardsTitle": "Runs",
+    "count_one": "{{count}} run",
+    "count_other": "{{count}} runs",
+    "emptyTitle": "No runs yet",
+    "emptyDescription": "When you start a run it will appear here with its loss curve and metrics.",
+    "sparklineLabel": "Training loss curve",
+    "tableTitle": "Run comparison",
+    "tableCaption": "★ lowest final eval loss (simulated)",
+    "card": {
+      "loss": "Loss {{value}}",
+      "evalLoss": "Eval {{value}}",
+      "steps": "{{step}}/{{total}} steps"
+    },
+    "table": {
+      "ariaLabel": "Run comparison",
+      "empty": "No runs to compare.",
+      "best": "Lowest final eval loss",
+      "name": "Run",
+      "checkpoint": "Base model",
+      "method": "Method",
+      "rank": "r / α",
+      "lr": "LR",
+      "steps": "Steps",
+      "finalLoss": "Final loss",
+      "evalLoss": "Eval loss",
+      "duration": "Duration",
+      "peakVram": "Peak VRAM",
+      "size": "Size",
+      "status": "Status"
+    }
+  },
+  "charts": {
+    "simulated": "(simulated)",
+    "lossTitle": "Loss",
+    "loss": "Loss",
+    "trainLoss": "Training",
+    "evalLoss": "Evaluation",
+    "learningRate": "Learning rate",
+    "step": "Step",
+    "empty": "No loss points yet.",
+    "notStarted": "The curve will appear when training starts.",
+    "lossDisclaimer": "Training loss alone does not prove an improvement: compare the adapter with the base model on held-out cases."
+  }
+}

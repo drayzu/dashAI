@@ -1,11 +1,16 @@
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
+import ExtensionOutlinedIcon from "@mui/icons-material/ExtensionOutlined";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import SelectOptionMenu from "../threeSectionLayout/SelectOptionMenu";
 import { useTourContext } from "../tour/TourProvider";
 import { useGenerative } from "./GenerativeContext";
+import {
+  ADAPTED_MODELS_OPTION_NAME,
+  ADAPTERS_B_BASE,
+} from "../fineTuning/integration/entryPoints";
 import {
   STANDALONE_ENTRY_POINTS,
   isStandaloneTask,
@@ -26,7 +31,7 @@ const CREATE_SESSION = "new_session";
  */
 export default function CreateSessionLanding() {
   const navigate = useNavigate();
-  const { t } = useTranslation(["generative", "common"]);
+  const { t } = useTranslation(["generative", "common", "fineTuning"]);
   const tourContext = useTourContext();
   const { tasks } = useGenerative();
 
@@ -53,6 +58,14 @@ export default function CreateSessionLanding() {
         display_name: t("generative:label.fineTuningModule"),
         description: t("generative:label.fineTuningModuleDescription"),
         Icon: ModelTrainingIcon,
+        chips: [t("fineTuning:shellB.prototypeChip", { prototype: "A" })],
+      },
+      {
+        name: ADAPTED_MODELS_OPTION_NAME,
+        display_name: t("fineTuning:shellB.generativeCard.title"),
+        description: t("fineTuning:shellB.generativeCard.description"),
+        Icon: ExtensionOutlinedIcon,
+        chips: [t("fineTuning:shellB.prototypeChip", { prototype: "B" })],
       },
       ...standalone,
     ];
@@ -68,6 +81,10 @@ export default function CreateSessionLanding() {
     }
     if (name === "fine_tuning") {
       navigate("/app/generative/fine-tuning");
+      return;
+    }
+    if (name === ADAPTED_MODELS_OPTION_NAME) {
+      navigate(ADAPTERS_B_BASE);
       return;
     }
     navigate(standaloneRouteFor(name) ?? "/app/generative/sessions/new");

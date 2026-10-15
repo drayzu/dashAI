@@ -8,6 +8,11 @@ import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import { useTourContext } from "../tour/TourProvider";
 import { useNavigate } from "react-router-dom";
 import {
+  FINE_TUNING_B_NEW,
+  FINE_TUNING_TASK_NAME,
+  buildFineTuningTaskOption,
+} from "../fineTuning/integration/entryPoints";
+import {
   Category as ClassificationIcon,
   ShowChart as RegressionIcon,
   TextFields as TextClassificationIcon,
@@ -27,7 +32,7 @@ const TASK_ICONS = {
 };
 
 export default function ModelsCenterContent() {
-  const { t } = useTranslation(["models", "datasets", "common"]);
+  const { t } = useTranslation(["models", "datasets", "common", "fineTuning"]);
   const tourContext = useTourContext();
   const navigate = useNavigate();
   const {
@@ -42,6 +47,11 @@ export default function ModelsCenterContent() {
   } = useModels();
 
   const goToNextStep = (taskName) => {
+    // Front-only prototype card (LLM fine-tuning, prototype B).
+    if (taskName === FINE_TUNING_TASK_NAME) {
+      navigate(FINE_TUNING_B_NEW);
+      return;
+    }
     navigate(`/app/models/sessions/new/${taskName}`);
 
     if (tourContext?.run && tourContext?.stepIndex === 4) {
@@ -134,18 +144,22 @@ export default function ModelsCenterContent() {
                 })
               : t("models:label.configureTasksTrainCompareModels")
           }
-          options={tasks.map((task) => ({
-            name: task.name,
-            display_name:
-              task.display_name ||
-              task.name
-                .replace("Task", "")
-                .replace(/([A-Z])/g, " $1")
-                .trim(),
-            description:
-              task.description || task.metadata?.short_description || "",
-            Icon: TASK_ICONS[task.name] || DefaultTaskIcon,
-          }))}
+          options={[
+            ...tasks.map((task) => ({
+              name: task.name,
+              display_name:
+                task.display_name ||
+                task.name
+                  .replace("Task", "")
+                  .replace(/([A-Z])/g, " $1")
+                  .trim(),
+              description:
+                task.description || task.metadata?.short_description || "",
+              Icon: TASK_ICONS[task.name] || DefaultTaskIcon,
+            })),
+            // Appended after the backend tasks so the tour keeps its target.
+            ...(selectedDatasetId ? [] : [buildFineTuningTaskOption(t)]),
+          ]}
           searchBar={false}
           goToPrevStep={selectedDatasetId ? handleBackToDataset : null}
           showNoDatasetAlert={!selectedDatasetId && datasets.length === 0}

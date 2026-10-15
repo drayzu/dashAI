@@ -12,6 +12,25 @@ import { getComponents as getComponentsRequest } from "../../../api/component";
 import { useSnackbar } from "notistack";
 
 const UPLOAD_BASE_PATH = "/app/data/datasets/new";
+const LEGACY_FINE_TUNING_PATH = "/app/generative/fine-tuning-legacy";
+
+// Only in-app paths (no "..", backslashes, fragments or whitespace) are
+// accepted as a returnPath, so the param cannot send users elsewhere.
+const isSafeReturnPath = (path) =>
+  typeof path === "string" &&
+  path.length <= 2048 &&
+  /^\/app\/[^\\#\s]*$/.test(path) &&
+  !path.split("?")[0].split("/").includes("..");
+
+// Where to go after uploading a dataset from the fine-tuning module:
+// `returnPath` (already decoded) when safe, otherwise the legacy page.
+export const getFineTuningReturnUrl = (returnPath, datasetId) => {
+  const base = isSafeReturnPath(returnPath)
+    ? returnPath
+    : LEGACY_FINE_TUNING_PATH;
+  const separator = base.includes("?") ? "&" : "?";
+  return `${base}${separator}datasetId=${encodeURIComponent(datasetId)}`;
+};
 
 export default function UploadDatasetSteps({ backHome }) {
   const {
@@ -154,9 +173,11 @@ export default function UploadDatasetSteps({ backHome }) {
     addDatasetOptimistically(newDataset);
     setRightBarContent(null);
     startDatasetPolling(newDataset, datasetJob);
-    const returnTarget = new URLSearchParams(location.search).get("returnTo");
-    if (returnTarget === "fine-tuning") {
-      navigate(`/app/generative/fine-tuning?datasetId=${newDataset.id}`);
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get("returnTo") === "fine-tuning") {
+      navigate(
+        getFineTuningReturnUrl(searchParams.get("returnPath"), newDataset.id),
+      );
     } else {
       navigate(`/app/data/datasets/${newDataset.id}`);
     }

@@ -41,6 +41,8 @@ import hubEN from "./locales/en/hub.json";
 import hubES from "./locales/es/hub.json";
 import credentialsEN from "./locales/en/credentials.json";
 import credentialsES from "./locales/es/credentials.json";
+import fineTuningEN from "./locales/en/fineTuning.json";
+import fineTuningES from "./locales/es/fineTuning.json";
 import credentialsPT from "./locales/pt/credentials.json";
 import credentialsDE from "./locales/de/credentials.json";
 import credentialsZH from "./locales/zh/credentials.json";
@@ -125,6 +127,7 @@ const resources = {
     generativeTour: generativeTourEN,
     hub: hubEN,
     credentials: credentialsEN,
+    fineTuning: fineTuningEN,
   },
   es: {
     configurableObject: configurableObjectES,
@@ -147,6 +150,7 @@ const resources = {
     generativeTour: generativeTourES,
     hub: hubES,
     credentials: credentialsES,
+    fineTuning: fineTuningES,
   },
   pt: {
     configurableObject: configurableObjectPT,
@@ -168,6 +172,8 @@ const resources = {
     modelsSessionTour: modelsSessionTourPT,
     generativeTour: generativeTourPT,
     credentials: credentialsPT,
+    // Prototype strings are only translated to en/es; show English.
+    fineTuning: fineTuningEN,
   },
   de: {
     configurableObject: configurableObjectDE,
@@ -189,6 +195,8 @@ const resources = {
     modelsSessionTour: modelsSessionTourDE,
     generativeTour: generativeTourDE,
     credentials: credentialsDE,
+    // Prototype strings are only translated to en/es; show English.
+    fineTuning: fineTuningEN,
   },
   zh: {
     configurableObject: configurableObjectZH,
@@ -211,6 +219,8 @@ const resources = {
     generativeTour: generativeTourZH,
     hub: hubZH,
     credentials: credentialsZH,
+    // Prototype strings are only translated to en/es; show English.
+    fineTuning: fineTuningEN,
   },
 };
 
@@ -244,6 +254,7 @@ i18n
       "generativeTour",
       "hub",
       "credentials",
+      "fineTuning",
     ],
     defaultNS: "common",
 

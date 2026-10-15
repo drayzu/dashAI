@@ -156,7 +156,7 @@ export default function FineTuning() {
     setCreating(true);
     setStep(1);
     sessionStorage.removeItem(DRAFT_STORAGE_KEY);
-    navigate("/app/generative/fine-tuning", { replace: true });
+    navigate("/app/generative/fine-tuning-legacy", { replace: true });
   }, [location.search, navigate]);
 
   const selectedDataset = useMemo(

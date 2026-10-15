@@ -13,6 +13,7 @@ import NewItemButton from "../threeSectionLayout/NewItemButton";
 import InfoSessionModal from "./InfoSessionModal";
 import { useTranslation } from "react-i18next";
 import { useModels } from "./ModelsContext";
+import { useFineTuningModelsGroups } from "../fineTuning/integration/useFineTuningModelsGroups";
 
 export default function ModelsLeftBar({ onToggle }) {
   const {
@@ -53,8 +54,12 @@ export default function ModelsLeftBar({ onToggle }) {
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
   const { t } = useTranslation(["models", "datasets", "common"]);
 
+  // Prototype B fine-tuning sessions (front-only, string ids "ft-B-<id>").
+  const fineTuning = useFineTuningModelsGroups({ searchQuery });
+
   const SEARCH_THRESHOLD = 10;
-  const totalItems = datasets.length + sessions.length;
+  const totalItems =
+    datasets.length + sessions.length + fineTuning.allItemsCount;
 
   useEffect(() => {
     if (totalItems <= SEARCH_THRESHOLD) setSearchQuery("");
@@ -78,9 +83,10 @@ export default function ModelsLeftBar({ onToggle }) {
   useEffect(() => {
     // Sync the section map with the current task display names
     const displayNames = [
-      ...new Set(
-        sessions.map((session) => getTaskDisplayName(session.task_name)),
-      ),
+      ...new Set([
+        ...sessions.map((session) => getTaskDisplayName(session.task_name)),
+        ...(fineTuning.allItemsCount > 0 ? [fineTuning.groupName] : []),
+      ]),
     ];
     setOpenSections((prev) => {
       // Only update if display names have changed
@@ -94,7 +100,7 @@ export default function ModelsLeftBar({ onToggle }) {
       });
       return merged;
     });
-  }, [sessions, tasks]);
+  }, [sessions, tasks, fineTuning.allItemsCount, fineTuning.groupName]);
 
   useEffect(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -115,6 +121,7 @@ export default function ModelsLeftBar({ onToggle }) {
 
   const handleSessionInfo = React.useCallback(
     (sessionId) => {
+      if (fineTuning.owns(sessionId)) return;
       const session = sessions.find((s) => s.id === sessionId);
       if (session) {
         setSelectedInfoSession(session);
@@ -182,6 +189,7 @@ export default function ModelsLeftBar({ onToggle }) {
   };
 
   const getSessionDescription = (session) => {
+    if (fineTuning.owns(session.id)) return session.description;
     if (session.dataset_id && datasets.length > 0) {
       const associatedDataset = datasets.find(
         (dataset) => dataset.id === session.dataset_id,
@@ -208,7 +216,7 @@ export default function ModelsLeftBar({ onToggle }) {
       return groups;
     }, {});
 
-    return groupedSessions
+    const sorted = groupedSessions
       ? Object.keys(groupedSessions)
           .sort()
           .reduce((sorted, key) => {
@@ -216,13 +224,27 @@ export default function ModelsLeftBar({ onToggle }) {
             return sorted;
           }, {})
       : {};
-  }, [filteredSessions, getTaskDisplayName]);
+    // The prototype group always goes after the real task groups.
+    if (fineTuning.items.length > 0) {
+      sorted[fineTuning.groupName] = fineTuning.items;
+    }
+    return sorted;
+  }, [
+    filteredSessions,
+    getTaskDisplayName,
+    fineTuning.items,
+    fineTuning.groupName,
+  ]);
 
   const onDatasetClick = (datasetId) => {
     navigate(`/app/models/datasets/${datasetId}`);
   };
 
   const onSessionDelete = async (id) => {
+    if (fineTuning.owns(id)) {
+      fineTuning.onItemDelete(id);
+      return;
+    }
     const success = await deleteSessionById(id);
     if (!success) return;
     if (id === selectedSessionId) {
@@ -283,16 +305,30 @@ export default function ModelsLeftBar({ onToggle }) {
     return true;
   };
 
-  const onBulkSessionDelete = async (ids) => {
+  const onBulkSessionDelete = async (allIds) => {
+    const fineTuningIds = allIds.filter(fineTuning.owns);
+    const ids = allIds.filter((id) => !fineTuning.owns(id));
+    const fineTuningOk =
+      fineTuningIds.length === 0 || fineTuning.onBulkDelete(fineTuningIds);
+    if (ids.length === 0) return fineTuningOk;
     const success = await deleteSessionsByIds(ids);
     if (!success) return false;
     if (ids.includes(selectedSessionId)) {
       navigate("/app/models");
     }
-    return true;
+    return fineTuningOk;
+  };
+
+  const onSessionEdit = (id, name) => {
+    if (fineTuning.owns(id)) return fineTuning.onItemEdit(id, name);
+    return editSession(id, name);
   };
 
   const onSessionClick = (sessionId) => {
+    if (fineTuning.owns(sessionId)) {
+      fineTuning.onItemClick(sessionId);
+      return;
+    }
     navigate(`/app/models/sessions/${sessionId}`);
   };
 
@@ -304,7 +340,7 @@ export default function ModelsLeftBar({ onToggle }) {
     <SideBar>
       {/* Create new item button */}
       <Box p={4} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
-        {selectedDatasetId || selectedSessionId ? (
+        {selectedDatasetId || selectedSessionId || fineTuning.isActive ? (
           <NewItemButton
             onClick={handleNewSessionButton}
             title={t("models:button.modelsHub")}
@@ -364,10 +400,10 @@ export default function ModelsLeftBar({ onToggle }) {
 
         <GroupedCollapsibleList
           groups={sortedGroupedSessions}
-          selectedItemId={selectedSessionId}
+          selectedItemId={fineTuning.selectedItemId || selectedSessionId}
           onItemClick={onSessionClick}
           onItemDelete={onSessionDelete}
-          onItemEdit={editSession}
+          onItemEdit={onSessionEdit}
           onItemInfo={handleSessionInfo}
           title={t("common:sessions")}
           Icon={Biotech}
