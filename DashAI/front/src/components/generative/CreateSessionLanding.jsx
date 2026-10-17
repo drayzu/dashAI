@@ -61,6 +61,14 @@ export default function CreateSessionLanding() {
         chips: [t("fineTuning:shellB.prototypeChip", { prototype: "A" })],
       },
       {
+        name: "fine_tuning_simple",
+        display_name: "Fine-tuning (versión simple)",
+        description:
+          "Flujo lineal en cinco pasos: modelo, datos, configuración, entrenamiento y resultado.",
+        Icon: ModelTrainingIcon,
+        chips: ["Prototipo C"],
+      },
+      {
         name: ADAPTED_MODELS_OPTION_NAME,
         display_name: t("fineTuning:shellB.generativeCard.title"),
         description: t("fineTuning:shellB.generativeCard.description"),
@@ -81,6 +89,10 @@ export default function CreateSessionLanding() {
     }
     if (name === "fine_tuning") {
       navigate("/app/generative/fine-tuning");
+      return;
+    }
+    if (name === "fine_tuning_simple") {
+      navigate("/app/generative/fine-tuning-simple");
       return;
     }
     if (name === ADAPTED_MODELS_OPTION_NAME) {

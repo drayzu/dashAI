@@ -23,6 +23,7 @@ import FineTuning from "./pages/generative/FineTuning";
 import FineTuningPrototypeA from "./pages/generative/fineTuning/FineTuningPrototypeA";
 import FineTuningPrototypeB from "./pages/models/fineTuning/FineTuningPrototypeB";
 import AdaptersHubB from "./pages/generative/adapters/AdaptersHubB";
+import FineTuningSimple from "./pages/generative/fineTuningSimple/FineTuningSimple";
 import { GenerativeProvider } from "./components/generative/GenerativeContext";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 import HubContent from "./pages/hub/HubContent";
@@ -121,6 +122,10 @@ function App() {
                 <Route
                   path="/app/generative/fine-tuning/*"
                   element={<FineTuningPrototypeA />}
+                />
+                <Route
+                  path="/app/generative/fine-tuning-simple"
+                  element={<FineTuningSimple />}
                 />
                 <Route
                   path="/app/generative/fine-tuning-legacy"
