@@ -1,14 +1,18 @@
 // Hardware profile for VRAM estimates and frozen snapshots (SPEC §3.3).
-// Uses DashAI's real hardware monitor (read-only WebSocket) when it reports a
-// GPU; otherwise falls back to the simulated GTX 1080 profile.
+// Reads DashAI's real hardware stats ONCE per page load (GET
+// /api/v1/hardware/) when they report a GPU; otherwise falls back to the
+// simulated GTX 1080 profile. The prototypes only need static values (GPU
+// name, total VRAM/RAM), so they never keep the 1 s monitoring WebSocket
+// open: each tick of it runs nvidia-smi (and a PowerShell probe on Windows)
+// on the backend's event loop, which made the rest of DashAI slow.
 //
-// Units: the backend (/api/v1/hardware/ws, endpoints/hardware.py) sends
+// Units: the backend (endpoints/hardware.py) sends
 // `gpus[].memory_total` and `ram.total` in BYTES (pynvml / psutil), the same
 // values HardwareMonitorPanel formats with bytes / 1024³. We convert to GiB
 // (labelled GB in the UI) rounded to 0.1.
 
-import { createContext, useContext, useMemo } from "react";
-import { useHardwareMonitor } from "../../../hooks/useHardwareMonitor";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import api from "../../../api/api";
 import { SIMULATED_HARDWARE } from "../data/catalog";
 
 const GIB = 1024 ** 3;
@@ -46,19 +50,49 @@ export function hardwareProfileFromStats(stats) {
   };
 }
 
+// One shared request for the whole page (all providers and components).
+let statsPromise = null;
+function loadStatsOnce() {
+  if (!statsPromise) {
+    statsPromise = api
+      .get("/v1/hardware/", { timeout: 20000 })
+      .then((response) => response.data)
+      .catch(() => {
+        statsPromise = null; // allow a later retry
+        return null;
+      });
+  }
+  return statsPromise;
+}
+
+function useHardwareStatsOnce(enabled) {
+  const [stats, setStats] = useState(null);
+  useEffect(() => {
+    if (!enabled) return undefined;
+    let alive = true;
+    loadStatsOnce().then((data) => {
+      if (alive) setStats(data);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [enabled]);
+  return { stats, connected: Boolean(stats) };
+}
+
 function defaultMonitoring() {
   return process.env.NODE_ENV !== "test";
 }
 
 /**
- * Opens the hardware monitor and returns a stable profile object (identity
+ * Reads the hardware stats once and returns a stable profile object (identity
  * changes only when GPU name / VRAM / RAM change).
  * @returns {{profile: object, connected: boolean, detected: boolean}}
  */
 export function useHardwareProfileSource({
   enabled = defaultMonitoring(),
 } = {}) {
-  const { stats, connected } = useHardwareMonitor(enabled);
+  const { stats, connected } = useHardwareStatsOnce(enabled);
   const detected = connected ? hardwareProfileFromStats(stats) : null;
   const key = detected
     ? `${detected.gpuName}|${detected.vramGb}|${detected.ramGb}|${detected.vendor}`
@@ -77,7 +111,7 @@ export function useHardwareProfileSource({
 
 /**
  * Hardware profile for components. Inside FineTuningProvider it reuses the
- * provider's single connection; outside it opens its own.
+ * provider's profile; outside it reads the shared snapshot itself.
  * @returns {{profile: {gpuName, vramGb, ramGb, accelerator, source},
  *   connected: boolean, detected: boolean}}
  */
