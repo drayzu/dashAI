@@ -1,3 +1,4 @@
+import FastForwardIcon from "@mui/icons-material/FastForward";
 import { useId, useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
@@ -100,6 +101,9 @@ export default function DemoControlsMenu({
   const actions = useFineTuningActions();
   const routes = useFineTuningRoutes();
   const demo = useFineTuningStore(selectDemo) || {};
+  const hasStartedRun = useFineTuningStore((st) =>
+    st.runs.some((r) => r.timeline && (r.status === 1 || r.status === 2)),
+  );
   const view = useViewState();
 
   const menuId = useId();
@@ -268,6 +272,23 @@ export default function DemoControlsMenu({
             </ListItemText>
           </MenuItem>
         ))}
+
+        <MenuItem
+          disabled={!hasStartedRun}
+          onClick={() => {
+            actions?.fastForwardRuns?.();
+            closeMenus();
+          }}
+        >
+          <ListItemIcon>
+            <FastForwardIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary={t("fineTuning:demo.fastForward")}
+            secondary={t("fineTuning:demo.fastForwardHint")}
+            slotProps={{ secondary: { sx: { whiteSpace: "normal" } } }}
+          />
+        </MenuItem>
 
         <Divider />
         <MenuItem

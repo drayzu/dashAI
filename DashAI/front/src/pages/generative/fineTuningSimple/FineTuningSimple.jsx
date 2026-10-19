@@ -260,7 +260,7 @@ export default function FineTuningSimple({
   const [draft, setDraft] = useState(EMPTY_DRAFT);
   const [localAdapters, setAdapters] = useState(EXISTING_ADAPTERS);
   const adapters = externalAdapters || localAdapters;
-  const { training, start, cancel, reset } = useFakeTraining();
+  const { training, start, cancel, reset, finishNow } = useFakeTraining();
 
   const step = STEPS[active];
   const model = BASE_MODELS.find((m) => m.id === draft.modelId);
@@ -313,7 +313,14 @@ export default function FineTuningSimple({
     model: <ModelStep draft={draft} onChange={update} />,
     data: <DataStep draft={draft} onChange={update} />,
     config: <ConfigStep draft={draft} onChange={update} />,
-    train: <TrainStep training={training} onStart={start} onCancel={cancel} />,
+    train: (
+      <TrainStep
+        training={training}
+        onStart={start}
+        onCancel={cancel}
+        onFinishNow={finishNow}
+      />
+    ),
     result: (
       <ResultStep
         draft={draft}

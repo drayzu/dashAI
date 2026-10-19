@@ -27,6 +27,7 @@ import {
   Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import FastForwardIcon from "@mui/icons-material/FastForward";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import ExtensionOutlinedIcon from "@mui/icons-material/ExtensionOutlined";
@@ -350,7 +351,7 @@ function LossChart({ points }) {
 
 LossChart.propTypes = { points: PropTypes.arrayOf(PropTypes.number) };
 
-export function TrainStep({ training, onStart, onCancel }) {
+export function TrainStep({ training, onStart, onCancel, onFinishNow }) {
   const { status, step } = training;
   const progress = Math.round((step / TOTAL_STEPS) * 100);
   const phase =
@@ -422,11 +423,20 @@ export function TrainStep({ training, onStart, onCancel }) {
       </Box>
 
       {status === "running" && (
-        <Box>
+        <Stack direction="row" spacing={2}>
           <Button color="error" variant="outlined" onClick={onCancel}>
             Cancelar
           </Button>
-        </Box>
+          {onFinishNow && (
+            <Button
+              variant="outlined"
+              startIcon={<FastForwardIcon />}
+              onClick={onFinishNow}
+            >
+              Terminar ahora
+            </Button>
+          )}
+        </Stack>
       )}
     </Stack>
   );
@@ -436,6 +446,7 @@ TrainStep.propTypes = {
   training: PropTypes.object.isRequired,
   onStart: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
+  onFinishNow: PropTypes.func,
 };
 
 export function ResultStep({ draft, adapterName, extra }) {
@@ -532,9 +543,8 @@ export function useFakeTraining() {
 
   useEffect(() => stop, []);
 
-  const start = () => {
+  const tick = (ms) => {
     stop();
-    setTraining({ status: "running", step: 0 });
     timer.current = setInterval(() => {
       setTraining((current) => {
         const step = current.step + 1;
@@ -544,8 +554,16 @@ export function useFakeTraining() {
         }
         return { status: "running", step };
       });
-    }, 150);
+    }, ms);
   };
+
+  const start = () => {
+    setTraining({ status: "running", step: 0 });
+    tick(150);
+  };
+
+  /** Demo shortcut: plays the rest of the run in fast motion (~0.5 s). */
+  const finishNow = () => tick(10);
 
   const cancel = () => {
     stop();
@@ -554,5 +572,5 @@ export function useFakeTraining() {
 
   const reset = cancel;
 
-  return { training, start, cancel, reset };
+  return { training, start, cancel, reset, finishNow };
 }

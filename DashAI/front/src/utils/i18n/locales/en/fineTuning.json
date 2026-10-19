@@ -868,7 +868,9 @@
     "resetConfirmTitle": "Reset prototype data?",
     "resetConfirmBody": "This prototype's sessions, runs, adapters, chats and comparisons will be deleted and the sample data restored. Real DashAI data is not modified.",
     "resetConfirm": "Reset",
-    "resetDone": "Prototype data reset"
+    "resetDone": "Prototype data reset",
+    "fastForward": "Finish now",
+    "fastForwardHint": "The current run finishes in a few seconds, going through all its phases."
   },
   "dataStep": {
     "title": "Data",

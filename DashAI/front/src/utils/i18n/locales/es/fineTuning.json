@@ -889,7 +889,9 @@
     "resetConfirmTitle": "¿Restablecer datos del prototipo?",
     "resetConfirmBody": "Se eliminarán las sesiones, ejecuciones, adaptadores, chats y comparaciones de este prototipo y se restaurarán los datos de ejemplo. Los datos reales de DashAI no se modifican.",
     "resetConfirm": "Restablecer",
-    "resetDone": "Datos del prototipo restablecidos"
+    "resetDone": "Datos del prototipo restablecidos",
+    "fastForward": "Terminar ahora",
+    "fastForwardHint": "La ejecución en curso termina en unos segundos, pasando por todas sus fases."
   },
   "dataStep": {
     "title": "Datos",

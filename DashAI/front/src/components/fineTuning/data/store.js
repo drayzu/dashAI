@@ -233,7 +233,9 @@ function frozenDraft(draft) {
 
 function adapterNameFor(run) {
   const d = run.snapshot.draft;
-  return `${run.name} · ${METHOD_LABEL[d.method] || d.method} r${d.parameters.loraR}`;
+  return `${run.name} · ${METHOD_LABEL[d.method] || d.method} r${
+    d.parameters.loraR
+  }`;
 }
 
 function adapterBytesFor(run) {
@@ -1971,6 +1973,26 @@ export function createFineTuningStore(options = {}) {
     },
 
     // -------------------------------------------------------------- demo --
+    /**
+     * Demo shortcut: compresses what is left of every started run so it ends
+     * in ~2 s, still going through its remaining phases (and its configured
+     * failure, if any). Returns the number of runs fast-forwarded.
+     */
+    fastForwardRuns(targetMs = 2000) {
+      const t = now();
+      let count = 0;
+      const runs = state.runs.map((r) => {
+        if (!r.timeline || !isActiveStatus(r.status) || !(r.timeline.endAt > t))
+          return r;
+        const factor = Math.min(1, targetMs / (r.timeline.endAt - t));
+        if (factor >= 1) return r;
+        count += 1;
+        return { ...r, timeline: rescaleTimeline(r.timeline, t, factor) };
+      });
+      if (count) commit({ ...state, runs });
+      return count;
+    },
+
     setDemo(patch) {
       if (!patch) return;
       const t = now();
