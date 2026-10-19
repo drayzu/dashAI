@@ -438,7 +438,7 @@ TrainStep.propTypes = {
   onCancel: PropTypes.func.isRequired,
 };
 
-export function ResultStep({ draft, adapterName }) {
+export function ResultStep({ draft, adapterName, extra }) {
   const [promptIndex, setPromptIndex] = useState(0);
   const model = BASE_MODELS.find((m) => m.id === draft.modelId);
   const sample = TEST_PROMPTS[promptIndex];
@@ -459,6 +459,7 @@ export function ResultStep({ draft, adapterName }) {
           </Box>
           <Chip label="Disponible" color="success" size="small" />
         </Stack>
+        {extra && <Box sx={{ mt: 3 }}>{extra}</Box>}
       </Card>
 
       <Box>
@@ -516,6 +517,7 @@ export function ResultStep({ draft, adapterName }) {
 ResultStep.propTypes = {
   draft: PropTypes.object.isRequired,
   adapterName: PropTypes.string.isRequired,
+  extra: PropTypes.node,
 };
 
 /** Drives the fake training: one tick every 150 ms (~9 s total). */

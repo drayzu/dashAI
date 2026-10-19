@@ -85,7 +85,14 @@ function PanelTitle({ children }) {
 
 PanelTitle.propTypes = { children: PropTypes.node };
 
-function LeftBar({ active, reached, onSelect, onNew, adapters }) {
+function LeftBar({
+  active,
+  reached,
+  onSelect,
+  onNew,
+  adapters,
+  onAdapterClick,
+}) {
   return (
     <Stack sx={{ height: "100%", p: 3, overflowY: "auto" }} spacing={4}>
       <Button variant="contained" startIcon={<AddIcon />} onClick={onNew}>
@@ -141,7 +148,11 @@ function LeftBar({ active, reached, onSelect, onNew, adapters }) {
         <PanelTitle>Adaptadores</PanelTitle>
         <List dense disablePadding>
           {adapters.map((adapter) => (
-            <ListItemButton key={adapter.id} sx={{ borderRadius: 1 }}>
+            <ListItemButton
+              key={adapter.id}
+              sx={{ borderRadius: 1 }}
+              onClick={() => onAdapterClick?.(adapter)}
+            >
               <ListItemIcon sx={{ minWidth: 32 }}>
                 <ExtensionOutlinedIcon fontSize="small" />
               </ListItemIcon>
@@ -164,6 +175,7 @@ LeftBar.propTypes = {
   onSelect: PropTypes.func.isRequired,
   onNew: PropTypes.func.isRequired,
   adapters: PropTypes.array.isRequired,
+  onAdapterClick: PropTypes.func,
 };
 
 function SummaryRow({ label, value }) {
@@ -235,12 +247,19 @@ Summary.propTypes = {
  * show layout and steps. State lives in memory; nothing is persisted and the
  * backend is never called. Mounted at `/app/generative/fine-tuning-simple`.
  */
-export default function FineTuningSimple() {
+export default function FineTuningSimple({
+  chipLabel = "Prototipo C · simple",
+  adapters: externalAdapters,
+  onAdapterCreated,
+  onAdapterClick,
+  renderResultExtra,
+}) {
   const layout = useThreePanelLayout({ storageKey: "fineTuningSimple" });
   const [active, setActive] = useState(0);
   const [reached, setReached] = useState(0);
   const [draft, setDraft] = useState(EMPTY_DRAFT);
-  const [adapters, setAdapters] = useState(EXISTING_ADAPTERS);
+  const [localAdapters, setAdapters] = useState(EXISTING_ADAPTERS);
+  const adapters = externalAdapters || localAdapters;
   const { training, start, cancel, reset } = useFakeTraining();
 
   const step = STEPS[active];
@@ -258,7 +277,14 @@ export default function FineTuningSimple() {
 
   const next = () => {
     const nextIndex = active + 1;
-    if (STEPS[nextIndex]?.key === "result") {
+    if (STEPS[nextIndex]?.key === "result" && onAdapterCreated) {
+      onAdapterCreated({
+        name: adapterName,
+        base: model?.name,
+        method: draft.method === "qlora" ? "QLoRA" : "LoRA",
+        datasetId: draft.datasetId,
+      });
+    } else if (STEPS[nextIndex]?.key === "result") {
       setAdapters((current) =>
         current.some((a) => a.name === adapterName)
           ? current
@@ -288,7 +314,13 @@ export default function FineTuningSimple() {
     data: <DataStep draft={draft} onChange={update} />,
     config: <ConfigStep draft={draft} onChange={update} />,
     train: <TrainStep training={training} onStart={start} onCancel={cancel} />,
-    result: <ResultStep draft={draft} adapterName={adapterName} />,
+    result: (
+      <ResultStep
+        draft={draft}
+        adapterName={adapterName}
+        extra={renderResultExtra?.(adapterName)}
+      />
+    ),
   }[step.key];
 
   return (
@@ -301,6 +333,7 @@ export default function FineTuningSimple() {
             onSelect={setActive}
             onNew={startNew}
             adapters={adapters}
+            onAdapterClick={onAdapterClick}
           />
         </LeftPanel>
         <CenterPanel>
@@ -318,11 +351,7 @@ export default function FineTuningSimple() {
               <Typography variant="h6" sx={{ fontWeight: 600, flex: 1 }}>
                 Fine-tuning
               </Typography>
-              <Chip
-                size="small"
-                variant="outlined"
-                label="Prototipo C · simple"
-              />
+              <Chip size="small" variant="outlined" label={chipLabel} />
             </Stack>
 
             <Stepper activeStep={active} alternativeLabel>
@@ -371,3 +400,11 @@ export default function FineTuningSimple() {
     </ThreePanelLayoutContext.Provider>
   );
 }
+
+FineTuningSimple.propTypes = {
+  chipLabel: PropTypes.string,
+  adapters: PropTypes.array,
+  onAdapterCreated: PropTypes.func,
+  onAdapterClick: PropTypes.func,
+  renderResultExtra: PropTypes.func,
+};

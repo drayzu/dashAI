@@ -1,4 +1,8 @@
 import { useModels } from "./ModelsContext";
+import {
+  prototypeVisible,
+  useActivePrototype,
+} from "../../utils/demoPrototype";
 import { useTranslation } from "react-i18next";
 import { Box } from "@mui/material";
 import CreateSessionSteps from "./CreateSessionSteps";
@@ -45,6 +49,7 @@ export default function ModelsCenterContent() {
     selectedDatasetId,
     step,
   } = useModels();
+  const activePrototype = useActivePrototype();
 
   const goToNextStep = (taskName) => {
     // Front-only prototype card (LLM fine-tuning, prototype B).
@@ -158,7 +163,9 @@ export default function ModelsCenterContent() {
               Icon: TASK_ICONS[task.name] || DefaultTaskIcon,
             })),
             // Appended after the backend tasks so the tour keeps its target.
-            ...(selectedDatasetId ? [] : [buildFineTuningTaskOption(t)]),
+            ...(selectedDatasetId || !prototypeVisible(activePrototype, "B")
+              ? []
+              : [buildFineTuningTaskOption(t)]),
           ]}
           searchBar={false}
           goToPrevStep={selectedDatasetId ? handleBackToDataset : null}

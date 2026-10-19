@@ -1,0 +1,117 @@
+import { useEffect, useState } from "react";
+import {
+  Button,
+  Paper,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from "@mui/material";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  applyPrototypeFromSearch,
+  setActivePrototype,
+  useActivePrototype,
+} from "../../../utils/demoPrototype";
+
+// Where each prototype starts when picked from the switcher.
+const START = {
+  all: "/app/generative",
+  A: "/app/generative",
+  B: "/app/models",
+  C: "/app/generative",
+  D: "/app/generative",
+};
+
+const LABELS = {
+  all: "Todos",
+  A: "A · Generativo",
+  B: "B · Modelos",
+  C: "C · Simple",
+  D: "D · Sesión unificada",
+};
+
+/**
+ * Presenter-only switcher (Alt+Shift+P): picks which fine-tuning prototype
+ * the real DashAI modules show, so each one can be presented on its own.
+ * Hidden unless opened; mounted once in App.
+ */
+export default function PrototypeSwitcher() {
+  const [open, setOpen] = useState(false);
+  const active = useActivePrototype();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    applyPrototypeFromSearch(location.search);
+  }, [location.search]);
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (event.altKey && event.shiftKey && event.code === "KeyP") {
+        event.preventDefault();
+        setOpen((value) => !value);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  if (!open) return null;
+
+  return (
+    <Paper
+      elevation={8}
+      sx={{
+        position: "fixed",
+        top: 72,
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 1500,
+        p: 3,
+        border: 1,
+        borderColor: "primary.main",
+        maxWidth: "calc(100vw - 32px)",
+      }}
+    >
+      <Stack spacing={2}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+          Prototipo a presentar
+        </Typography>
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          value={active}
+          onChange={(_, value) => {
+            if (!value) return;
+            setActivePrototype(value);
+            navigate(START[value]);
+          }}
+          sx={{ flexWrap: "wrap" }}
+        >
+          {Object.entries(LABELS).map(([value, label]) => (
+            <ToggleButton key={value} value={value} sx={{ px: 3 }}>
+              {label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Typography variant="caption" color="text.secondary">
+            Alt + Shift + P para mostrar u ocultar
+          </Typography>
+          <Button
+            size="small"
+            variant="contained"
+            onClick={() => setOpen(false)}
+          >
+            Listo
+          </Button>
+        </Stack>
+      </Stack>
+    </Paper>
+  );
+}

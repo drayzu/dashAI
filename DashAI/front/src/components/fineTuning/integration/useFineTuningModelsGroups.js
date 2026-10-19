@@ -4,6 +4,10 @@
 // string ids ("ft-B-<sessionId>") plus type-dispatched handlers, so the real
 // backend sessions (numeric ids) keep their own handlers untouched.
 
+import {
+  prototypeVisible,
+  useActivePrototype,
+} from "../../../utils/demoPrototype";
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -53,6 +57,7 @@ export function useFineTuningModelsGroups({
   searchQuery = "",
 } = {}) {
   const { t } = useTranslation(["fineTuning", "common"]);
+  const activePrototype = useActivePrototype();
   const navigate = useNavigate();
   const location = useLocation();
   const { enqueueSnackbar } = useSnackbar();
@@ -176,10 +181,12 @@ export function useFineTuningModelsGroups({
     [deleteOne, activeSessionId, navigate],
   );
 
+  // Hidden while presenting another prototype (see utils/demoPrototype).
+  const visible = prototypeVisible(activePrototype, "B");
   return {
     groupName: t("fineTuning:shellB.leftBar.group"),
-    items,
-    allItemsCount: allItems.length,
+    items: visible ? items : [],
+    allItemsCount: visible ? allItems.length : 0,
     selectedItemId,
     isActive,
     owns: isFineTuningItemId,

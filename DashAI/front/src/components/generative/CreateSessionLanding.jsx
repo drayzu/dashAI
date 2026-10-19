@@ -12,6 +12,14 @@ import {
   ADAPTERS_B_BASE,
 } from "../fineTuning/integration/entryPoints";
 import {
+  prototypeVisible,
+  useActivePrototype,
+} from "../../utils/demoPrototype";
+import {
+  FT_D_PATH,
+  SESSIONS_D_PATH,
+} from "../../pages/generative/prototypeD/storeD";
+import {
   STANDALONE_ENTRY_POINTS,
   isStandaloneTask,
   standaloneRouteFor,
@@ -34,6 +42,7 @@ export default function CreateSessionLanding() {
   const { t } = useTranslation(["generative", "common", "fineTuning"]);
   const tourContext = useTourContext();
   const { tasks } = useGenerative();
+  const activePrototype = useActivePrototype();
 
   const options = useMemo(() => {
     const standalone = (tasks ?? [])
@@ -46,6 +55,9 @@ export default function CreateSessionLanding() {
         Icon: STANDALONE_ENTRY_POINTS[task.name].Icon,
       }));
 
+    const single = activePrototype !== "all";
+    const chip = (label) => (single ? [] : [label]);
+    const show = (id) => prototypeVisible(activePrototype, id);
     return [
       {
         name: CREATE_SESSION,
@@ -53,31 +65,49 @@ export default function CreateSessionLanding() {
         description: t("generative:label.createNewSessionDescription"),
         Icon: AutoAwesomeIcon,
       },
-      {
+      show("A") && {
         name: "fine_tuning",
         display_name: t("generative:label.fineTuningModule"),
         description: t("generative:label.fineTuningModuleDescription"),
         Icon: ModelTrainingIcon,
-        chips: [t("fineTuning:shellB.prototypeChip", { prototype: "A" })],
+        chips: chip(t("fineTuning:shellB.prototypeChip", { prototype: "A" })),
       },
-      {
+      show("C") && {
         name: "fine_tuning_simple",
-        display_name: "Fine-tuning (versión simple)",
+        display_name: single ? "Fine-tuning" : "Fine-tuning (versión simple)",
         description:
           "Flujo lineal en cinco pasos: modelo, datos, configuración, entrenamiento y resultado.",
         Icon: ModelTrainingIcon,
-        chips: ["Prototipo C"],
+        chips: chip("Prototipo C"),
       },
-      {
+      show("B") && {
         name: ADAPTED_MODELS_OPTION_NAME,
         display_name: t("fineTuning:shellB.generativeCard.title"),
         description: t("fineTuning:shellB.generativeCard.description"),
         Icon: ExtensionOutlinedIcon,
-        chips: [t("fineTuning:shellB.prototypeChip", { prototype: "B" })],
+        chips: chip(t("fineTuning:shellB.prototypeChip", { prototype: "B" })),
+      },
+      show("D") && {
+        name: "fine_tuning_d",
+        display_name: single
+          ? "Fine-tuning"
+          : "Fine-tuning (solo entrenamiento)",
+        description:
+          "Entrena un adaptador LoRA/QLoRA. Después se usa desde «Crear nueva sesión».",
+        Icon: ModelTrainingIcon,
+        chips: chip("Prototipo D"),
+      },
+      activePrototype === "all" && {
+        name: "sessions_d",
+        display_name: "Crear nueva sesión (con modelos adaptados)",
+        description:
+          "Copia simulada de «Crear nueva sesión» donde los adaptadores aparecen como modelos.",
+        Icon: AutoAwesomeIcon,
+        chips: ["Prototipo D"],
       },
       ...standalone,
-    ];
-  }, [tasks, t]);
+    ].filter(Boolean);
+  }, [tasks, t, activePrototype]);
 
   /**
    * Navigate to the chosen entry point.
@@ -89,6 +119,17 @@ export default function CreateSessionLanding() {
     }
     if (name === "fine_tuning") {
       navigate("/app/generative/fine-tuning");
+      return;
+    }
+    if (name === "fine_tuning_d") {
+      navigate(FT_D_PATH);
+      return;
+    }
+    if (
+      name === "sessions_d" ||
+      (name === CREATE_SESSION && activePrototype === "D")
+    ) {
+      navigate(`${SESSIONS_D_PATH}/new`);
       return;
     }
     if (name === "fine_tuning_simple") {
