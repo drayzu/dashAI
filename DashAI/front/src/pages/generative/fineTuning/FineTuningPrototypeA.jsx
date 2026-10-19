@@ -86,10 +86,10 @@ function CenterContent({ route }) {
 
 CenterContent.propTypes = { route: PropTypes.object.isRequired };
 
-/** Layout of prototype A (inside the provider). */
-function FineTuningShellA() {
+/** Layout of prototype A (inside the provider). `base` is its route base. */
+function FineTuningShellA({ base }) {
   const threePanelLayout = useThreePanelLayout({ storageKey: "fineTuningA" });
-  const route = useFineTuningRouteA();
+  const route = useFineTuningRouteA(base);
   useDatasetReturn(route);
   const sessionExists = useFineTuningStore((s) =>
     route.sessionId ? Boolean(sessionById(s, route.sessionId)) : false,
@@ -144,6 +144,8 @@ function FineTuningShellA() {
   );
 }
 
+FineTuningShellA.propTypes = { base: PropTypes.string.isRequired };
+
 /**
  * Prototype A of the fine-tuning module ("en Generative", SPEC §5), mounted
  * at `/app/generative/fine-tuning/*`. Fully simulated: data lives in the
@@ -155,9 +157,27 @@ function FineTuningShellA() {
  *   prototype-A singleton
  * @param {boolean} [props.hardwareMonitoring] forwarded to the provider
  */
-export default function FineTuningPrototypeA({ store, hardwareMonitoring }) {
-  const resolvedStore = useMemo(() => store || getPrototypeStore("A"), [store]);
-  const routes = useMemo(() => buildRoutesA(FINE_TUNING_BASE_A), []);
+export default function FineTuningPrototypeA({
+  store,
+  hardwareMonitoring,
+  prototype = "A",
+  base = FINE_TUNING_BASE_A,
+  chatBase,
+}) {
+  const resolvedStore = useMemo(
+    () => store || getPrototypeStore(prototype),
+    [store, prototype],
+  );
+  const routes = useMemo(() => {
+    const built = buildRoutesA(base);
+    if (!chatBase) return built;
+    // Prototype E: inference lives in "Crear nueva sesión", not here.
+    return {
+      ...built,
+      externalChat: true,
+      chat: (chatId) => (chatId ? `${chatBase}/${chatId}` : `${chatBase}/new`),
+    };
+  }, [base, chatBase]);
   return (
     <FineTuningProvider
       store={resolvedStore}
@@ -165,12 +185,15 @@ export default function FineTuningPrototypeA({ store, hardwareMonitoring }) {
       prototype="A"
       hardwareMonitoring={hardwareMonitoring}
     >
-      <FineTuningShellA />
+      <FineTuningShellA base={base} />
     </FineTuningProvider>
   );
 }
 
 FineTuningPrototypeA.propTypes = {
   store: PropTypes.object,
+  prototype: PropTypes.oneOf(["A", "E"]),
+  base: PropTypes.string,
+  chatBase: PropTypes.string,
   hardwareMonitoring: PropTypes.bool,
 };

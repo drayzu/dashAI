@@ -26,6 +26,8 @@ import AdaptersHubB from "./pages/generative/adapters/AdaptersHubB";
 import FineTuningSimple from "./pages/generative/fineTuningSimple/FineTuningSimple";
 import FineTuningD from "./pages/generative/prototypeD/FineTuningD";
 import SessionsD from "./pages/generative/prototypeD/SessionsD";
+import FineTuningE from "./pages/generative/prototypeE/FineTuningE";
+import SessionsE from "./pages/generative/prototypeE/SessionsE";
 import PrototypeSwitcher from "./components/fineTuning/demoSwitcher/PrototypeSwitcher";
 import { GenerativeProvider } from "./components/generative/GenerativeContext";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
@@ -137,6 +139,14 @@ function App() {
                 <Route
                   path="/app/generative/sessions-d/*"
                   element={<SessionsD />}
+                />
+                <Route
+                  path="/app/generative/fine-tuning-e/*"
+                  element={<FineTuningE />}
+                />
+                <Route
+                  path="/app/generative/sessions-e/*"
+                  element={<SessionsE />}
                 />
                 <Route
                   path="/app/generative/fine-tuning-legacy"

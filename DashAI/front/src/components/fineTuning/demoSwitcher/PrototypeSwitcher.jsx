@@ -21,15 +21,24 @@ const START = {
   B: "/app/models",
   C: "/app/generative",
   D: "/app/generative",
+  E: "/app/generative",
 };
 
-const LABELS = {
-  all: "Todos",
-  A: "A · Generativo",
-  B: "B · Modelos",
-  C: "C · Simple",
-  D: "D · Sesión unificada",
-};
+const GROUPS = [
+  { title: "Desarrollo", items: { all: "Todos" } },
+  {
+    title: "Completos",
+    items: {
+      A: "A · En Generativo",
+      B: "B · En Modelos",
+      E: "E · Sesión unificada",
+    },
+  },
+  {
+    title: "Simples",
+    items: { C: "C · Lineal", D: "D · Sesión unificada" },
+  },
+];
 
 /**
  * Presenter-only switcher (Alt+Shift+P): picks which fine-tuning prototype
@@ -78,23 +87,30 @@ export default function PrototypeSwitcher() {
         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
           Prototipo a presentar
         </Typography>
-        <ToggleButtonGroup
-          exclusive
-          size="small"
-          value={active}
-          onChange={(_, value) => {
-            if (!value) return;
-            setActivePrototype(value);
-            navigate(START[value]);
-          }}
-          sx={{ flexWrap: "wrap" }}
-        >
-          {Object.entries(LABELS).map(([value, label]) => (
-            <ToggleButton key={value} value={value} sx={{ px: 3 }}>
-              {label}
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
+        {GROUPS.map((group) => (
+          <Stack key={group.title} spacing={1}>
+            <Typography variant="caption" color="text.secondary">
+              {group.title}
+            </Typography>
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={active}
+              onChange={(_, value) => {
+                if (!value) return;
+                setActivePrototype(value);
+                navigate(START[value]);
+              }}
+              sx={{ flexWrap: "wrap" }}
+            >
+              {Object.entries(group.items).map(([value, label]) => (
+                <ToggleButton key={value} value={value} sx={{ px: 3 }}>
+                  {label}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+          </Stack>
+        ))}
         <Stack
           direction="row"
           justifyContent="space-between"

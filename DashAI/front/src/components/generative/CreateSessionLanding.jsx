@@ -20,6 +20,10 @@ import {
   SESSIONS_D_PATH,
 } from "../../pages/generative/prototypeD/storeD";
 import {
+  FT_E_PATH,
+  SESSIONS_E_PATH,
+} from "../../pages/generative/prototypeE/SessionsE";
+import {
   STANDALONE_ENTRY_POINTS,
   isStandaloneTask,
   standaloneRouteFor,
@@ -97,6 +101,24 @@ export default function CreateSessionLanding() {
         Icon: ModelTrainingIcon,
         chips: chip("Prototipo D"),
       },
+      show("E") && {
+        name: "fine_tuning_e",
+        display_name: single
+          ? "Fine-tuning local"
+          : "Fine-tuning local (completo)",
+        description:
+          "Entrena adaptadores LoRA/QLoRA con tus datasets. Después se usan desde «Crear nueva sesión».",
+        Icon: ModelTrainingIcon,
+        chips: chip("Prototipo E"),
+      },
+      activePrototype === "all" && {
+        name: "sessions_e",
+        display_name: "Crear nueva sesión (completa, con adaptados)",
+        description:
+          "Copia simulada de «Crear nueva sesión» con los adaptadores del prototipo E.",
+        Icon: AutoAwesomeIcon,
+        chips: ["Prototipo E"],
+      },
       activePrototype === "all" && {
         name: "sessions_d",
         display_name: "Crear nueva sesión (con modelos adaptados)",
@@ -119,6 +141,17 @@ export default function CreateSessionLanding() {
     }
     if (name === "fine_tuning") {
       navigate("/app/generative/fine-tuning");
+      return;
+    }
+    if (name === "fine_tuning_e") {
+      navigate(FT_E_PATH);
+      return;
+    }
+    if (
+      name === "sessions_e" ||
+      (name === CREATE_SESSION && activePrototype === "E")
+    ) {
+      navigate(`${SESSIONS_E_PATH}/new`);
       return;
     }
     if (name === "fine_tuning_d") {

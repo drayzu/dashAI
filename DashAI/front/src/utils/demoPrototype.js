@@ -7,7 +7,7 @@ import { useSyncExternalStore } from "react";
  * Persisted in localStorage; `?proto=a` in any URL also sets it.
  */
 
-export const PROTOTYPES = ["all", "A", "B", "C", "D"];
+export const PROTOTYPES = ["all", "A", "B", "C", "D", "E"];
 const STORAGE_KEY = "dashai:ft-proto:active:v1";
 
 function read() {

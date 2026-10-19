@@ -82,11 +82,11 @@ export function parseFineTuningPath(
 }
 
 /** Current prototype-A view, derived from the URL. */
-export function useFineTuningRouteA() {
+export function useFineTuningRouteA(base = FINE_TUNING_BASE_A) {
   const location = useLocation();
   return useMemo(
-    () => parseFineTuningPath(location.pathname, location.search),
-    [location.pathname, location.search],
+    () => parseFineTuningPath(location.pathname, location.search, base),
+    [location.pathname, location.search, base],
   );
 }
 

@@ -9,6 +9,7 @@ import { registerExternalJobsSource } from "../../../utils/externalJobs";
 export const STORAGE_KEYS = Object.freeze({
   A: "dashai:ft-proto:A:v1",
   B: "dashai:ft-proto:B:v1",
+  E: "dashai:ft-proto:E:v1",
 });
 
 // Route bases (SPEC §5 for A, SPEC-B "Routes" for B). Kept here only for the
@@ -17,6 +18,8 @@ export const RUN_HREF = Object.freeze({
   A: (run) =>
     `/app/generative/fine-tuning/sessions/${run.sessionId}/runs/${run.id}`,
   B: (run) => `/app/models/fine-tuning/${run.sessionId}/run/${run.id}`,
+  E: (run) =>
+    `/app/generative/fine-tuning-e/sessions/${run.sessionId}/runs/${run.id}`,
 });
 
 const RECENT_TERMINAL_MS = 12 * 60 * 60 * 1000;
@@ -112,11 +115,12 @@ export function runsToJobs(store, prototype, t) {
  * @param {"A"|"B"} prototype
  */
 export function getPrototypeStore(prototype = "A") {
-  const key = prototype === "B" ? "B" : "A";
+  const key = ["B", "E"].includes(prototype) ? prototype : "A";
   if (!stores[key]) {
+    // E reuses the full prototype-A module with its own data.
     const store = createFineTuningStore({
       storageKey: STORAGE_KEYS[key],
-      prototype: key,
+      prototype: key === "E" ? "A" : key,
     });
     stores[key] = store;
     registerExternalJobsSource(`fine-tuning-${key}`, {
@@ -142,7 +146,7 @@ export function ensureFineTuningJobSources() {
     storage = null;
   }
   if (!storage) return;
-  ["A", "B"].forEach((key) => {
+  ["A", "B", "E"].forEach((key) => {
     try {
       if (storage.getItem(STORAGE_KEYS[key])) getPrototypeStore(key);
     } catch (e) {

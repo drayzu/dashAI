@@ -207,7 +207,10 @@ export default function FineTuningBreadcrumbs({ route }) {
       <Box
         sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}
       >
-        <PrototypeBadge prototype="A" storageError={names.storageError} />
+        <PrototypeBadge
+          prototype={routes.externalChat ? "E" : "A"}
+          storageError={names.storageError}
+        />
         <DemoControlsMenu
           otherPrototypeHref={OTHER_PROTOTYPE_HREF}
           otherPrototypeLabel={t(`${NS}.otherPrototype`)}

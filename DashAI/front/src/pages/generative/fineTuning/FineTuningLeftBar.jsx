@@ -164,7 +164,7 @@ export default function FineTuningLeftBar({
     [t],
   );
 
-  const navItems = [
+  const allNavItems = [
     {
       key: "adapters",
       level: "intermediate",
@@ -187,6 +187,10 @@ export default function FineTuningLeftBar({
       to: `${routes.home()}/compare`,
     },
   ];
+  // Prototype E chats from "Crear nueva sesión" instead.
+  const navItems = routes.externalChat
+    ? allNavItems.filter((item) => item.key !== "chat")
+    : allNavItems;
 
   return (
     <SideBar>

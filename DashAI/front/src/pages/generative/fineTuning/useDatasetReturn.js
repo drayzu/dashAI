@@ -15,7 +15,9 @@ function stripDatasetParam(location) {
   const params = new URLSearchParams(location.search);
   params.delete("datasetId");
   const query = params.toString();
-  return `${location.pathname}${query ? `?${query}` : ""}${location.hash || ""}`;
+  return `${location.pathname}${query ? `?${query}` : ""}${
+    location.hash || ""
+  }`;
 }
 
 /**
