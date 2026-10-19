@@ -492,6 +492,10 @@
         "compare": {
           "title": "Compare with the base model",
           "description": "Evaluate the adapter against its base model on held-out cases ({{count}} adapters available)."
+        },
+        "sessionChat": {
+          "title": "Use an adapter in a session",
+          "description": "Adapters appear in Generative → Create a new session, next to the other models."
         }
       },
       "recentTitle": "Recent runs",

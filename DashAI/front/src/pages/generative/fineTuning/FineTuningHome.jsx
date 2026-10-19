@@ -72,12 +72,14 @@ export default function FineTuningHome() {
       level: "essential",
       Icon: ForumOutlinedIcon,
       // Prototype E: the adapters are used from "Crear nueva sesión".
-      title: routes.externalChat
-        ? "Usar un adaptador en una sesión"
-        : t(`${NS}.options.chat.title`),
-      description: routes.externalChat
-        ? "Los adaptadores aparecen en Generativo → Crear nueva sesión, junto a los demás modelos."
-        : t(`${NS}.options.chat.description`),
+      title: t(
+        `${NS}.options.${routes.externalChat ? "sessionChat" : "chat"}.title`,
+      ),
+      description: t(
+        `${NS}.options.${
+          routes.externalChat ? "sessionChat" : "chat"
+        }.description`,
+      ),
       onClick: () => navigate(routes.chat()),
     },
     {

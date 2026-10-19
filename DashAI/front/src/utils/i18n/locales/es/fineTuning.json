@@ -503,6 +503,10 @@
         "compare": {
           "title": "Comparar con modelo base",
           "description": "Evalúa el adaptador frente a su modelo base en casos reservados ({{count}} adaptadores disponibles)."
+        },
+        "sessionChat": {
+          "title": "Usar un adaptador en una sesión",
+          "description": "Los adaptadores aparecen en Generativo → Crear nueva sesión, junto a los demás modelos."
         }
       },
       "recentTitle": "Ejecuciones recientes",
