@@ -499,7 +499,10 @@
     "adaptedModel": "Modelo adaptado · {{name}}",
     "baseModel": "Modelo base",
     "infoTitle": "Información",
-    "infoBody": "Los modelos adaptados se usan como cualquier otro modelo: se eligen al crear la sesión. Las respuestas son simuladas."
+    "infoBody": "Los modelos adaptados se usan como cualquier otro modelo: se eligen al crear la sesión. Las respuestas son simuladas.",
+    "categoryBase": "Texto a Texto",
+    "categoryAdapted": "Mis modelos adaptados",
+    "adapterDescription": "{{base}} + adaptador {{method}} entrenado en Fine-tuning."
   },
   "shellA": {
     "otherPrototype": "Prototipo B (en Modelos)",

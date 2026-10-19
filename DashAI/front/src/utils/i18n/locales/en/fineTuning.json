@@ -489,7 +489,10 @@
     "adaptedModel": "Adapted model · {{name}}",
     "baseModel": "Base model",
     "infoTitle": "Information",
-    "infoBody": "Adapted models are used like any other model: you pick them when creating the session. Responses are simulated."
+    "infoBody": "Adapted models are used like any other model: you pick them when creating the session. Responses are simulated.",
+    "categoryBase": "Text to Text",
+    "categoryAdapted": "My adapted models",
+    "adapterDescription": "{{base}} + {{method}} adapter trained in Fine-tuning."
   },
   "shellA": {
     "otherPrototype": "Prototype B (in Models)",

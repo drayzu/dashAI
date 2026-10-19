@@ -35,6 +35,7 @@ import {
 } from "../../../components/fineTuning/FineTuningContext";
 import { getPrototypeStore } from "../../../components/fineTuning/data/instances";
 import { chatById } from "../../../components/fineTuning/data/selectors";
+import ComponentSelector from "../../../components/custom/ComponentSelector";
 import AdapterChat from "../../../components/fineTuning/inference/AdapterChat";
 import GenerationParamsPanel from "../../../components/fineTuning/inference/GenerationParamsPanel";
 
@@ -85,7 +86,7 @@ ModelCard.propTypes = {
 const NS = "fineTuning:sessionsE";
 
 function NewSession() {
-  const { t } = useTranslation(["fineTuning"]);
+  const { t } = useTranslation(["fineTuning", "generative"]);
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const store = useFineTuningActions();
@@ -128,98 +129,58 @@ function NewSession() {
     navigate(`${SESSIONS_E_PATH}/${chatId}`);
   };
 
-  const visibleAdapters = adapters;
+  // Same items the real model picker shows, plus the trained adapters as
+  // their own group ("Mis modelos adaptados").
+  const selectorItems = [
+    ...checkpoints.map((ck) => ({
+      name: `base:${ck.id}`,
+      display_name: ck.name,
+      description: t(`${NS}.modelSubtitle`, {
+        params: ck.parametersB,
+        license: ck.license || "",
+      }),
+      task_display_name: t(`${NS}.categoryBase`),
+    })),
+    ...adapters.map((a) => ({
+      name: `adapter:${a.id}`,
+      display_name: a.name,
+      description: t(`${NS}.adapterDescription`, {
+        base: ckName(a.checkpointId),
+        method: String(a.method || "").toUpperCase(),
+      }),
+      task_display_name: t(`${NS}.categoryAdapted`),
+    })),
+  ];
 
   return (
     <Stack sx={{ height: "100%", p: 4, boxSizing: "border-box" }} spacing={4}>
       <Box>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          {t(`${NS}.title`)}
+        <Typography variant="h5" component="h2">
+          {step === 0
+            ? t("generative:label.selectModel")
+            : t(`${NS}.stepConfig`)}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {t(`${NS}.step`, {
-            current: step + 1,
-            label: t(`${NS}.${step === 0 ? "stepModel" : "stepConfig"}`),
-          })}
+          {step === 0
+            ? t("generative:label.pickAModelGroupedByTask")
+            : t(`${NS}.step`, { current: 2, label: t(`${NS}.stepConfig`) })}
         </Typography>
       </Box>
 
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", pr: 1 }}>
         {step === 0 ? (
-          <Stack spacing={6}>
-            <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                {t(`${NS}.models`)}
-              </Typography>
-              <Box sx={grid}>
-                {checkpoints.map((ck) => (
-                  <ModelCard
-                    key={ck.id}
-                    icon={SmartToyOutlinedIcon}
-                    title={ck.name}
-                    subtitle={t(`${NS}.modelSubtitle`, {
-                      params: ck.parametersB,
-                      license: ck.license || "",
-                    })}
-                    note={
-                      ck.availability === "ready"
-                        ? null
-                        : t(`${NS}.availability.${ck.availability}`)
-                    }
-                    selected={isSelected("base", ck.id)}
-                    onSelect={() => setSelected({ kind: "base", id: ck.id })}
-                  />
-                ))}
-              </Box>
-            </Box>
-            <Box>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ mb: 2 }}
-              >
-                <Box>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                    {t(`${NS}.adapted`)}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {t(`${NS}.adaptedHint`)}
-                  </Typography>
-                </Box>
-                <Button size="small" onClick={() => navigate(FT_E_PATH)}>
-                  {t(`${NS}.goToFineTuning`)}
-                </Button>
-              </Stack>
-              {visibleAdapters.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  {t(`${NS}.noAdapters`)}
-                </Typography>
-              ) : (
-                <Box sx={grid}>
-                  {visibleAdapters.map((a) => (
-                    <ModelCard
-                      key={a.id}
-                      icon={ExtensionOutlinedIcon}
-                      title={a.name}
-                      subtitle={`${ckName(a.checkpointId)} · ${String(
-                        a.method || "",
-                      ).toUpperCase()}`}
-                      note={
-                        a.availability === "ready"
-                          ? null
-                          : t(`${NS}.availability.adapterUnavailable`)
-                      }
-                      selected={isSelected("adapter", a.id)}
-                      onSelect={() =>
-                        setSelected({ kind: "adapter", id: a.id })
-                      }
-                    />
-                  ))}
-                </Box>
-              )}
-            </Box>
-          </Stack>
+          <ComponentSelector
+            components={selectorItems}
+            selected={
+              selected ? { name: `${selected.kind}:${selected.id}` } : null
+            }
+            onSelect={(component) => {
+              const [kind, ...rest] = component.name.split(":");
+              setSelected({ kind, id: rest.join(":") });
+            }}
+            categoryKey="task_display_name"
+            searchPlaceholder={t("generative:label.searchModels")}
+          />
         ) : (
           <Stack spacing={5} sx={{ maxWidth: 560 }}>
             <Alert severity="info" variant="outlined">
