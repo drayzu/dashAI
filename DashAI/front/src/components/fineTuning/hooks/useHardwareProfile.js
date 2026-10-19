@@ -12,7 +12,6 @@
 // (labelled GB in the UI) rounded to 0.1.
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import api from "../../../api/api";
 import { SIMULATED_HARDWARE } from "../data/catalog";
 
 const GIB = 1024 ** 3;
@@ -54,8 +53,10 @@ export function hardwareProfileFromStats(stats) {
 let statsPromise = null;
 function loadStatsOnce() {
   if (!statsPromise) {
-    statsPromise = api
-      .get("/v1/hardware/", { timeout: 20000 })
+    // Lazy import: loading the API client also initialises DashAI's i18n,
+    // which tests (and storybook-like renders) must not get as a side effect.
+    statsPromise = import("../../../api/api")
+      .then(({ default: api }) => api.get("/v1/hardware/", { timeout: 20000 }))
       .then((response) => response.data)
       .catch(() => {
         statsPromise = null; // allow a later retry
