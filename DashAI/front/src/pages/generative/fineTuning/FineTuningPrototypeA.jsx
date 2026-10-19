@@ -176,6 +176,7 @@ export default function FineTuningPrototypeA({
       ...built,
       externalChat: true,
       chat: (chatId) => (chatId ? `${chatBase}/${chatId}` : `${chatBase}/new`),
+      useInSession: (adapterId) => `${chatBase}/new?adapter=${adapterId}`,
     };
   }, [base, chatBase]);
   return (

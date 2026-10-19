@@ -1064,7 +1064,9 @@
       "compare": "Comparar con modelo base",
       "provenance": "Procedencia",
       "rename": "Renombrar",
-      "delete": "Eliminar"
+      "delete": "Eliminar",
+      "useInSession": "Usar en una sesión",
+      "compareShort": "Comparar con base"
     },
     "rename": {
       "title": "Renombrar adaptador",
@@ -2003,7 +2005,7 @@
   },
   "viewEditing": {
     "title": "Editar vista",
-    "hint": "Oculta bloques con el ícono de ojo. Al salir, lo oculto no deja rastro. Atajo: Ctrl+Shift+E.",
+    "hint": "Oculta bloques con el ícono de ojo. Al salir, lo oculto no deja rastro. Atajos: Ctrl+Shift+E (editar vista) · Ctrl+Shift+P (cambiar prototipo).",
     "toolbarLabel": "Edición de la vista del prototipo",
     "levelLabel": "Nivel de detalle",
     "levels": {

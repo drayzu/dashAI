@@ -35,7 +35,9 @@ export default function useRunActions(run, opts = {}) {
     const current = requestRef.current;
     if (current.key === key && now - current.at < REQUEST_REUSE_MS)
       return current.id;
-    const id = `${key}-${now.toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    const id = `${key}-${now.toString(36)}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
     requestRef.current = { key, id, at: now };
     return id;
   }, []);

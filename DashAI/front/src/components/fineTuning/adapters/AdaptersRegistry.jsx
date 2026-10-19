@@ -10,6 +10,7 @@ import {
   DialogTitle,
   IconButton,
   Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -322,7 +323,9 @@ export default function AdaptersRegistry({
                         "&.Mui-selected": { bgcolor: "action.selected" },
                       }}
                     >
-                      <TableCell sx={{ maxWidth: 260 }}>
+                      <TableCell
+                        sx={{ maxWidth: routes.useInSession ? 360 : 260 }}
+                      >
                         <Typography
                           variant="body2"
                           sx={{ fontWeight: 600 }}
@@ -344,6 +347,35 @@ export default function AdaptersRegistry({
                               })
                             : ""}
                         </Typography>
+                        {routes.useInSession && (
+                          <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              startIcon={<ForumOutlinedIcon />}
+                              sx={{ whiteSpace: "nowrap" }}
+                              disabled={!status.usable}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                navigate(routes.useInSession(adapter.id));
+                              }}
+                            >
+                              {t("fineTuning:adapters.actions.useInSession")}
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<CompareArrowsIcon />}
+                              sx={{ whiteSpace: "nowrap" }}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                navigate(routes.compare(adapter.id));
+                              }}
+                            >
+                              {t("fineTuning:adapters.actions.compareShort")}
+                            </Button>
+                          </Stack>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Box
@@ -405,21 +437,27 @@ export default function AdaptersRegistry({
                         />
                       </TableCell>
                       <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                        <ActionButton
-                          title={t("fineTuning:adapters.actions.chat")}
-                          disabledReason={blocked}
-                          disabled={!status.usable}
-                          color="primary"
-                          onClick={() => openChat(adapter)}
-                        >
-                          <ForumOutlinedIcon fontSize="small" />
-                        </ActionButton>
-                        <ActionButton
-                          title={t("fineTuning:adapters.actions.compare")}
-                          onClick={() => navigate(routes.compare(adapter.id))}
-                        >
-                          <CompareArrowsIcon fontSize="small" />
-                        </ActionButton>
+                        {!routes.useInSession && (
+                          <>
+                            <ActionButton
+                              title={t("fineTuning:adapters.actions.chat")}
+                              disabledReason={blocked}
+                              disabled={!status.usable}
+                              color="primary"
+                              onClick={() => openChat(adapter)}
+                            >
+                              <ForumOutlinedIcon fontSize="small" />
+                            </ActionButton>
+                            <ActionButton
+                              title={t("fineTuning:adapters.actions.compare")}
+                              onClick={() =>
+                                navigate(routes.compare(adapter.id))
+                              }
+                            >
+                              <CompareArrowsIcon fontSize="small" />
+                            </ActionButton>
+                          </>
+                        )}
                         <ActionButton
                           title={t("fineTuning:adapters.actions.provenance")}
                           onClick={() => setProvenanceId(adapter.id)}

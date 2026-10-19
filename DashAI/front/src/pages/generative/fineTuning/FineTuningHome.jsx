@@ -94,6 +94,12 @@ export default function FineTuningHome() {
     },
   ];
 
+  // Prototype E: only start a session or review adapters; using an adapter
+  // and comparing it with its base are actions on each adapter.
+  const visibleOptions = routes.externalChat
+    ? options.filter((o) => ["new", "adapters"].includes(o.key))
+    : options;
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <Box>
@@ -112,7 +118,7 @@ export default function FineTuningHome() {
           gap: 4,
         }}
       >
-        {options.map((option) => {
+        {visibleOptions.map((option) => {
           const box = (
             <OptionBox
               key={option.key}

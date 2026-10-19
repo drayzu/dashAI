@@ -1040,7 +1040,9 @@
       "compare": "Compare with base model",
       "provenance": "Provenance",
       "rename": "Rename",
-      "delete": "Delete"
+      "delete": "Delete",
+      "useInSession": "Use in a session",
+      "compareShort": "Compare with base"
     },
     "rename": {
       "title": "Rename adapter",
@@ -1969,7 +1971,7 @@
   },
   "viewEditing": {
     "title": "Edit view",
-    "hint": "Hide blocks with the eye icon. When you leave, hidden blocks leave no trace. Shortcut: Ctrl+Shift+E.",
+    "hint": "Hide blocks with the eye icon. When you leave, hidden blocks leave no trace. Shortcuts: Ctrl+Shift+E (edit view) · Ctrl+Shift+P (switch prototype).",
     "toolbarLabel": "Prototype view editing",
     "levelLabel": "Level of detail",
     "levels": {

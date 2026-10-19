@@ -269,7 +269,10 @@ function baseTicketProse(input, category, key, params) {
   const lines = [
     opening,
     "",
-    `Por lo que comentas («${normalizeInput(input).slice(0, 90)}»), lo más probable es que se trate de un detalle de configuración. Te sugiero:`,
+    `Por lo que comentas («${normalizeInput(input).slice(
+      0,
+      90,
+    )}»), lo más probable es que se trate de un detalle de configuración. Te sugiero:`,
     "",
     `1. ${s1}`,
     `2. ${s2}`,
@@ -300,7 +303,10 @@ function genericBaseAnswer(input, key, params) {
   return [
     opening,
     "",
-    `Sobre «${normalizeInput(input).slice(0, 80)}»: depende un poco del contexto, pero en general conviene empezar por definir el objetivo, revisar la información disponible y avanzar con pasos pequeños y verificables.`,
+    `Sobre «${normalizeInput(input).slice(
+      0,
+      80,
+    )}»: depende un poco del contexto, pero en general conviene empezar por definir el objetivo, revisar la información disponible y avanzar con pasos pequeños y verificables.`,
     "",
     pick(BASE_CLOSINGS, `${key}|gclose`),
   ].join("\n");
@@ -371,7 +377,10 @@ export function simulateResponse({
     // Adapter trained on another dataset: concise support-assistant style.
     const { category } = classifyTicket(clean);
     text = category
-      ? `${pick(NEXT_STEPS[category], `${key}|other`)} Si el problema persiste, revisa el registro correspondiente en DashAI.`
+      ? `${pick(
+          NEXT_STEPS[category],
+          `${key}|other`,
+        )} Si el problema persiste, revisa el registro correspondiente en DashAI.`
       : "Puedo ayudarte con dudas sobre datos, entrenamiento o uso de modelos en DashAI. ¿Qué necesitas revisar?";
   } else if (heldOut) {
     if (BASE_JSON_HELD_OUT[heldOut.id]) {

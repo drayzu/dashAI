@@ -187,9 +187,10 @@ export default function FineTuningLeftBar({
       to: `${routes.home()}/compare`,
     },
   ];
-  // Prototype E chats from "Crear nueva sesión" instead.
+  // Prototype E: chatting happens in "Crear nueva sesión" and comparing is
+  // an action of each adapter, so only the adapters entry stays.
   const navItems = routes.externalChat
-    ? allNavItems.filter((item) => item.key !== "chat")
+    ? allNavItems.filter((item) => item.key === "adapters")
     : allNavItems;
 
   return (

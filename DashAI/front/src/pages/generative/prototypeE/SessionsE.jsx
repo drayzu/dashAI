@@ -407,6 +407,8 @@ export default function SessionsE() {
       externalChat: true,
       chat: (chatId) =>
         chatId ? `${SESSIONS_E_PATH}/${chatId}` : `${SESSIONS_E_PATH}/new`,
+      useInSession: (adapterId) =>
+        `${SESSIONS_E_PATH}/new?adapter=${adapterId}`,
     }),
     [],
   );

@@ -49,7 +49,11 @@ export default function ResourcePanel({ run, showEstimate, sx }) {
           <Chip
             size="small"
             variant="outlined"
-            label={`${hw.gpuName} · ${t(`fineTuning:runs.resources.source.${hw.source === "detected" ? "detected" : "simulated"}`)}`}
+            label={`${hw.gpuName} · ${t(
+              `fineTuning:runs.resources.source.${
+                hw.source === "detected" ? "detected" : "simulated"
+              }`,
+            )}`}
           />
         )}
       </Box>

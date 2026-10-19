@@ -48,7 +48,9 @@ export function frozenConfigGroups(run, t, language) {
     .filter(([, col]) => col)
     .map(
       ([field, col]) =>
-        `${t(`fineTuning:datasets.fields.${field}`, { defaultValue: field })} ← ${col}`,
+        `${t(`fineTuning:datasets.fields.${field}`, {
+          defaultValue: field,
+        })} ← ${col}`,
     )
     .join(" · ");
 
@@ -186,7 +188,9 @@ export function frozenConfigGroups(run, t, language) {
         row(
           "hardwareSource",
           t(
-            `fineTuning:runs.resources.source.${hw.source === "detected" ? "detected" : "simulated"}`,
+            `fineTuning:runs.resources.source.${
+              hw.source === "detected" ? "detected" : "simulated"
+            }`,
           ),
         ),
         row("estimatedVram", formatGb(snap.estimatedVramGb)),

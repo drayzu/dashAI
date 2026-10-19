@@ -123,7 +123,9 @@ export default function LossChart({
         y: series.train.y,
         line: { color: trainColor, width: 2, shape: "spline", smoothing: 0.7 },
         marker: { color: trainColor },
-        hovertemplate: `${stepLabel} %{x}: %{y:.4f}<extra>${t("fineTuning:charts.trainLoss")}</extra>`,
+        hovertemplate: `${stepLabel} %{x}: %{y:.4f}<extra>${t(
+          "fineTuning:charts.trainLoss",
+        )}</extra>`,
       },
     ];
     if (hasEval) {
@@ -135,7 +137,9 @@ export default function LossChart({
         y: series.eval.y,
         line: { color: evalColor, width: 2, dash: "dot" },
         marker: { color: evalColor, size: 6 },
-        hovertemplate: `${stepLabel} %{x}: %{y:.4f}<extra>${t("fineTuning:charts.evalLoss")}</extra>`,
+        hovertemplate: `${stepLabel} %{x}: %{y:.4f}<extra>${t(
+          "fineTuning:charts.evalLoss",
+        )}</extra>`,
       });
     }
     return data;

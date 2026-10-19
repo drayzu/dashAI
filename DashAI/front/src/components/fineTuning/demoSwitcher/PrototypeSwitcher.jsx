@@ -14,6 +14,11 @@ import {
   useActivePrototype,
 } from "../../../utils/demoPrototype";
 
+const isEditableTarget = (target) =>
+  target &&
+  (target.isContentEditable ||
+    ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
+
 // Where each prototype starts when picked from the switcher.
 const START = {
   all: "/app/generative",
@@ -41,7 +46,7 @@ const GROUPS = [
 ];
 
 /**
- * Presenter-only switcher (Alt+Shift+P): picks which fine-tuning prototype
+ * Presenter-only switcher (Ctrl/Cmd+Shift+P, next to Ctrl+Shift+E for view editing): picks which fine-tuning prototype
  * the real DashAI modules show, so each one can be presented on its own.
  * Hidden unless opened; mounted once in App.
  */
@@ -57,7 +62,12 @@ export default function PrototypeSwitcher() {
 
   useEffect(() => {
     const onKeyDown = (event) => {
-      if (event.altKey && event.shiftKey && event.code === "KeyP") {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.shiftKey &&
+        event.code === "KeyP" &&
+        !isEditableTarget(event.target)
+      ) {
         event.preventDefault();
         setOpen((value) => !value);
       }
@@ -117,7 +127,8 @@ export default function PrototypeSwitcher() {
           alignItems="center"
         >
           <Typography variant="caption" color="text.secondary">
-            Alt + Shift + P para mostrar u ocultar
+            Ctrl + Shift + P para mostrar u ocultar · Ctrl + Shift + E para
+            editar la vista
           </Typography>
           <Button
             size="small"
