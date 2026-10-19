@@ -20,6 +20,7 @@ import AddIcon from "@mui/icons-material/Add";
 import ExtensionOutlinedIcon from "@mui/icons-material/ExtensionOutlined";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import ModuleContainer from "../../../components/layout/ModuleContainer";
 import LeftPanel from "../../../components/threeSectionLayout/panels/LeftPanel";
 import CenterPanel from "../../../components/threeSectionLayout/panels/CenterPanel";
@@ -39,13 +40,6 @@ import GenerationParamsPanel from "../../../components/fineTuning/inference/Gene
 
 export const FT_E_PATH = "/app/generative/fine-tuning-e";
 export const SESSIONS_E_PATH = "/app/generative/sessions-e";
-
-const AVAILABILITY = {
-  ready: null,
-  missing: "No descargado",
-  downloading: "Descargando",
-  invalid: "No válido",
-};
 
 const grid = {
   display: "grid",
@@ -88,7 +82,10 @@ ModelCard.propTypes = {
 };
 
 /** "Crear nueva sesión": 1) pick a model (base or adapted) 2) configure. */
+const NS = "fineTuning:sessionsE";
+
 function NewSession() {
+  const { t } = useTranslation(["fineTuning"]);
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const store = useFineTuningActions();
@@ -137,11 +134,13 @@ function NewSession() {
     <Stack sx={{ height: "100%", p: 4, boxSizing: "border-box" }} spacing={4}>
       <Box>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          Crear nueva sesión
+          {t(`${NS}.title`)}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Paso {step + 1} de 2 ·{" "}
-          {step === 0 ? "Elige un modelo" : "Configura la sesión"}
+          {t(`${NS}.step`, {
+            current: step + 1,
+            label: t(`${NS}.${step === 0 ? "stepModel" : "stepConfig"}`),
+          })}
         </Typography>
       </Box>
 
@@ -150,7 +149,7 @@ function NewSession() {
           <Stack spacing={6}>
             <Box>
               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                Modelos
+                {t(`${NS}.models`)}
               </Typography>
               <Box sx={grid}>
                 {checkpoints.map((ck) => (
@@ -158,10 +157,15 @@ function NewSession() {
                     key={ck.id}
                     icon={SmartToyOutlinedIcon}
                     title={ck.name}
-                    subtitle={`${ck.parametersB} B parámetros · ${
-                      ck.license || ""
-                    }`}
-                    note={AVAILABILITY[ck.availability] ?? null}
+                    subtitle={t(`${NS}.modelSubtitle`, {
+                      params: ck.parametersB,
+                      license: ck.license || "",
+                    })}
+                    note={
+                      ck.availability === "ready"
+                        ? null
+                        : t(`${NS}.availability.${ck.availability}`)
+                    }
                     selected={isSelected("base", ck.id)}
                     onSelect={() => setSelected({ kind: "base", id: ck.id })}
                   />
@@ -177,19 +181,19 @@ function NewSession() {
               >
                 <Box>
                   <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                    Mis modelos adaptados
+                    {t(`${NS}.adapted`)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Modelo base + adaptador LoRA/QLoRA entrenado en Fine-tuning.
+                    {t(`${NS}.adaptedHint`)}
                   </Typography>
                 </Box>
                 <Button size="small" onClick={() => navigate(FT_E_PATH)}>
-                  Ir a Fine-tuning
+                  {t(`${NS}.goToFineTuning`)}
                 </Button>
               </Stack>
               {visibleAdapters.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
-                  Todavía no hay adaptadores. Entrena uno en Fine-tuning.
+                  {t(`${NS}.noAdapters`)}
                 </Typography>
               ) : (
                 <Box sx={grid}>
@@ -201,7 +205,11 @@ function NewSession() {
                       subtitle={`${ckName(a.checkpointId)} · ${String(
                         a.method || "",
                       ).toUpperCase()}`}
-                      note={a.availability === "ready" ? null : "No disponible"}
+                      note={
+                        a.availability === "ready"
+                          ? null
+                          : t(`${NS}.availability.adapterUnavailable`)
+                      }
                       selected={isSelected("adapter", a.id)}
                       onSelect={() =>
                         setSelected({ kind: "adapter", id: a.id })
@@ -216,21 +224,22 @@ function NewSession() {
           <Stack spacing={5} sx={{ maxWidth: 560 }}>
             <Alert severity="info" variant="outlined">
               {selectedAdapter
-                ? `Se cargará ${ckName(
-                    selectedAdapter.checkpointId,
-                  )} con el adaptador «${selectedAdapter.name}» encima.`
-                : `Modelo: ${selectedLabel}.`}
+                ? t(`${NS}.loadsAdapter`, {
+                    base: ckName(selectedAdapter.checkpointId),
+                    adapter: selectedAdapter.name,
+                  })
+                : t(`${NS}.loadsModel`, { model: selectedLabel })}
             </Alert>
             <TextField
               size="small"
-              label="Nombre de la sesión"
+              label={t(`${NS}.sessionName`)}
               placeholder={selectedLabel}
               value={config.name}
               onChange={(e) => setConfig({ ...config, name: e.target.value })}
             />
             <Box>
               <Typography variant="body2">
-                Temperatura: {config.temperature}
+                {t(`${NS}.temperature`, { value: config.temperature })}
               </Typography>
               <Slider
                 min={0}
@@ -245,14 +254,14 @@ function NewSession() {
             <TextField
               size="small"
               type="number"
-              label="Máximo de tokens nuevos"
+              label={t(`${NS}.maxNewTokens`)}
               value={config.maxNewTokens}
               onChange={(e) =>
                 setConfig({ ...config, maxNewTokens: Number(e.target.value) })
               }
             />
             <Typography variant="caption" color="text.secondary">
-              Estos parámetros se pueden cambiar después en el panel derecho.
+              {t(`${NS}.paramsLater`)}
             </Typography>
           </Stack>
         )}
@@ -261,7 +270,7 @@ function NewSession() {
       <Divider />
       <Stack direction="row" justifyContent="space-between">
         <Button disabled={step === 0} onClick={() => setStep(0)}>
-          Atrás
+          {t(`${NS}.back`)}
         </Button>
         {step === 0 ? (
           <Button
@@ -269,11 +278,11 @@ function NewSession() {
             disabled={!selected}
             onClick={() => setStep(1)}
           >
-            Siguiente
+            {t(`${NS}.next`)}
           </Button>
         ) : (
           <Button variant="contained" onClick={create}>
-            Crear sesión
+            {t(`${NS}.create`)}
           </Button>
         )}
       </Stack>
@@ -282,6 +291,7 @@ function NewSession() {
 }
 
 function SessionsList({ chatId }) {
+  const { t } = useTranslation(["fineTuning"]);
   const navigate = useNavigate();
   const chats = useFineTuningStore((s) => s.chats);
   const adapters = useFineTuningStore((s) => s.adapters);
@@ -297,19 +307,19 @@ function SessionsList({ chatId }) {
         startIcon={<AddIcon />}
         onClick={() => navigate(`${SESSIONS_E_PATH}/new`)}
       >
-        Nueva sesión
+        {t(`${NS}.newSession`)}
       </Button>
       <Typography
         variant="caption"
         color="text.secondary"
         sx={{ px: 2, textTransform: "uppercase", fontWeight: 600 }}
       >
-        Sesiones
+        {t(`${NS}.sessions`)}
       </Typography>
       <List dense disablePadding>
         {sorted.length === 0 && (
           <Typography variant="body2" color="text.secondary" sx={{ px: 2 }}>
-            Aún no hay sesiones.
+            {t(`${NS}.noSessions`)}
           </Typography>
         )}
         {sorted.map((c) => {
@@ -327,7 +337,9 @@ function SessionsList({ chatId }) {
               <ListItemText
                 primary={c.name}
                 secondary={
-                  adapter ? `Modelo adaptado · ${adapter.name}` : "Modelo base"
+                  adapter
+                    ? t(`${NS}.adaptedModel`, { name: adapter.name })
+                    : t(`${NS}.baseModel`)
                 }
                 primaryTypographyProps={{ noWrap: true }}
                 secondaryTypographyProps={{ noWrap: true }}
@@ -343,6 +355,7 @@ function SessionsList({ chatId }) {
 SessionsList.propTypes = { chatId: PropTypes.string };
 
 function SessionsShell() {
+  const { t } = useTranslation(["fineTuning"]);
   const layout = useThreePanelLayout({ storageKey: "sessionsE" });
   const { "*": rest = "" } = useParams();
   const [params] = useSearchParams();
@@ -379,11 +392,10 @@ function SessionsShell() {
           ) : (
             <Stack sx={{ p: 4 }} spacing={2}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                Información
+                {t(`${NS}.infoTitle`)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Los modelos adaptados se usan como cualquier otro modelo: se
-                eligen al crear la sesión. Las respuestas son simuladas.
+                {t(`${NS}.infoBody`)}
               </Typography>
             </Stack>
           )}

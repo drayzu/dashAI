@@ -78,11 +78,12 @@ export default function CreateSessionLanding() {
       },
       show("C") && {
         name: "fine_tuning_simple",
-        display_name: single ? "Fine-tuning" : "Fine-tuning (versión simple)",
-        description:
-          "Flujo lineal en cinco pasos: modelo, datos, configuración, entrenamiento y resultado.",
+        display_name: t(
+          `fineTuning:protoCards.simple.${single ? "titleSingle" : "title"}`,
+        ),
+        description: t("fineTuning:protoCards.simple.description"),
         Icon: ModelTrainingIcon,
-        chips: chip("Prototipo C"),
+        chips: chip(t("fineTuning:protoCards.chip", { prototype: "C" })),
       },
       show("B") && {
         name: ADAPTED_MODELS_OPTION_NAME,
@@ -93,39 +94,35 @@ export default function CreateSessionLanding() {
       },
       show("D") && {
         name: "fine_tuning_d",
-        display_name: single
-          ? "Fine-tuning"
-          : "Fine-tuning (solo entrenamiento)",
-        description:
-          "Entrena un adaptador LoRA/QLoRA. Después se usa desde «Crear nueva sesión».",
+        display_name: t(
+          `fineTuning:protoCards.trainOnly.${single ? "titleSingle" : "title"}`,
+        ),
+        description: t("fineTuning:protoCards.trainOnly.description"),
         Icon: ModelTrainingIcon,
-        chips: chip("Prototipo D"),
+        chips: chip(t("fineTuning:protoCards.chip", { prototype: "D" })),
       },
       show("E") && {
         name: "fine_tuning_e",
-        display_name: single
-          ? "Fine-tuning local"
-          : "Fine-tuning local (completo)",
-        description:
-          "Entrena adaptadores LoRA/QLoRA con tus datasets. Después se usan desde «Crear nueva sesión».",
+        display_name: t(
+          `fineTuning:protoCards.full.${single ? "titleSingle" : "title"}`,
+        ),
+        description: t("fineTuning:protoCards.full.description"),
         Icon: ModelTrainingIcon,
-        chips: chip("Prototipo E"),
+        chips: chip(t("fineTuning:protoCards.chip", { prototype: "E" })),
       },
       activePrototype === "all" && {
         name: "sessions_e",
-        display_name: "Crear nueva sesión (completa, con adaptados)",
-        description:
-          "Copia simulada de «Crear nueva sesión» con los adaptadores del prototipo E.",
+        display_name: t("fineTuning:protoCards.sessionsE.title"),
+        description: t("fineTuning:protoCards.sessionsE.description"),
         Icon: AutoAwesomeIcon,
-        chips: ["Prototipo E"],
+        chips: [t("fineTuning:protoCards.chip", { prototype: "E" })],
       },
       activePrototype === "all" && {
         name: "sessions_d",
-        display_name: "Crear nueva sesión (con modelos adaptados)",
-        description:
-          "Copia simulada de «Crear nueva sesión» donde los adaptadores aparecen como modelos.",
+        display_name: t("fineTuning:protoCards.sessionsD.title"),
+        description: t("fineTuning:protoCards.sessionsD.description"),
         Icon: AutoAwesomeIcon,
-        chips: ["Prototipo D"],
+        chips: [t("fineTuning:protoCards.chip", { prototype: "D" })],
       },
       ...standalone,
     ].filter(Boolean);

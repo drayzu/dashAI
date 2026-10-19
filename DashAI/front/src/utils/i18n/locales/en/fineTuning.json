@@ -431,6 +431,66 @@
     "finished": "Adapter published",
     "cancelled": "Cancelled"
   },
+  "protoCards": {
+    "simple": {
+      "title": "Fine-tuning (simple version)",
+      "titleSingle": "Fine-tuning",
+      "description": "Linear five-step flow: model, data, configuration, training and result."
+    },
+    "trainOnly": {
+      "title": "Fine-tuning (training only)",
+      "titleSingle": "Fine-tuning",
+      "description": "Train a LoRA/QLoRA adapter. It is then used from “Create a new session”."
+    },
+    "full": {
+      "title": "Local fine-tuning (full)",
+      "titleSingle": "Local fine-tuning",
+      "description": "Train LoRA/QLoRA adapters with your datasets. They are then used from “Create a new session”."
+    },
+    "sessionsE": {
+      "title": "Create a new session (full, with adapters)",
+      "description": "Simulated copy of “Create a new session” with the adapters of prototype E."
+    },
+    "sessionsD": {
+      "title": "Create a new session (with adapted models)",
+      "description": "Simulated copy of “Create a new session” where adapters appear as models."
+    },
+    "chip": "Prototype {{prototype}}"
+  },
+  "sessionsE": {
+    "title": "Create a new session",
+    "step": "Step {{current}} of 2 · {{label}}",
+    "stepModel": "Pick a model",
+    "stepConfig": "Configure the session",
+    "models": "Models",
+    "modelSubtitle": "{{params}} B parameters · {{license}}",
+    "adapted": "My adapted models",
+    "adaptedHint": "Base model + LoRA/QLoRA adapter trained in Fine-tuning.",
+    "goToFineTuning": "Go to Fine-tuning",
+    "noAdapters": "There are no adapters yet. Train one in Fine-tuning.",
+    "availability": {
+      "missing": "Not downloaded",
+      "downloading": "Downloading",
+      "invalid": "Invalid",
+      "adapterUnavailable": "Unavailable"
+    },
+    "loadsAdapter": "{{base}} will be loaded with the adapter “{{adapter}}” on top.",
+    "loadsModel": "Model: {{model}}.",
+    "sessionName": "Session name",
+    "temperature": "Temperature: {{value}}",
+    "maxNewTokens": "Max new tokens",
+    "paramsLater": "These parameters can be changed later in the right panel.",
+    "back": "Back",
+    "next": "Next",
+    "create": "Create session",
+    "newSession": "New session",
+    "sessions": "Sessions",
+    "noSessions": "No sessions yet.",
+    "adaptedModel": "Adapted model · {{name}}",
+    "baseModel": "Base model",
+    "infoTitle": "Information",
+    "infoBody": "Adapted models are used like any other model: you pick them when creating the session. Responses are simulated."
+  },
   "shellA": {
     "otherPrototype": "Prototype B (in Models)",
     "tabs": {

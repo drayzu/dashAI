@@ -441,6 +441,66 @@
     "finished": "Adaptador publicado",
     "cancelled": "Cancelada"
   },
+  "protoCards": {
+    "simple": {
+      "title": "Fine-tuning (versión simple)",
+      "titleSingle": "Fine-tuning",
+      "description": "Flujo lineal en cinco pasos: modelo, datos, configuración, entrenamiento y resultado."
+    },
+    "trainOnly": {
+      "title": "Fine-tuning (solo entrenamiento)",
+      "titleSingle": "Fine-tuning",
+      "description": "Entrena un adaptador LoRA/QLoRA. Después se usa desde «Crear nueva sesión»."
+    },
+    "full": {
+      "title": "Fine-tuning local (completo)",
+      "titleSingle": "Fine-tuning local",
+      "description": "Entrena adaptadores LoRA/QLoRA con tus datasets. Después se usan desde «Crear nueva sesión»."
+    },
+    "sessionsE": {
+      "title": "Crear nueva sesión (completa, con adaptados)",
+      "description": "Copia simulada de «Crear nueva sesión» con los adaptadores del prototipo E."
+    },
+    "sessionsD": {
+      "title": "Crear nueva sesión (con modelos adaptados)",
+      "description": "Copia simulada de «Crear nueva sesión» donde los adaptadores aparecen como modelos."
+    },
+    "chip": "Prototipo {{prototype}}"
+  },
+  "sessionsE": {
+    "title": "Crear nueva sesión",
+    "step": "Paso {{current}} de 2 · {{label}}",
+    "stepModel": "Elige un modelo",
+    "stepConfig": "Configura la sesión",
+    "models": "Modelos",
+    "modelSubtitle": "{{params}} B parámetros · {{license}}",
+    "adapted": "Mis modelos adaptados",
+    "adaptedHint": "Modelo base + adaptador LoRA/QLoRA entrenado en Fine-tuning.",
+    "goToFineTuning": "Ir a Fine-tuning",
+    "noAdapters": "Todavía no hay adaptadores. Entrena uno en Fine-tuning.",
+    "availability": {
+      "missing": "No descargado",
+      "downloading": "Descargando",
+      "invalid": "No válido",
+      "adapterUnavailable": "No disponible"
+    },
+    "loadsAdapter": "Se cargará {{base}} con el adaptador «{{adapter}}» encima.",
+    "loadsModel": "Modelo: {{model}}.",
+    "sessionName": "Nombre de la sesión",
+    "temperature": "Temperatura: {{value}}",
+    "maxNewTokens": "Máximo de tokens nuevos",
+    "paramsLater": "Estos parámetros se pueden cambiar después en el panel derecho.",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "create": "Crear sesión",
+    "newSession": "Nueva sesión",
+    "sessions": "Sesiones",
+    "noSessions": "Aún no hay sesiones.",
+    "adaptedModel": "Modelo adaptado · {{name}}",
+    "baseModel": "Modelo base",
+    "infoTitle": "Información",
+    "infoBody": "Los modelos adaptados se usan como cualquier otro modelo: se eligen al crear la sesión. Las respuestas son simuladas."
+  },
   "shellA": {
     "otherPrototype": "Prototipo B (en Modelos)",
     "tabs": {
