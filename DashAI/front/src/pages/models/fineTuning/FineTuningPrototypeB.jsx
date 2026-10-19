@@ -101,7 +101,17 @@ function PrototypeBViews() {
  */
 export default function FineTuningPrototypeB({ store, hardwareMonitoring }) {
   const threePanelLayout = useThreePanelLayout({ storageKey: "models" });
-  const routes = useMemo(() => buildRoutesB(), []);
+  const routes = useMemo(
+    () => ({
+      ...buildRoutesB(),
+      // Adapters are used from Generative > "Crear nueva sesión".
+      chat: (chatId) =>
+        chatId
+          ? `/app/generative/sessions-b/${chatId}`
+          : "/app/generative/sessions-b/new",
+    }),
+    [],
+  );
   const models = useModels();
   const modelsRef = useRef(models);
   modelsRef.current = models;

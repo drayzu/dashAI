@@ -21,6 +21,7 @@ import {
 } from "../../pages/generative/prototypeD/storeD";
 import {
   FT_E_PATH,
+  SESSIONS_B_PATH,
   SESSIONS_E_PATH,
 } from "../../pages/generative/prototypeE/SessionsE";
 import {
@@ -85,7 +86,7 @@ export default function CreateSessionLanding() {
         Icon: ModelTrainingIcon,
         chips: chip(t("fineTuning:protoCards.chip", { prototype: "C" })),
       },
-      show("B") && {
+      activePrototype === "all" && {
         name: ADAPTED_MODELS_OPTION_NAME,
         display_name: t("fineTuning:shellB.generativeCard.title"),
         description: t("fineTuning:shellB.generativeCard.description"),
@@ -138,6 +139,10 @@ export default function CreateSessionLanding() {
     }
     if (name === "fine_tuning") {
       navigate("/app/generative/fine-tuning");
+      return;
+    }
+    if (name === CREATE_SESSION && activePrototype === "B") {
+      navigate(`${SESSIONS_B_PATH}/new`);
       return;
     }
     if (name === "fine_tuning_e") {

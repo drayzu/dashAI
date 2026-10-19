@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Alert,
@@ -30,6 +30,7 @@ import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
 import {
   FineTuningProvider,
   buildRoutesA,
+  buildRoutesB,
   useFineTuningActions,
   useFineTuningStore,
 } from "../../../components/fineTuning/FineTuningContext";
@@ -85,7 +86,11 @@ ModelCard.propTypes = {
 /** "Crear nueva sesión": 1) pick a model (base or adapted) 2) configure. */
 const NS = "fineTuning:sessionsE";
 
+// Base path of this unified "Crear nueva sesión" page (prototype E or B).
+const SessionsPathContext = createContext(SESSIONS_E_PATH);
+
 function NewSession() {
+  const sessionsPath = useContext(SessionsPathContext);
   const { t } = useTranslation(["fineTuning", "generative"]);
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -126,7 +131,7 @@ function NewSession() {
       temperature: config.temperature,
       maxNewTokens: config.maxNewTokens,
     });
-    navigate(`${SESSIONS_E_PATH}/${chatId}`);
+    navigate(`${sessionsPath}/${chatId}`);
   };
 
   // Same items the real model picker shows, plus the trained adapters as
@@ -252,6 +257,7 @@ function NewSession() {
 }
 
 function SessionsList({ chatId }) {
+  const sessionsPath = useContext(SessionsPathContext);
   const { t } = useTranslation(["fineTuning"]);
   const navigate = useNavigate();
   const chats = useFineTuningStore((s) => s.chats);
@@ -266,7 +272,7 @@ function SessionsList({ chatId }) {
       <Button
         variant="contained"
         startIcon={<AddIcon />}
-        onClick={() => navigate(`${SESSIONS_E_PATH}/new`)}
+        onClick={() => navigate(`${sessionsPath}/new`)}
       >
         {t(`${NS}.newSession`)}
       </Button>
@@ -292,7 +298,7 @@ function SessionsList({ chatId }) {
             <ListItemButton
               key={c.id}
               selected={c.id === chatId}
-              onClick={() => navigate(`${SESSIONS_E_PATH}/${c.id}`)}
+              onClick={() => navigate(`${sessionsPath}/${c.id}`)}
               sx={{ borderRadius: 1 }}
             >
               <ListItemText
@@ -372,22 +378,38 @@ function SessionsShell() {
  * the full prototype (per-message snapshots, availability checks), so the
  * adapters trained in the full fine-tuning module are used from here only.
  */
-export default function SessionsE() {
-  const store = useMemo(() => getPrototypeStore("E"), []);
+export const SESSIONS_B_PATH = "/app/generative/sessions-b";
+
+export default function SessionsE({
+  prototype = "E",
+  sessionsPath = SESSIONS_E_PATH,
+}) {
+  const store = useMemo(() => getPrototypeStore(prototype), [prototype]);
   const routes = useMemo(
     () => ({
-      ...buildRoutesA(FT_E_PATH),
+      // Prototype B trains in Models; E trains in its own Generative module.
+      ...(prototype === "B" ? buildRoutesB() : buildRoutesA(FT_E_PATH)),
       externalChat: true,
       chat: (chatId) =>
-        chatId ? `${SESSIONS_E_PATH}/${chatId}` : `${SESSIONS_E_PATH}/new`,
-      useInSession: (adapterId) =>
-        `${SESSIONS_E_PATH}/new?adapter=${adapterId}`,
+        chatId ? `${sessionsPath}/${chatId}` : `${sessionsPath}/new`,
+      useInSession: (adapterId) => `${sessionsPath}/new?adapter=${adapterId}`,
     }),
-    [],
+    [prototype, sessionsPath],
   );
   return (
-    <FineTuningProvider store={store} routes={routes} prototype="A">
-      <SessionsShell />
-    </FineTuningProvider>
+    <SessionsPathContext.Provider value={sessionsPath}>
+      <FineTuningProvider
+        store={store}
+        routes={routes}
+        prototype={prototype === "B" ? "B" : "A"}
+      >
+        <SessionsShell />
+      </FineTuningProvider>
+    </SessionsPathContext.Provider>
   );
 }
+
+SessionsE.propTypes = {
+  prototype: PropTypes.oneOf(["E", "B"]),
+  sessionsPath: PropTypes.string,
+};
