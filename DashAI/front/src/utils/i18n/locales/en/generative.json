@@ -219,6 +219,11 @@
       "unsavedIn": "Unsaved changes in: {{sections}}"
     },
     "create": {
+      "adapterDescription": "{{base}} + {{method}} adapter trained in Fine-tuning.",
+      "adapterNotice": "{{base}} will be loaded with the adapter “{{adapter}}” on top.",
+      "adapterPrototype": "Prototype: the RAG integration is shown only in the model selection.",
+      "groupAdapted": "My adapted models",
+      "groupModels": "Language models",
       "newSession": "New RAG session",
       "selectModel": "Language model",
       "subtitle": "A name and a model. Add your documents once the session exists; everything else has a sensible default you can change later.",

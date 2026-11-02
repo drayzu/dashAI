@@ -1,8 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import {
+  Alert,
   Box,
   CircularProgress,
   Stack,
@@ -33,6 +40,18 @@ import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/
 import { FormSchemaProvider } from "../../../contexts/schema";
 import { generateSequentialName } from "../../../utils/nameGenerator";
 import { getApiErrorMessage } from "../../../utils/apiError";
+import {
+  prototypeVisible,
+  useActivePrototype,
+} from "../../../utils/demoPrototype";
+import { getPrototypeStore } from "../../../components/fineTuning/data/instances";
+
+// Fine-tuning prototype E: its (simulated) trained adapters are offered here
+// as their own model group. They live only in the browser, so the backend
+// cannot create a RAG session with them; picking one shows what would load.
+const ADAPTER_PREFIX = "ft-proto-adapter:";
+const noopSubscribe = () => () => {};
+const noSnapshot = () => null;
 
 /**
  * The RAG entry point: create a session from a name and a model.
@@ -131,6 +150,50 @@ export default function RAGCreatePage() {
     return needsDownload || locked;
   }, [selectedModelState, statuses, credentialsLoaded]);
 
+  const showAdapters = prototypeVisible(useActivePrototype(), "E");
+  const protoStore = showAdapters ? getPrototypeStore("E") : null;
+  const protoState = useSyncExternalStore(
+    protoStore ? protoStore.subscribe : noopSubscribe,
+    protoStore ? protoStore.getSnapshot : noSnapshot,
+  );
+
+  const adapterItems = useMemo(() => {
+    if (!protoState) return [];
+    const baseName = (id) =>
+      protoState.checkpoints.find((ck) => ck.id === id)?.name || id;
+    return protoState.adapters
+      .filter((a) => a.availability !== "missing")
+      .map((a) => ({
+        name: `${ADAPTER_PREFIX}${a.id}`,
+        display_name: a.name,
+        description: t("generative:rag.create.adapterDescription", {
+          base: baseName(a.checkpointId),
+          method: String(a.method || "").toUpperCase(),
+        }),
+        baseName: baseName(a.checkpointId),
+        ragGroup: t("generative:rag.create.groupAdapted"),
+      }));
+  }, [protoState, t]);
+
+  const withAdapters = adapterItems.length > 0;
+  const selectorItems = useMemo(
+    () =>
+      withAdapters
+        ? [
+            ...adapterItems,
+            ...models.map((m) => ({
+              ...m,
+              ragGroup: t("generative:rag.create.groupModels"),
+            })),
+          ]
+        : models,
+    [withAdapters, adapterItems, models, t],
+  );
+
+  const selectedAdapter = selectedModel?.name?.startsWith(ADAPTER_PREFIX)
+    ? adapterItems.find((a) => a.name === selectedModel.name)
+    : null;
+
   const canCreate =
     Boolean(name.trim()) &&
     Boolean(selectedModel) &&
@@ -139,6 +202,12 @@ export default function RAGCreatePage() {
 
   const handleCreate = async () => {
     if (!canCreate) return;
+    if (selectedAdapter) {
+      enqueueSnackbar(t("generative:rag.create.adapterPrototype"), {
+        variant: "info",
+      });
+      return;
+    }
     setSubmitting(true);
     try {
       const created = await createRAGSession({
@@ -232,6 +301,14 @@ export default function RAGCreatePage() {
                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
                       {t("generative:rag.create.selectModel")}
                     </Typography>
+                    {selectedAdapter && (
+                      <Alert severity="info" variant="outlined" sx={{ mb: 3 }}>
+                        {t("generative:rag.create.adapterNotice", {
+                          base: selectedAdapter.baseName,
+                          adapter: selectedAdapter.display_name,
+                        })}
+                      </Alert>
+                    )}
                     {loadingModels ? (
                       <Box
                         sx={{
@@ -244,11 +321,12 @@ export default function RAGCreatePage() {
                       </Box>
                     ) : (
                       <ComponentSelector
-                        components={models}
+                        components={selectorItems}
                         selected={selectedModel}
                         onSelect={setSelectedModel}
                         onDownloadChange={handleDownloadChange}
-                        flat
+                        flat={!withAdapters}
+                        categoryKey="ragGroup"
                         showFooter={false}
                         searchPlaceholder={t("generative:label.searchModels")}
                       />
