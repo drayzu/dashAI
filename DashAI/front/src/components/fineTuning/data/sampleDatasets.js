@@ -184,7 +184,7 @@ const FICHAS = [
     "Quiero reanudar un entrenamiento que cancelé, pero solo veo la opción de nueva ejecución.",
     "entrenamiento",
     "La ejecución cancelada no puede reanudarse.",
-    "Crear una nueva ejecución desde la configuración congelada de la ejecución cancelada.",
+    "Crear una nueva ejecución desde la configuración fijada de la ejecución cancelada.",
   ],
   [
     "La tasa de aprendizaje que escribí (0.5) aparece marcada como inválida.",
@@ -347,7 +347,7 @@ const QA_PAIRS = [
   ],
   [
     "¿Qué es una sesión de fine-tuning?",
-    "Es un borrador editable con el modelo base, los datos y los parámetros; cada ejecución congela una copia de esa configuración.",
+    "Es un borrador editable con el modelo base, los datos y los parámetros; cada ejecución fija una copia de esa configuración.",
   ],
   [
     "¿Qué diferencia hay entre LoRA y QLoRA?",
@@ -363,7 +363,7 @@ const QA_PAIRS = [
   ],
   [
     "¿Puedo cambiar la configuración de una ejecución que ya empezó?",
-    "No; la configuración de una ejecución queda congelada. Para probar otros valores, edita el borrador y crea una nueva ejecución.",
+    "No; la configuración de una ejecución queda fijada. Para probar otros valores, edita el borrador y crea una nueva ejecución.",
   ],
   [
     "¿Qué significa que una ejecución esté en cola?",
@@ -564,7 +564,7 @@ const CONVERSATIONS = [
     ["user", "¿Dónde veo con qué datos se entrenó un adaptador?"],
     [
       "assistant",
-      "En la procedencia del adaptador: dataset, huella de datos, particiones, modelo base con su revisión exacta y la configuración congelada.",
+      "En la procedencia del adaptador: dataset, huella de datos, particiones, modelo base con su revisión exacta y la configuración fijada.",
     ],
   ],
   [
@@ -954,7 +954,7 @@ export const HELD_OUT_CASES = Object.freeze(
         resumen:
           "La ejecución terminó con menos pasos de los esperados para 2 épocas.",
         siguiente_paso:
-          "Revisar el modo de duración y el máximo de pasos en la configuración congelada de la ejecución.",
+          "Revisar el modo de duración y el máximo de pasos en la configuración fijada de la ejecución.",
       },
     },
     {

@@ -1,12 +1,12 @@
 {
   "events": {
     "unknown": "Evento",
-    "created": "Configuración congelada · ejecución «{{name}}» registrada",
+    "created": "Configuración fijada · ejecución «{{name}}» registrada",
     "queued": "Aceptada en cola (GPU única simulada)",
     "waitingForRun": "Esperando a que termine «{{name}}»",
     "gpuWaiting": "GPU ocupada por otro proceso; la ejecución sigue en cola",
     "gpuFree": "GPU disponible; comienza la ejecución",
-    "preparing": "Preparación: verificando la configuración congelada y las dependencias",
+    "preparing": "Preparación: verificando la configuración fijada y las dependencias",
     "checkpointCached": "Checkpoint {{repository}}@{{revision}} disponible localmente; no se descarga",
     "downloadStarted": "Descargando {{repository}}@{{revision}} ({{size}})",
     "downloadProgress": "Descarga al {{percent}} % ({{done}} de {{total}})",
@@ -620,7 +620,7 @@
         "detected": "detectado",
         "simulated": "simulado"
       },
-      "frozenConfig": "Configuración congelada",
+      "frozenConfig": "Configuración fijada",
       "provenance": "Ver procedencia",
       "openAdapter": "Ver en adaptadores",
       "adapterMissing": "El adaptador ya no existe.",
@@ -847,7 +847,7 @@
     },
     "dataDialog": {
       "title": "Editar preparación de datos",
-      "frozenNote": "Los cambios se aplican a las configuraciones nuevas. Las ejecuciones existentes conservan sus datos congelados.",
+      "frozenNote": "Los cambios se aplican a las configuraciones nuevas. Las ejecuciones existentes conservan sus datos fijados.",
       "saved": "Preparación de datos actualizada."
     },
     "runInfo": {
@@ -1154,7 +1154,7 @@
         "base": "Modelo base",
         "data": "Datos",
         "method": "Método",
-        "config": "Configuración congelada",
+        "config": "Configuración fijada",
         "environment": "Entorno",
         "metrics": "Tiempos y métricas",
         "artifact": "Artefacto",
@@ -1486,7 +1486,7 @@
       "modeLabel": "Modo de duración",
       "steps": "Pasos",
       "epochs": "Épocas",
-      "exclusive": "Solo se usa el límite activo; el otro no se guarda en la configuración congelada.",
+      "exclusive": "Solo se usa el límite activo; el otro no se guarda en la configuración fijada.",
       "derivedSteps": "≈ {{steps}} pasos ({{train}} ejemplos de entrenamiento ÷ batch efectivo {{batch}} × {{epochs}} épocas)",
       "derivedEpochs": "≈ {{epochs}} épocas sobre {{train}} ejemplos de entrenamiento",
       "needDataset": "Elige un dataset para estimar el número de pasos."
@@ -1589,7 +1589,7 @@
   },
   "reviewStep": {
     "title": "Revisión",
-    "subtitle": "Revisa la configuración que se congelará al iniciar la ejecución y las comprobaciones previas.",
+    "subtitle": "Revisa la configuración que se fijará al iniciar la ejecución y las comprobaciones previas.",
     "noSession": "No hay una sesión seleccionada.",
     "simulatedNote": "Hardware y estimaciones (simulado)",
     "preflightTitle": "Validación previa",
@@ -1823,7 +1823,7 @@
       "cancelTitle": "¿Cancelar la ejecución?",
       "cancelBody": "La ejecución «{{name}}» se detendrá y quedará como Error · Cancelada. No se publicará ningún adaptador.",
       "newTitle": "¿Reemplazar el borrador de la sesión?",
-      "newBody": "Se copiará la configuración congelada de «{{name}}» al borrador editable de la sesión. Los cambios no guardados del borrador actual se perderán.",
+      "newBody": "Se copiará la configuración fijada de «{{name}}» al borrador editable de la sesión. Los cambios no guardados del borrador actual se perderán.",
       "newConfirm": "Reemplazar borrador",
       "deleteTitle": "¿Eliminar la ejecución?",
       "deleteBody": "Se eliminará «{{name}}» y su registro. Esta acción no se puede deshacer.",
@@ -1939,7 +1939,7 @@
       "count_other": "{{count}} eventos"
     },
     "data": {
-      "previewTitle": "Ejemplos SFT congelados",
+      "previewTitle": "Ejemplos SFT fijados",
       "previewCaption": "Hasta 3 ejemplos preparados guardados con la ejecución",
       "legendLoss": "Aporta a la pérdida",
       "legendContext": "Sin pérdida (contexto)",
@@ -1952,9 +1952,9 @@
       "truncated": "Truncado por la longitud máxima"
     },
     "config": {
-      "title": "Configuración congelada",
+      "title": "Configuración fijada",
       "subtitle": "Inmutable desde la creación de la ejecución",
-      "unavailable": "La configuración congelada no está disponible.",
+      "unavailable": "La configuración fijada no está disponible.",
       "showJson": "Ver JSON",
       "hideJson": "Ocultar JSON",
       "groups": {
@@ -2018,7 +2018,7 @@
       "estimatedVram": "VRAM estimada",
       "versions": "Versiones de bibliotecas",
       "versionsSimulated": "Versiones simuladas (prototipo)",
-      "frozenAt": "Congelada el",
+      "frozenAt": "Fijada el",
       "runId": "ID de ejecución"
     }
   },
@@ -2140,7 +2140,7 @@
       "bBaseModelsHint": "Indicación del panel",
       "bBaseModelsCatalogNote": "Nota del catálogo",
       "bCreatePreviewSummary": "Resumen de datos",
-      "bRunInfoConfigGroups": "Configuración congelada",
+      "bRunInfoConfigGroups": "Configuración fijada",
       "bRunProvenanceTab": "Pestaña Procedencia",
       "bSessionEditDataButton": "Botón «Editar preparación»",
       "bSessionTrainAll": "Botón «Entrenar todas»",
@@ -2203,7 +2203,7 @@
       "runLossDisclaimer": "Nota sobre la pérdida",
       "runResources": "Panel de recursos",
       "runEventLog": "Registro de eventos",
-      "runFrozenConfig": "Configuración congelada"
+      "runFrozenConfig": "Configuración fijada"
     }
   }
 }

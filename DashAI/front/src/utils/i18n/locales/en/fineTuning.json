@@ -1,12 +1,12 @@
 {
   "events": {
     "unknown": "Event",
-    "created": "Configuration frozen · run “{{name}}” created",
+    "created": "Configuration locked · run “{{name}}” created",
     "queued": "Accepted in the queue (single simulated GPU)",
     "waitingForRun": "Waiting for “{{name}}” to finish",
     "gpuWaiting": "GPU busy with another process; the run stays queued",
     "gpuFree": "GPU available; the run starts",
-    "preparing": "Preparing: checking the frozen configuration and dependencies",
+    "preparing": "Preparing: checking the locked configuration and dependencies",
     "checkpointCached": "Checkpoint {{repository}}@{{revision}} available locally; no download needed",
     "downloadStarted": "Downloading {{repository}}@{{revision}} ({{size}})",
     "downloadProgress": "Download at {{percent}}% ({{done}} of {{total}})",
@@ -607,7 +607,7 @@
         "detected": "detected",
         "simulated": "simulated"
       },
-      "frozenConfig": "Frozen configuration",
+      "frozenConfig": "Locked configuration",
       "provenance": "View provenance",
       "openAdapter": "View in adapters",
       "adapterMissing": "The adapter no longer exists.",
@@ -827,7 +827,7 @@
     },
     "dataDialog": {
       "title": "Edit data preparation",
-      "frozenNote": "Changes apply to new configurations. Existing runs keep their frozen data.",
+      "frozenNote": "Changes apply to new configurations. Existing runs keep their locked data.",
       "saved": "Data preparation updated."
     },
     "runInfo": {
@@ -1130,7 +1130,7 @@
         "base": "Base model",
         "data": "Data",
         "method": "Method",
-        "config": "Frozen configuration",
+        "config": "Locked configuration",
         "environment": "Environment",
         "metrics": "Times and metrics",
         "artifact": "Artifact",
@@ -1461,7 +1461,7 @@
       "modeLabel": "Duration mode",
       "steps": "Steps",
       "epochs": "Epochs",
-      "exclusive": "Only the active limit is used; the other one is not stored in the frozen configuration.",
+      "exclusive": "Only the active limit is used; the other one is not stored in the locked configuration.",
       "derivedSteps": "≈ {{steps}} steps ({{train}} training examples ÷ effective batch {{batch}} × {{epochs}} epochs)",
       "derivedEpochs": "≈ {{epochs}} epochs over {{train}} training examples",
       "needDataset": "Pick a dataset to estimate the number of steps."
@@ -1563,7 +1563,7 @@
   },
   "reviewStep": {
     "title": "Review",
-    "subtitle": "Check the configuration that will be frozen when the run starts, and the preflight checks.",
+    "subtitle": "Check the configuration that will be locked when the run starts, and the preflight checks.",
     "noSession": "No session selected.",
     "simulatedNote": "Hardware and estimates (simulated)",
     "preflightTitle": "Preflight checks",
@@ -1789,7 +1789,7 @@
       "cancelTitle": "Cancel the run?",
       "cancelBody": "Run “{{name}}” will stop and end as Error · Cancelled. No adapter will be published.",
       "newTitle": "Replace the session draft?",
-      "newBody": "The frozen configuration of “{{name}}” will be copied into the session's editable draft. Unsaved changes in the current draft will be lost.",
+      "newBody": "The locked configuration of “{{name}}” will be copied into the session's editable draft. Unsaved changes in the current draft will be lost.",
       "newConfirm": "Replace draft",
       "deleteTitle": "Delete the run?",
       "deleteBody": "“{{name}}” and its log will be deleted. This cannot be undone.",
@@ -1905,7 +1905,7 @@
       "count_other": "{{count}} events"
     },
     "data": {
-      "previewTitle": "Frozen SFT examples",
+      "previewTitle": "Locked SFT examples",
       "previewCaption": "Up to 3 prepared examples stored with the run",
       "legendLoss": "Counts toward loss",
       "legendContext": "No loss (context)",
@@ -1918,9 +1918,9 @@
       "truncated": "Truncated by max length"
     },
     "config": {
-      "title": "Frozen configuration",
+      "title": "Locked configuration",
       "subtitle": "Immutable since the run was created",
-      "unavailable": "The frozen configuration is not available.",
+      "unavailable": "The locked configuration is not available.",
       "showJson": "View JSON",
       "hideJson": "Hide JSON",
       "groups": {
@@ -1984,7 +1984,7 @@
       "estimatedVram": "Estimated VRAM",
       "versions": "Library versions",
       "versionsSimulated": "Simulated versions (prototype)",
-      "frozenAt": "Frozen at",
+      "frozenAt": "Locked at",
       "runId": "Run ID"
     }
   },
@@ -2106,7 +2106,7 @@
       "bBaseModelsHint": "Panel hint",
       "bBaseModelsCatalogNote": "Catalog note",
       "bCreatePreviewSummary": "Data summary",
-      "bRunInfoConfigGroups": "Frozen configuration",
+      "bRunInfoConfigGroups": "Locked configuration",
       "bRunProvenanceTab": "Provenance tab",
       "bSessionEditDataButton": "“Edit data prep” button",
       "bSessionTrainAll": "“Train all” button",
@@ -2169,7 +2169,7 @@
       "runLossDisclaimer": "Loss disclaimer",
       "runResources": "Resources panel",
       "runEventLog": "Event log",
-      "runFrozenConfig": "Frozen configuration"
+      "runFrozenConfig": "Locked configuration"
     }
   }
 }

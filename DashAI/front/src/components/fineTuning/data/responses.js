@@ -151,7 +151,7 @@ const NEXT_STEPS = {
   entrenamiento: [
     "Revisar el registro de la ejecución y la fase en que se detuvo antes de crear una nueva ejecución.",
     "Ajustar batch, longitud máxima o método según la estimación de VRAM y repetir una ejecución controlada.",
-    "Comparar la configuración congelada con la de ejecuciones anteriores para aislar el cambio relevante.",
+    "Comparar la configuración fijada con la de ejecuciones anteriores para aislar el cambio relevante.",
     "Revisar las curvas de pérdida y los valores registrados antes de confiar en el resultado.",
   ],
   inferencia: [
