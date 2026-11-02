@@ -1,11 +1,13 @@
 import {
+  Alert,
   Box,
   CircularProgress,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import ComponentSelector from "../custom/ComponentSelector";
 import {
@@ -16,6 +18,10 @@ import GenerativeBreadcrumbs from "./GenerativeBreadcrumbs";
 import { useCreateSession } from "./CreateSessionContext";
 import StepperNavigationFooter from "../shared/StepperNavigationFooter";
 import { useTourContext } from "../tour/TourProvider";
+import usePrototypeAdapterItems, {
+  isPrototypeAdapter,
+} from "../fineTuning/integration/usePrototypeAdapterItems";
+import { SESSIONS_E_PATH } from "../../pages/generative/prototypeE/SessionsE";
 
 export default function CreateSessionCenter() {
   const { t } = useTranslation(["generative", "common"]);
@@ -92,7 +98,29 @@ export default function CreateSessionCenter() {
     }
   }, [selectedUsable]);
 
-  const canGoNext = !!selectedModel && selectedUsable;
+  // Fine-tuning prototype E: its simulated adapters join the real catalog as
+  // their own group. The backend does not know them, so Next continues in the
+  // prototype's session flow (configure, then the simulated chat).
+  const navigate = useNavigate();
+  const adapterItems = usePrototypeAdapterItems("task_display_name");
+  const [selectedAdapter, setSelectedAdapter] = useState(null);
+  const selectorItems = useMemo(
+    () => (adapterItems.length ? [...models, ...adapterItems] : models),
+    [models, adapterItems],
+  );
+  const handlePick = useCallback(
+    (item) => {
+      if (isPrototypeAdapter(item)) {
+        setSelectedAdapter(item);
+        return;
+      }
+      setSelectedAdapter(null);
+      handleSelectModelWithTour(item);
+    },
+    [handleSelectModelWithTour],
+  );
+
+  const canGoNext = selectedAdapter ? true : !!selectedModel && selectedUsable;
   const canCreate =
     !!selectedModel &&
     selectedUsable &&
@@ -125,6 +153,15 @@ export default function CreateSessionCenter() {
         </Typography>
       </Box>
 
+      {step === 0 && selectedAdapter && (
+        <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
+          {t("generative:adaptedModels.notice", {
+            base: selectedAdapter.baseName,
+            adapter: selectedAdapter.display_name,
+          })}
+        </Alert>
+      )}
+
       <Box
         data-tour={step === 1 ? "session-config" : undefined}
         sx={{
@@ -151,9 +188,9 @@ export default function CreateSessionCenter() {
             </Box>
           ) : (
             <ComponentSelector
-              components={models}
-              selected={selectedModel}
-              onSelect={handleSelectModelWithTour}
+              components={selectorItems}
+              selected={selectedAdapter || selectedModel}
+              onSelect={handlePick}
               onDownloadChange={(model, isDownloaded) =>
                 markModelDownloaded(model.name, isDownloaded)
               }
@@ -191,7 +228,16 @@ export default function CreateSessionCenter() {
 
       <StepperNavigationFooter
         onBack={handleBack}
-        onNext={step === 0 ? handleNextWithTour : handleCreate}
+        onNext={
+          step === 0
+            ? selectedAdapter
+              ? () =>
+                  navigate(
+                    `${SESSIONS_E_PATH}/new?adapter=${selectedAdapter.adapterId}`,
+                  )
+              : handleNextWithTour
+            : handleCreate
+        }
         backDisabled={submitting}
         nextDisabled={step === 0 ? !canGoNext : !canCreate}
         nextLabel={

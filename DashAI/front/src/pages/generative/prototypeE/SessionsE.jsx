@@ -19,7 +19,12 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import ExtensionOutlinedIcon from "@mui/icons-material/ExtensionOutlined";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  Navigate,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import ModuleContainer from "../../../components/layout/ModuleContainer";
 import LeftPanel from "../../../components/threeSectionLayout/panels/LeftPanel";
@@ -235,7 +240,15 @@ function NewSession() {
 
       <Divider />
       <Stack direction="row" justifyContent="space-between">
-        <Button disabled={step === 0} onClick={() => setStep(0)}>
+        <Button
+          disabled={step === 0}
+          onClick={() =>
+            // E chose the model in DashAI's real selector: go back there.
+            sessionsPath === SESSIONS_E_PATH
+              ? navigate("/app/generative/sessions/new")
+              : setStep(0)
+          }
+        >
           {t(`${NS}.back`)}
         </Button>
         {step === 0 ? (
@@ -272,7 +285,15 @@ function SessionsList({ chatId }) {
       <Button
         variant="contained"
         startIcon={<AddIcon />}
-        onClick={() => navigate(`${sessionsPath}/new`)}
+        onClick={() =>
+          // E picks the model in DashAI's real selector, which lists the
+          // adapters as their own group; B keeps its own picker.
+          navigate(
+            sessionsPath === SESSIONS_E_PATH
+              ? "/app/generative/sessions/new"
+              : `${sessionsPath}/new`,
+          )
+        }
       >
         {t(`${NS}.newSession`)}
       </Button>
@@ -328,6 +349,18 @@ function SessionsShell() {
   const [params] = useSearchParams();
   const chatId = rest && rest !== "new" ? rest : null;
   const exists = useFineTuningStore((s) => Boolean(chatById(s, chatId)));
+  const sessionsPath = useContext(SessionsPathContext);
+
+  // Prototype E picks the model in DashAI's real selector, which lists the
+  // adapters as their own group; this page only keeps the configure step
+  // (reached with ?adapter=) and the simulated chat.
+  if (
+    sessionsPath === SESSIONS_E_PATH &&
+    !(chatId && exists) &&
+    !params.get("adapter")
+  ) {
+    return <Navigate to="/app/generative/sessions/new" replace />;
+  }
 
   return (
     <ThreePanelLayoutContext.Provider value={layout}>

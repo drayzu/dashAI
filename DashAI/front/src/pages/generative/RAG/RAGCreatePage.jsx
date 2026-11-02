@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
@@ -40,18 +34,9 @@ import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/
 import { FormSchemaProvider } from "../../../contexts/schema";
 import { generateSequentialName } from "../../../utils/nameGenerator";
 import { getApiErrorMessage } from "../../../utils/apiError";
-import {
-  prototypeVisible,
-  useActivePrototype,
-} from "../../../utils/demoPrototype";
-import { getPrototypeStore } from "../../../components/fineTuning/data/instances";
-
-// Fine-tuning prototype E: its (simulated) trained adapters are offered here
-// as their own model group. They live only in the browser, so the backend
-// cannot create a RAG session with them; picking one shows what would load.
-const ADAPTER_PREFIX = "ft-proto-adapter:";
-const noopSubscribe = () => () => {};
-const noSnapshot = () => null;
+import usePrototypeAdapterItems, {
+  isPrototypeAdapter,
+} from "../../../components/fineTuning/integration/usePrototypeAdapterItems";
 
 /**
  * The RAG entry point: create a session from a name and a model.
@@ -150,30 +135,10 @@ export default function RAGCreatePage() {
     return needsDownload || locked;
   }, [selectedModelState, statuses, credentialsLoaded]);
 
-  const showAdapters = prototypeVisible(useActivePrototype(), "E");
-  const protoStore = showAdapters ? getPrototypeStore("E") : null;
-  const protoState = useSyncExternalStore(
-    protoStore ? protoStore.subscribe : noopSubscribe,
-    protoStore ? protoStore.getSnapshot : noSnapshot,
-  );
-
-  const adapterItems = useMemo(() => {
-    if (!protoState) return [];
-    const baseName = (id) =>
-      protoState.checkpoints.find((ck) => ck.id === id)?.name || id;
-    return protoState.adapters
-      .filter((a) => a.availability !== "missing")
-      .map((a) => ({
-        name: `${ADAPTER_PREFIX}${a.id}`,
-        display_name: a.name,
-        description: t("generative:rag.create.adapterDescription", {
-          base: baseName(a.checkpointId),
-          method: String(a.method || "").toUpperCase(),
-        }),
-        baseName: baseName(a.checkpointId),
-        ragGroup: t("generative:rag.create.groupAdapted"),
-      }));
-  }, [protoState, t]);
+  // Fine-tuning prototype E: its simulated adapters as their own group. The
+  // backend cannot create a RAG session with them; picking one shows what
+  // would load.
+  const adapterItems = usePrototypeAdapterItems("ragGroup");
 
   const withAdapters = adapterItems.length > 0;
   const selectorItems = useMemo(
@@ -190,7 +155,7 @@ export default function RAGCreatePage() {
     [withAdapters, adapterItems, models, t],
   );
 
-  const selectedAdapter = selectedModel?.name?.startsWith(ADAPTER_PREFIX)
+  const selectedAdapter = isPrototypeAdapter(selectedModel)
     ? adapterItems.find((a) => a.name === selectedModel.name)
     : null;
 
@@ -203,7 +168,7 @@ export default function RAGCreatePage() {
   const handleCreate = async () => {
     if (!canCreate) return;
     if (selectedAdapter) {
-      enqueueSnackbar(t("generative:rag.create.adapterPrototype"), {
+      enqueueSnackbar(t("generative:adaptedModels.ragPrototype"), {
         variant: "info",
       });
       return;
@@ -303,7 +268,7 @@ export default function RAGCreatePage() {
                     </Typography>
                     {selectedAdapter && (
                       <Alert severity="info" variant="outlined" sx={{ mb: 3 }}>
-                        {t("generative:rag.create.adapterNotice", {
+                        {t("generative:adaptedModels.notice", {
                           base: selectedAdapter.baseName,
                           adapter: selectedAdapter.display_name,
                         })}

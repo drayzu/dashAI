@@ -219,10 +219,6 @@
       "unsavedIn": "Unsaved changes in: {{sections}}"
     },
     "create": {
-      "adapterDescription": "{{base}} + {{method}} adapter trained in Fine-tuning.",
-      "adapterNotice": "{{base}} will be loaded with the adapter “{{adapter}}” on top.",
-      "adapterPrototype": "Prototype: the RAG integration is shown only in the model selection.",
-      "groupAdapted": "My adapted models",
       "groupModels": "Language models",
       "newSession": "New RAG session",
       "selectModel": "Language model",
@@ -334,5 +330,11 @@
     "apiKeyMissingDescription": "This model requires an API key to function. Open Advanced Configuration to add your API key.",
     "contextSpace": "With your current configuration you have space for your sources (chunks) and {{availableChars}} characters for your message.",
     "insufficientContextDescription": "The selected model doesn't have enough context to handle the current Chunk Size and Top K settings. Please reduce the Chunk Size, the number of results (Top K), or select a model with a larger context window."
+  },
+  "adaptedModels": {
+    "description": "{{base}} + {{method}} adapter trained in Fine-tuning.",
+    "group": "My adapted models",
+    "notice": "{{base}} will be loaded with the adapter “{{adapter}}” on top.",
+    "ragPrototype": "Prototype: the RAG integration is shown only in the model selection."
   }
 }

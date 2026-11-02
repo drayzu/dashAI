@@ -223,10 +223,6 @@
       "unsavedIn": "Cambios sin guardar en: {{sections}}"
     },
     "create": {
-      "adapterDescription": "{{base}} + adaptador {{method}} entrenado en Fine-tuning.",
-      "adapterNotice": "Se cargará {{base}} con el adaptador «{{adapter}}» encima.",
-      "adapterPrototype": "Prototipo: la integración con RAG se muestra solo en la selección del modelo.",
-      "groupAdapted": "Mis modelos adaptados",
       "groupModels": "Modelos de lenguaje",
       "newSession": "Nueva sesión RAG",
       "selectModel": "Modelo de lenguaje",
@@ -339,5 +335,11 @@
     "apiKeyMissingDescription": "Este modelo requiere una API key para funcionar. Abre la configuración avanzada para añadir tu API key.",
     "contextSpace": "Con tu configuración actual tienes espacio para tus fuentes (chunks) y {{availableChars}} caracteres para tu mensaje.",
     "insufficientContextDescription": "El modelo seleccionado no tiene suficiente contexto para manejar la configuración actual de tamaño de fragmento y Top K. Por favor, reduce el tamaño de fragmento, el número de resultados (Top K), o selecciona un modelo con una ventana de contexto más grande."
+  },
+  "adaptedModels": {
+    "description": "{{base}} + adaptador {{method}} entrenado en Fine-tuning.",
+    "group": "Mis modelos adaptados",
+    "notice": "Se cargará {{base}} con el adaptador «{{adapter}}» encima.",
+    "ragPrototype": "Prototipo: la integración con RAG se muestra solo en la selección del modelo."
   }
 }
