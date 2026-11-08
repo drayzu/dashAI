@@ -43,6 +43,8 @@ import hubEN from "./locales/en/hub.json";
 import hubES from "./locales/es/hub.json";
 import credentialsEN from "./locales/en/credentials.json";
 import credentialsES from "./locales/es/credentials.json";
+import fineTuningEN from "./locales/en/fineTuning.json";
+import fineTuningES from "./locales/es/fineTuning.json";
 import credentialsPT from "./locales/pt/credentials.json";
 import credentialsDE from "./locales/de/credentials.json";
 import credentialsZH from "./locales/zh/credentials.json";
@@ -137,6 +139,7 @@ const resources = {
     hub: hubEN,
     credentials: credentialsEN,
     updates: updatesEN,
+    fineTuning: fineTuningEN,
   },
   es: {
     configurableObject: configurableObjectES,
@@ -161,6 +164,7 @@ const resources = {
     hub: hubES,
     credentials: credentialsES,
     updates: updatesES,
+    fineTuning: fineTuningES,
   },
   pt: {
     configurableObject: configurableObjectPT,
@@ -184,6 +188,8 @@ const resources = {
     hubTour: hubTourPT,
     credentials: credentialsPT,
     updates: updatesPT,
+    // Prototype strings are only translated to en/es; show English.
+    fineTuning: fineTuningEN,
   },
   de: {
     configurableObject: configurableObjectDE,
@@ -207,6 +213,8 @@ const resources = {
     hubTour: hubTourDE,
     credentials: credentialsDE,
     updates: updatesDE,
+    // Prototype strings are only translated to en/es; show English.
+    fineTuning: fineTuningEN,
   },
   zh: {
     configurableObject: configurableObjectZH,
@@ -231,6 +239,8 @@ const resources = {
     hub: hubZH,
     credentials: credentialsZH,
     updates: updatesZH,
+    // Prototype strings are only translated to en/es; show English.
+    fineTuning: fineTuningEN,
   },
 };
 
@@ -266,6 +276,7 @@ i18n
       "hub",
       "credentials",
       "updates",
+      "fineTuning",
     ],
     defaultNS: "common",
 

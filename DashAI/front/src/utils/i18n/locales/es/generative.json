@@ -72,6 +72,8 @@
     "deleteSessionConfirmation": "¿Seguro que quieres eliminar esta sesión? Esta acción no se puede deshacer.",
     "downloadRequired": "descarga requerida",
     "generativeModule": "Módulo Generativo",
+    "fineTuningModule": "Fine-tuning local",
+    "fineTuningModuleDescription": "Entrena adaptadores LoRA/QLoRA con datasets de DashAI.",
     "modelChangeEvent": "Modelo cambiado: <1></1>",
     "modelHasNoParameters": "Este modelo no tiene parámetros configurables.",
     "modelNotDownloaded": "El modelo de esta sesión aún no está descargado. Descárgalo para continuar.",
@@ -104,6 +106,66 @@
     "tourDisabledMessage": "Regresa al inicio para comenzar el tour",
     "typeYourMessage": "Escribe un mensaje",
     "untitledSession": "Sesión sin título"
+  },
+  "fineTuning": {
+    "title": "Fine-tuning local de LLM",
+    "subtitle": "Entrena un adaptador LoRA/QLoRA y úsalo directamente en Generative.",
+    "button": {
+      "newRun": "Nueva ejecución",
+      "createAndStart": "Crear e iniciar",
+      "runPreflight": "Ejecutar diagnóstico",
+      "openInGenerative": "Abrir en Generative",
+      "showAdvanced": "Opciones avanzadas",
+      "hideAdvanced": "Ocultar opciones avanzadas",
+      "download": "Descargar",
+      "retryDownload": "Reintentar descarga",
+      "uploadDataset": "Cargar un dataset nuevo",
+      "cancel": "Cancelar ejecución"
+    },
+    "label": {
+      "runs": "Ejecuciones",
+      "inventory": "Inventario local",
+      "stepModel": "Modelo y hardware",
+      "stepDataset": "Mapeo del dataset",
+      "stepConfiguration": "Configuración",
+      "stepReview": "Revisión y ejecución",
+      "name": "Nombre",
+      "baseModel": "Modelo base",
+      "method": "Método",
+      "backend": "Motor de ejecución",
+      "backendTransformers": "Transformers (predeterminado)",
+      "backendUnsloth": "Unsloth (experimental)",
+      "dataset": "Dataset",
+      "format": "Formato",
+      "textColumn": "Columna de texto",
+      "messagesColumn": "Columna de mensajes",
+      "promptColumn": "Columna de prompt",
+      "completionColumn": "Columna de completion",
+      "preset": "Preset",
+      "maxSamples": "Muestras máximas",
+      "maxSteps": "Pasos máximos",
+      "sequenceLength": "Longitud de secuencia",
+      "gradientAccumulation": "Acumulación de gradiente",
+      "learningRate": "Tasa de aprendizaje",
+      "loraRank": "Rango LoRA",
+      "warmupSteps": "Pasos de calentamiento",
+      "preflightReady": "Diagnóstico listo",
+      "preflightBlocked": "Diagnóstico bloqueado",
+      "rowsSummary": "{{train}} de entrenamiento / {{validation}} de validación",
+      "stepsUnit": "pasos",
+      "statusNotDownloaded": "Sin descargar",
+      "statusDownloading": "Descargando",
+      "statusReady": "Listo",
+      "statusError": "Error",
+      "recommendedVram": "VRAM recomendada: {{gb}} GB"
+    },
+    "message": {
+      "noRuns": "Aún no hay ejecuciones de fine-tuning.",
+      "deleteConfirm": "¿Eliminar {{name}}?",
+      "healthWarnings": "Advertencias de salud del entrenamiento",
+      "datasetProcessing": "El dataset todavía se está procesando. El entrenamiento estará disponible cuando quede listo.",
+      "datasetFailed": "Falló el procesamiento del dataset. Revísalo en el módulo Datos o carga otro dataset."
+    }
   },
   "message": {
     "sessionCreatedSuccess": "Sesión creada exitosamente.",
@@ -178,6 +240,7 @@
       "unsavedIn": "Cambios sin guardar en: {{sections}}"
     },
     "create": {
+      "groupModels": "Modelos de lenguaje",
       "newSession": "Nueva sesión RAG",
       "selectModel": "Modelo de lenguaje",
       "subtitle": "Un nombre y un modelo. Agrega tus documentos una vez creada la sesión; todo lo demás tiene un valor por defecto que puedes cambiar después.",
@@ -339,5 +402,11 @@
     "apiKeyMissingDescription": "Este modelo requiere una API key para funcionar. Abre la configuración avanzada para añadir tu API key.",
     "contextSpace": "Con tu configuración actual tienes espacio para tus fuentes (chunks) y {{availableChars}} caracteres para tu mensaje.",
     "insufficientContextDescription": "El modelo seleccionado no tiene suficiente contexto para manejar la configuración actual de tamaño de fragmento y Top K. Por favor, reduce el tamaño de fragmento, el número de resultados (Top K), o selecciona un modelo con una ventana de contexto más grande."
+  },
+  "adaptedModels": {
+    "description": "{{base}} + adaptador {{method}} entrenado en Fine-tuning.",
+    "group": "Mis modelos adaptados",
+    "notice": "Se cargará {{base}} con el adaptador «{{adapter}}» encima.",
+    "ragPrototype": "Prototipo: la integración con RAG se muestra solo en la selección del modelo."
   }
 }

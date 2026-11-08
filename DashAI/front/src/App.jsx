@@ -19,6 +19,17 @@ import PluginsPage from "./pages/plugins/Plugins";
 import PipelinesPage from "./pages/pipelines/Pipelines";
 import PluginsDetails from "./pages/plugins/components/PluginsDetails";
 import Generative from "./pages/generative/Generative";
+import FineTuningPrototypeA from "./pages/generative/fineTuning/FineTuningPrototypeA";
+import FineTuningPrototypeB from "./pages/models/fineTuning/FineTuningPrototypeB";
+import AdaptersHubB from "./pages/generative/adapters/AdaptersHubB";
+import FineTuningSimple from "./pages/generative/fineTuningSimple/FineTuningSimple";
+import FineTuningD from "./pages/generative/prototypeD/FineTuningD";
+import SessionsD from "./pages/generative/prototypeD/SessionsD";
+import FineTuningE from "./pages/generative/prototypeE/FineTuningE";
+import SessionsE, {
+  SESSIONS_B_PATH,
+} from "./pages/generative/prototypeE/SessionsE";
+import PrototypeSwitcher from "./components/fineTuning/demoSwitcher/PrototypeSwitcher";
 import { GenerativeProvider } from "./components/generative/GenerativeContext";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 import HubContent from "./pages/hub/HubContent";
@@ -100,6 +111,11 @@ function App() {
                   <Route path="hub/:sourceName" element={<HubContent />} />
                 </Route>
                 <Route path="/app/models" element={<ModelsPage />} />
+                {/* Fine-tuning prototype B (frontend-only, simulated). */}
+                <Route
+                  path="/app/models/fine-tuning/*"
+                  element={<FineTuningPrototypeB />}
+                />
                 <Route
                   path="/app/models/datasets/:id"
                   element={<ModelsPage />}
@@ -117,6 +133,41 @@ function App() {
                   element={<ModelsPage />}
                 />
                 <Route path="/app/generative" element={<Generative />} />
+                {/* Fine-tuning prototypes (frontend-only, simulated). */}
+                <Route
+                  path="/app/generative/fine-tuning/*"
+                  element={<FineTuningPrototypeA />}
+                />
+                <Route
+                  path="/app/generative/fine-tuning-simple"
+                  element={<FineTuningSimple />}
+                />
+                <Route
+                  path="/app/generative/fine-tuning-d"
+                  element={<FineTuningD />}
+                />
+                <Route
+                  path="/app/generative/sessions-d/*"
+                  element={<SessionsD />}
+                />
+                <Route
+                  path="/app/generative/fine-tuning-e/*"
+                  element={<FineTuningE />}
+                />
+                <Route
+                  path="/app/generative/sessions-e/*"
+                  element={<SessionsE />}
+                />
+                <Route
+                  path="/app/generative/sessions-b/*"
+                  element={
+                    <SessionsE prototype="B" sessionsPath={SESSIONS_B_PATH} />
+                  }
+                />
+                <Route
+                  path="/app/generative/adapters/*"
+                  element={<AdaptersHubB />}
+                />
                 {/* RAG is an entry point of the Generative module, not a step
                     inside session creation, and the entry point *is* creating a
                     session: picking RAG used to land on a menu whose only card
@@ -187,6 +238,7 @@ function App() {
                 </Route>
               </Routes>
               <JobQueueWidget />
+              <PrototypeSwitcher />
             </GenerativeProvider>
           </ModelsProvider>
         </DatasetsProvider>

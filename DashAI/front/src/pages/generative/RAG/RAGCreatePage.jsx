@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import {
+  Alert,
   Box,
   CircularProgress,
   Stack,
@@ -35,6 +36,9 @@ import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/
 import { FormSchemaProvider } from "../../../contexts/schema";
 import { generateSequentialName } from "../../../utils/nameGenerator";
 import { getApiErrorMessage } from "../../../utils/apiError";
+import usePrototypeAdapterItems, {
+  isPrototypeAdapter,
+} from "../../../components/fineTuning/integration/usePrototypeAdapterItems";
 
 /**
  * The RAG entry point: create a session from a name and a model.
@@ -133,6 +137,30 @@ export default function RAGCreatePage() {
     return needsDownload || locked;
   }, [selectedModelState, statuses, credentialsLoaded]);
 
+  // Fine-tuning prototype E: its simulated adapters as their own group. The
+  // backend cannot create a RAG session with them; picking one shows what
+  // would load.
+  const adapterItems = usePrototypeAdapterItems("ragGroup");
+
+  const withAdapters = adapterItems.length > 0;
+  const selectorItems = useMemo(
+    () =>
+      withAdapters
+        ? [
+            ...adapterItems,
+            ...models.map((m) => ({
+              ...m,
+              ragGroup: t("generative:rag.create.groupModels"),
+            })),
+          ]
+        : models,
+    [withAdapters, adapterItems, models, t],
+  );
+
+  const selectedAdapter = isPrototypeAdapter(selectedModel)
+    ? adapterItems.find((a) => a.name === selectedModel.name)
+    : null;
+
   const canCreate =
     Boolean(name.trim()) &&
     Boolean(selectedModel) &&
@@ -141,6 +169,12 @@ export default function RAGCreatePage() {
 
   const handleCreate = async () => {
     if (!canCreate) return;
+    if (selectedAdapter) {
+      enqueueSnackbar(t("generative:adaptedModels.ragPrototype"), {
+        variant: "info",
+      });
+      return;
+    }
     setSubmitting(true);
     try {
       const created = await createRAGSession({
@@ -239,6 +273,14 @@ export default function RAGCreatePage() {
                     >
                       {t("generative:rag.create.selectModel")}
                     </Typography>
+                    {selectedAdapter && (
+                      <Alert severity="info" variant="outlined" sx={{ mb: 3 }}>
+                        {t("generative:adaptedModels.notice", {
+                          base: selectedAdapter.baseName,
+                          adapter: selectedAdapter.display_name,
+                        })}
+                      </Alert>
+                    )}
                     {loadingModels ? (
                       <Box
                         sx={{
@@ -251,11 +293,12 @@ export default function RAGCreatePage() {
                       </Box>
                     ) : (
                       <ComponentSelector
-                        components={models}
+                        components={selectorItems}
                         selected={selectedModel}
                         onSelect={setSelectedModel}
                         onDownloadChange={handleDownloadChange}
-                        flat
+                        flat={!withAdapters}
+                        categoryKey="ragGroup"
                         showFooter={false}
                         searchPlaceholder={t("generative:label.searchModels")}
                       />

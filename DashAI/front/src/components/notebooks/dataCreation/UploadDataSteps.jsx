@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import PropTypes from "prop-types";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
@@ -16,6 +16,25 @@ import { getComponents as getComponentsRequest } from "../../../api/component";
 import { loadsDataKind } from "../../../utils/dataKinds";
 
 const UPLOAD_BASE_PATH = "/app/data/new";
+const FINE_TUNING_FALLBACK_PATH = "/app/generative";
+
+// Only in-app paths (no "..", backslashes, fragments or whitespace) are
+// accepted as a returnPath, so the param cannot send users elsewhere.
+const isSafeReturnPath = (path) =>
+  typeof path === "string" &&
+  path.length <= 2048 &&
+  /^\/app\/[^\\#\s]*$/.test(path) &&
+  !path.split("?")[0].split("/").includes("..");
+
+// Where to go after uploading a dataset from the fine-tuning prototype:
+// `returnPath` (already decoded) when safe, otherwise the Generative module.
+export const getFineTuningReturnUrl = (returnPath, datasetId) => {
+  const base = isSafeReturnPath(returnPath)
+    ? returnPath
+    : FINE_TUNING_FALLBACK_PATH;
+  const separator = base.includes("?") ? "&" : "?";
+  return `${base}${separator}datasetId=${encodeURIComponent(datasetId)}`;
+};
 
 function loaderDataKind(loader) {
   return loadsDataKind(loader, "document") ? "document" : "dataset";
@@ -34,6 +53,7 @@ export default function UploadDataSteps({ backHome }) {
   } = useDatasetsAndNotebooks();
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { dataloaderName } = useParams();
   const step = dataloaderName ? 1 : 0;
 
@@ -143,7 +163,7 @@ export default function UploadDataSteps({ backHome }) {
   }, []);
 
   const goToNextStep = () => {
-    navigate(`${UPLOAD_BASE_PATH}/${selectedLoader.name}`);
+    navigate(`${UPLOAD_BASE_PATH}/${selectedLoader.name}${location.search}`);
   };
 
   const goToPrevStep = () => {
@@ -151,7 +171,7 @@ export default function UploadDataSteps({ backHome }) {
       backHome();
       return;
     }
-    navigate(UPLOAD_BASE_PATH);
+    navigate(`${UPLOAD_BASE_PATH}${location.search}`);
   };
 
   const getTitle = () => {
@@ -172,7 +192,14 @@ export default function UploadDataSteps({ backHome }) {
     addDatasetOptimistically(newDataset);
     setRightBarContent(null);
     startDatasetPolling(newDataset, datasetJob);
-    navigate(`/app/data/datasets/${newDataset.id}`);
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get("returnTo") === "fine-tuning") {
+      navigate(
+        getFineTuningReturnUrl(searchParams.get("returnPath"), newDataset.id),
+      );
+    } else {
+      navigate(`/app/data/datasets/${newDataset.id}`);
+    }
 
     if (tourContext?.run) {
       tourContext.completeTour();

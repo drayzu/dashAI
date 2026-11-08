@@ -43,7 +43,9 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { deleteAllJobs } from "../../api/job";
 import { useJobManager, forceRefreshNow } from "../../hooks/useJobPolling";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { getStatusText } from "../../utils/jobStatusText";
+import { useExternalJobs } from "../../utils/externalJobs";
 
 export const StatusIcon = ({ status }) => {
   switch (status) {
@@ -82,6 +84,9 @@ const JobQueueWidget = () => {
   const [clearingAll, setClearingAll] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  // Ids of external (frontend-only) jobs dismissed from the list.
+  const [hiddenExternalIds, setHiddenExternalIds] = useState(() => new Set());
+  const navigate = useNavigate();
 
   // Drag state — anchored to whichever edge (left/right, top/bottom) is
   // nearest, as a distance in px from that edge. This is what lets the
@@ -197,7 +202,19 @@ const JobQueueWidget = () => {
     setConfirmClearAll(true);
   };
 
+  const hideExternalJobs = (ids) =>
+    setHiddenExternalIds((prev) => new Set([...prev, ...ids]));
+
   const confirmClearAllJobs = async () => {
+    // External jobs never go through the API: finished ones are hidden,
+    // active ones stay (they keep running in their own module).
+    hideExternalJobs(
+      externalJobs.filter((job) => !isActiveJob(job)).map((job) => job.id),
+    );
+    if (realJobs.length === 0) {
+      setConfirmClearAll(false);
+      return;
+    }
     try {
       setClearingAll(true);
       await deleteAllJobs();
@@ -226,6 +243,16 @@ const JobQueueWidget = () => {
   const confirmDeleteJob = async () => {
     if (!jobToDelete) return;
 
+    if (jobToDelete.external) {
+      if (isActiveJob(jobToDelete) && jobToDelete.onCancel) {
+        jobToDelete.onCancel();
+      } else {
+        hideExternalJobs([jobToDelete.id]);
+      }
+      setJobToDelete(null);
+      return;
+    }
+
     try {
       await deleteJob(jobToDelete.id);
       forceRefreshNow();
@@ -244,7 +271,24 @@ const JobQueueWidget = () => {
     setJobToDelete(null);
   };
 
-  const { jobs, loading, error, refresh } = useJobManager();
+  const { jobs: realJobs, loading, error, refresh } = useJobManager();
+  // Frontend-only jobs (e.g. the simulated fine-tuning runs) shown next to
+  // the real queue; they share counts, badges and auto-expand.
+  const externalJobs = useExternalJobs();
+  const jobs = [
+    ...realJobs,
+    ...externalJobs.filter((job) => !hiddenExternalIds.has(job.id)),
+  ];
+
+  // Forget dismissed ids whose job no longer exists (e.g. after a reset).
+  useEffect(() => {
+    setHiddenExternalIds((prev) => {
+      const next = new Set(
+        externalJobs.map((job) => job.id).filter((id) => prev.has(id)),
+      );
+      return next.size === prev.size ? prev : next;
+    });
+  }, [externalJobs]);
 
   const activeJobs = jobs.filter(
     (job) => job.status === "started" || job.status === "not_started",
@@ -294,6 +338,10 @@ const JobQueueWidget = () => {
   };
 
   const handleJobClick = (job) => {
+    if (job.external) {
+      if (job.href) navigate(job.href);
+      return;
+    }
     setSelectedJob(job);
   };
 
@@ -591,7 +639,8 @@ const JobQueueWidget = () => {
                                   sx={{ display: "flex", alignItems: "center" }}
                                 >
                                   <span>
-                                    {job.status === "started" &&
+                                    {(job.status === "started" ||
+                                      job.external) &&
                                     job.progress_message
                                       ? job.progress_message
                                       : getStatusText(job.status, t)}
@@ -601,6 +650,8 @@ const JobQueueWidget = () => {
                                     <Tooltip
                                       title={
                                         job.error_msg ||
+                                        (job.external &&
+                                          job.progress_message) ||
                                         t("common:unknownError")
                                       }
                                     >

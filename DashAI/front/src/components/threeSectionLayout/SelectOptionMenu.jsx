@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Box, Grid, Button, Alert, AlertTitle, Skeleton } from "@mui/material";
 
 function useContainerColumns(ref) {
@@ -45,20 +45,18 @@ export default function SelectOptionMenu({
   // Cards share a single dynamic height, sized to fit whichever card's
   // content needs the most space, so text never gets cut off. Each OptionBox
   // measures its own natural (unconstrained) height and reports it here.
+  // Heights are kept per option name and only the visible options count.
+  // (Clearing them when the list changed ran after the cards had already
+  // reported, leaving every card at its natural height.)
   const [cardHeights, setCardHeights] = useState({});
-  const visibleNames = useMemo(
-    () => filteredOptions.map((option) => option.name).join("|"),
-    [filteredOptions],
-  );
-  useEffect(() => {
-    setCardHeights({});
-  }, [visibleNames]);
   const handleMeasure = useCallback((name, height) => {
     setCardHeights((prev) =>
       prev[name] === height ? prev : { ...prev, [name]: height },
     );
   }, []);
-  const cardHeightValues = Object.values(cardHeights);
+  const cardHeightValues = filteredOptions
+    .map((option) => cardHeights[option.name])
+    .filter((height) => height > 0);
   const cardHeight = cardHeightValues.length
     ? Math.max(...cardHeightValues)
     : null;

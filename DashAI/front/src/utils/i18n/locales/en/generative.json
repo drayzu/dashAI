@@ -69,6 +69,8 @@
     "deleteSessionConfirmation": "Are you sure you want to delete this session? This action cannot be undone.",
     "downloadRequired": "download required",
     "generativeModule": "Generative Module",
+    "fineTuningModule": "Local fine-tuning",
+    "fineTuningModuleDescription": "Train LoRA/QLoRA adapters with your DashAI datasets.",
     "modelChangeEvent": "Model changed: <1></1>",
     "modelHasNoParameters": "This model has no configurable parameters.",
     "modelNotDownloaded": "This session's model is not downloaded yet. Download it to continue.",
@@ -101,6 +103,66 @@
     "tourDisabledMessage": "Return to home to start the tour",
     "typeYourMessage": "Type a message",
     "untitledSession": "Untitled Session"
+  },
+  "fineTuning": {
+    "title": "Local LLM fine-tuning",
+    "subtitle": "Train a LoRA/QLoRA adapter and use it directly in Generative.",
+    "button": {
+      "newRun": "New run",
+      "createAndStart": "Create and start",
+      "runPreflight": "Run preflight",
+      "openInGenerative": "Open in Generative",
+      "showAdvanced": "Advanced options",
+      "hideAdvanced": "Hide advanced options",
+      "download": "Download",
+      "retryDownload": "Retry download",
+      "uploadDataset": "Upload a new dataset",
+      "cancel": "Cancel run"
+    },
+    "label": {
+      "runs": "Runs",
+      "inventory": "Local inventory",
+      "stepModel": "Model and hardware",
+      "stepDataset": "Dataset mapping",
+      "stepConfiguration": "Configuration",
+      "stepReview": "Review and run",
+      "name": "Name",
+      "baseModel": "Base model",
+      "method": "Method",
+      "backend": "Execution backend",
+      "backendTransformers": "Transformers (default)",
+      "backendUnsloth": "Unsloth (experimental)",
+      "dataset": "Dataset",
+      "format": "Format",
+      "textColumn": "Text column",
+      "messagesColumn": "Messages column",
+      "promptColumn": "Prompt column",
+      "completionColumn": "Completion column",
+      "preset": "Preset",
+      "maxSamples": "Max samples",
+      "maxSteps": "Max steps",
+      "sequenceLength": "Sequence length",
+      "gradientAccumulation": "Gradient accumulation",
+      "learningRate": "Learning rate",
+      "loraRank": "LoRA rank",
+      "warmupSteps": "Warmup steps",
+      "preflightReady": "Preflight ready",
+      "preflightBlocked": "Preflight blocked",
+      "rowsSummary": "{{train}} train / {{validation}} validation",
+      "stepsUnit": "steps",
+      "statusNotDownloaded": "Not downloaded",
+      "statusDownloading": "Downloading",
+      "statusReady": "Ready",
+      "statusError": "Error",
+      "recommendedVram": "Recommended VRAM: {{gb}} GB"
+    },
+    "message": {
+      "noRuns": "No fine-tuning runs yet.",
+      "deleteConfirm": "Delete {{name}}?",
+      "healthWarnings": "Training health warnings",
+      "datasetProcessing": "The dataset is still being processed. Training will be available when it is ready.",
+      "datasetFailed": "Dataset processing failed. Review it in the Data module or upload another dataset."
+    }
   },
   "message": {
     "sessionCreatedSuccess": "Session successfully created.",
@@ -175,6 +237,7 @@
       "unsavedIn": "Unsaved changes in: {{sections}}"
     },
     "create": {
+      "groupModels": "Language models",
       "newSession": "New RAG session",
       "selectModel": "Language model",
       "subtitle": "A name and a model. Add your documents once the session exists; everything else has a sensible default you can change later.",
@@ -331,5 +394,11 @@
     "apiKeyMissingDescription": "This model requires an API key to function. Open Advanced Configuration to add your API key.",
     "contextSpace": "With your current configuration you have space for your sources (chunks) and {{availableChars}} characters for your message.",
     "insufficientContextDescription": "The selected model doesn't have enough context to handle the current Chunk Size and Top K settings. Please reduce the Chunk Size, the number of results (Top K), or select a model with a larger context window."
+  },
+  "adaptedModels": {
+    "description": "{{base}} + {{method}} adapter trained in Fine-tuning.",
+    "group": "My adapted models",
+    "notice": "{{base}} will be loaded with the adapter “{{adapter}}” on top.",
+    "ragPrototype": "Prototype: the RAG integration is shown only in the model selection."
   }
 }
