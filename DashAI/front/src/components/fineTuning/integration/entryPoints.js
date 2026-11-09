@@ -45,6 +45,8 @@ export function buildFineTuningTaskOption(t) {
     display_name: t("fineTuning:shellB.taskCard.title"),
     description: t("fineTuning:shellB.taskCard.description"),
     Icon: ModelTrainingIcon,
+    // Supervised fine-tuning: the response column is the target.
+    badge: t("models:label.supervisedBadge"),
     chips: [t("fineTuning:shellB.prototypeChip", { prototype: "B" })],
     dataTour: undefined,
   };

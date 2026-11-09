@@ -404,7 +404,7 @@
     "insufficientContextDescription": "El modelo seleccionado no tiene suficiente contexto para manejar la configuración actual de tamaño de fragmento y Top K. Por favor, reduce el tamaño de fragmento, el número de resultados (Top K), o selecciona un modelo con una ventana de contexto más grande."
   },
   "adaptedModels": {
-    "description": "{{base}} + adaptador {{method}} entrenado en Modelos › Ajuste por instrucciones.",
+    "description": "{{base}} + adaptador {{method}} entrenado en Modelos › Ajuste fino por instrucciones.",
     "group": "Mis modelos adaptados",
     "notice": "Se cargará {{base}} con el adaptador «{{adapter}}» encima.",
     "ragPrototype": "Prototipo: la integración con RAG se muestra solo en la selección del modelo."

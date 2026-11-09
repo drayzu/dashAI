@@ -465,7 +465,7 @@
     "models": "Models",
     "modelSubtitle": "{{params}} B parameters · {{license}}",
     "adapted": "My adapted models",
-    "adaptedHint": "Base model + LoRA/QLoRA adapter trained in Models › Instruction tuning.",
+    "adaptedHint": "Base model + LoRA/QLoRA adapter trained in Models › Instruction fine-tuning.",
     "goToFineTuning": "Go to Fine-tuning",
     "noAdapters": "There are no adapters yet. Train one in Fine-tuning.",
     "availability": {
@@ -492,7 +492,7 @@
     "infoBody": "Adapted models are used like any other model: you pick them when creating the session. Responses are simulated.",
     "categoryBase": "Text to Text",
     "categoryAdapted": "My adapted models",
-    "adapterDescription": "{{base}} + {{method}} adapter trained in Models › Instruction tuning."
+    "adapterDescription": "{{base}} + {{method}} adapter trained in Models › Instruction fine-tuning."
   },
   "shellA": {
     "otherPrototype": "Prototype B (in Models)",
@@ -656,12 +656,12 @@
   "shellB": {
     "prototypeChip": "Prototype {{prototype}}",
     "taskCard": {
-      "title": "Instruction tuning",
+      "title": "Instruction fine-tuning",
       "description": "Adapt a language model to your own examples: an instruction, an optional context and the response it should learn. Compare base models, methods and hyper-parameters as runs of one session."
     },
     "generativeCard": {
       "title": "Adapted models",
-      "description": "Chat with the adapters trained in Models › Instruction tuning and compare them with their base model."
+      "description": "Chat with the adapters trained in Models › Instruction fine-tuning and compare them with their base model."
     },
     "header": {
       "back": "Back",
@@ -669,14 +669,14 @@
       "otherPrototype": "Prototype A (in Generative)"
     },
     "crumbs": {
-      "fineTuning": "Instruction tuning",
+      "fineTuning": "Instruction fine-tuning",
       "generative": "Generative",
       "adapters": "Adapted models",
       "chat": "Chat",
       "compare": "Compare with base"
     },
     "leftBar": {
-      "group": "Instruction tuning (prototype)",
+      "group": "Instruction fine-tuning (prototype)",
       "empty": "No fine-tuning sessions yet.",
       "confirmDelete": "Delete the session \"{{name}}\"? Its runs and adapters will be deleted. This action cannot be undone.",
       "itemDescription_one": "{{count}} run · {{dataset}}",
@@ -842,7 +842,7 @@
     },
     "adapters": {
       "trainedIn": "Adapters are trained in",
-      "trainedInLink": "Models › Instruction tuning",
+      "trainedInLink": "Models › Instruction fine-tuning",
       "newChat": "New chat",
       "navAria": "Adapted models sections",
       "navRegistry": "Adapted models ({{count}})",
