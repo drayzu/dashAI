@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useModels } from "./ModelsContext";
 import {
   prototypeVisible,
@@ -17,6 +18,12 @@ import {
   FINE_TUNING_TASK_NAME,
   buildFineTuningTaskOption,
 } from "../fineTuning/integration/entryPoints";
+import {
+  buildExtensionTaskOptions,
+  extensionFromOptionName,
+  extensionsVisible,
+} from "../fineTuning/integration/extensions";
+import ExtensionPreviewDialog from "../fineTuning/integration/ExtensionPreviewDialog";
 
 export default function ModelsCenterContent() {
   const { t } = useTranslation(["models", "datasets", "common", "fineTuning"]);
@@ -33,8 +40,15 @@ export default function ModelsCenterContent() {
     step,
   } = useModels();
   const activePrototype = useActivePrototype();
+  const [extensionId, setExtensionId] = useState(null);
 
   const goToNextStep = (taskName) => {
+    // Preview of a candidate extension (prototype F): nothing to navigate to.
+    const extension = extensionFromOptionName(taskName);
+    if (extension) {
+      setExtensionId(extension);
+      return;
+    }
     // Front-only prototype card (LLM fine-tuning, prototype B).
     if (taskName === FINE_TUNING_TASK_NAME) {
       navigate(FINE_TUNING_B_NEW);
@@ -154,6 +168,9 @@ export default function ModelsCenterContent() {
             ...(selectedDatasetId || !prototypeVisible(activePrototype, "B")
               ? []
               : [buildFineTuningTaskOption(t)]),
+            ...(selectedDatasetId || !extensionsVisible(activePrototype)
+              ? []
+              : buildExtensionTaskOptions()),
           ]}
           searchBar={false}
           goToPrevStep={selectedDatasetId ? handleBackToDataset : null}
@@ -163,6 +180,14 @@ export default function ModelsCenterContent() {
           dataTour="task-selection"
         />
       ) : null}
+      <ExtensionPreviewDialog
+        extensionId={extensionId}
+        onClose={() => setExtensionId(null)}
+        onTry={() => {
+          setExtensionId(null);
+          navigate(FINE_TUNING_B_NEW);
+        }}
+      />
     </>
   );
 }

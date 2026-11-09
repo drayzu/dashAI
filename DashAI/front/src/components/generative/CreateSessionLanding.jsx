@@ -1,7 +1,7 @@
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
 import ExtensionOutlinedIcon from "@mui/icons-material/ExtensionOutlined";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import SelectOptionMenu from "../threeSectionLayout/SelectOptionMenu";
@@ -11,6 +11,12 @@ import {
   ADAPTED_MODELS_OPTION_NAME,
   ADAPTERS_B_BASE,
 } from "../fineTuning/integration/entryPoints";
+import {
+  buildImportModelOption,
+  extensionFromOptionName,
+  extensionsVisible,
+} from "../fineTuning/integration/extensions";
+import ExtensionPreviewDialog from "../fineTuning/integration/ExtensionPreviewDialog";
 import {
   prototypeVisible,
   useActivePrototype,
@@ -48,6 +54,7 @@ export default function CreateSessionLanding() {
   const tourContext = useTourContext();
   const { tasks } = useGenerative();
   const activePrototype = useActivePrototype();
+  const [extensionId, setExtensionId] = useState(null);
 
   const options = useMemo(() => {
     const standalone = (tasks ?? [])
@@ -125,6 +132,7 @@ export default function CreateSessionLanding() {
         Icon: AutoAwesomeIcon,
         chips: [t("fineTuning:protoCards.chip", { prototype: "D" })],
       },
+      extensionsVisible(activePrototype) && buildImportModelOption(),
       ...standalone,
     ].filter(Boolean);
   }, [tasks, t, activePrototype]);
@@ -141,7 +149,12 @@ export default function CreateSessionLanding() {
       navigate("/app/generative/fine-tuning");
       return;
     }
-    if (name === CREATE_SESSION && activePrototype === "B") {
+    const extension = extensionFromOptionName(name);
+    if (extension) {
+      setExtensionId(extension);
+      return;
+    }
+    if (name === CREATE_SESSION && ["B", "F"].includes(activePrototype)) {
       navigate(`${SESSIONS_B_PATH}/new`);
       return;
     }
@@ -179,14 +192,20 @@ export default function CreateSessionLanding() {
   };
 
   return (
-    <SelectOptionMenu
-      goToNextStep={handleOption}
-      title={t("generative:label.generativeModule")}
-      subtitle={t("generative:label.createNewSessionDescription")}
-      options={options}
-      searchBar={false}
-      dataTour="create-session-landing"
-      dataTourTarget={CREATE_SESSION}
-    />
+    <>
+      <SelectOptionMenu
+        goToNextStep={handleOption}
+        title={t("generative:label.generativeModule")}
+        subtitle={t("generative:label.createNewSessionDescription")}
+        options={options}
+        searchBar={false}
+        dataTour="create-session-landing"
+        dataTourTarget={CREATE_SESSION}
+      />
+      <ExtensionPreviewDialog
+        extensionId={extensionId}
+        onClose={() => setExtensionId(null)}
+      />
+    </>
   );
 }

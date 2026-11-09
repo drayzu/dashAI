@@ -36,6 +36,9 @@ import { formatBytes } from "../../../components/fineTuning/data/catalog";
 import RunConfigDialog from "./RunConfigDialog";
 import { SessionNotFound } from "./SessionViewB";
 import Hideable from "../../../components/fineTuning/viewEditing/Hideable";
+import { useActivePrototype } from "../../../utils/demoPrototype";
+import { extensionsVisible } from "../../../components/fineTuning/integration/extensions";
+import ExtensionPreviewDialog from "../../../components/fineTuning/integration/ExtensionPreviewDialog";
 
 /**
  * Right panel of a run detail (like Models' RunInfoSidebar): the frozen
@@ -54,6 +57,8 @@ export function RunInfoPanel({ runId }) {
     adapter ? checkpointById(s, adapter.checkpointId) : null,
   );
   const groups = run ? frozenConfigGroups(run, t, i18n.language) : [];
+  const showExtensions = extensionsVisible(useActivePrototype());
+  const [exportPreviewOpen, setExportPreviewOpen] = useState(false);
   const blocker = adapter ? adapterUseBlocker(adapter, checkpoint, t) : null;
 
   const openInGenerative = () => {
@@ -158,6 +163,17 @@ export function RunInfoPanel({ runId }) {
                   >
                     {t("fineTuning:shellB.runInfo.useInGenerative")}
                   </Button>
+                  {showExtensions && (
+                    <Button
+                      fullWidth
+                      size="small"
+                      variant="outlined"
+                      onClick={() => setExportPreviewOpen(true)}
+                      sx={{ mt: 1 }}
+                    >
+                      Exportar a GGUF (vista previa)
+                    </Button>
+                  )}
                   {blocker && (
                     <Typography
                       variant="caption"
@@ -199,6 +215,10 @@ export function RunInfoPanel({ runId }) {
           )}
         </Box>
       </Box>
+      <ExtensionPreviewDialog
+        extensionId={exportPreviewOpen ? "exportGguf" : null}
+        onClose={() => setExportPreviewOpen(false)}
+      />
     </SideBar>
   );
 }

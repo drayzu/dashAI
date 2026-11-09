@@ -27,6 +27,7 @@ const START = {
   C: "/app/generative",
   D: "/app/generative",
   E: "/app/generative",
+  F: "/app/models",
 };
 
 // Grouped by design: the current one trains in Models and uses the adapter
@@ -35,7 +36,10 @@ const GROUPS = [
   {
     title: "Diseño actual",
     subtitle: "Entrenar en Modelos, usar en Generativo",
-    items: { B: "B · Ajuste fino en Modelos" },
+    items: {
+      B: "B · Ajuste fino en Modelos",
+      F: "F · B + extensiones (vista previa)",
+    },
   },
   {
     title: "Diseños anteriores",
