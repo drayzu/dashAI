@@ -311,14 +311,14 @@
       }
     },
     "formats": {
-      "alpaca": "Alpaca (instruction, input, output)",
+      "alpaca": "Alpaca (instruction, context, response)",
       "prompt_completion": "Prompt / completion",
-      "messages": "Messages (conversation)",
+      "messages": "Messages (conversation) · extension",
       "none": "No format"
     },
     "fields": {
       "instruction": "Instruction",
-      "input": "Input (optional)",
+      "input": "Context (optional)",
       "output": "Response",
       "prompt": "Prompt",
       "completion": "Completion",
@@ -465,7 +465,7 @@
     "models": "Models",
     "modelSubtitle": "{{params}} B parameters · {{license}}",
     "adapted": "My adapted models",
-    "adaptedHint": "Base model + LoRA/QLoRA adapter trained in Fine-tuning.",
+    "adaptedHint": "Base model + LoRA/QLoRA adapter trained in Models › Instruction tuning.",
     "goToFineTuning": "Go to Fine-tuning",
     "noAdapters": "There are no adapters yet. Train one in Fine-tuning.",
     "availability": {
@@ -492,7 +492,7 @@
     "infoBody": "Adapted models are used like any other model: you pick them when creating the session. Responses are simulated.",
     "categoryBase": "Text to Text",
     "categoryAdapted": "My adapted models",
-    "adapterDescription": "{{base}} + {{method}} adapter trained in Fine-tuning."
+    "adapterDescription": "{{base}} + {{method}} adapter trained in Models › Instruction tuning."
   },
   "shellA": {
     "otherPrototype": "Prototype B (in Models)",
@@ -656,12 +656,12 @@
   "shellB": {
     "prototypeChip": "Prototype {{prototype}}",
     "taskCard": {
-      "title": "LLM fine-tuning (SFT)",
-      "description": "Prepare a dataset for supervised fine-tuning and compare base model, method and hyper-parameter configurations as runs of one session."
+      "title": "Instruction tuning",
+      "description": "Adapt a language model to your own examples: an instruction, an optional context and the response it should learn. Compare base models, methods and hyper-parameters as runs of one session."
     },
     "generativeCard": {
       "title": "Adapted models",
-      "description": "Chat with the adapters trained in Models › LLM fine-tuning and compare them with their base model."
+      "description": "Chat with the adapters trained in Models › Instruction tuning and compare them with their base model."
     },
     "header": {
       "back": "Back",
@@ -669,14 +669,14 @@
       "otherPrototype": "Prototype A (in Generative)"
     },
     "crumbs": {
-      "fineTuning": "LLM fine-tuning",
+      "fineTuning": "Instruction tuning",
       "generative": "Generative",
       "adapters": "Adapted models",
       "chat": "Chat",
       "compare": "Compare with base"
     },
     "leftBar": {
-      "group": "LLM fine-tuning (prototype)",
+      "group": "Instruction tuning (prototype)",
       "empty": "No fine-tuning sessions yet.",
       "confirmDelete": "Delete the session \"{{name}}\"? Its runs and adapters will be deleted. This action cannot be undone.",
       "itemDescription_one": "{{count}} run · {{dataset}}",
@@ -842,7 +842,7 @@
     },
     "adapters": {
       "trainedIn": "Adapters are trained in",
-      "trainedInLink": "Models › LLM fine-tuning",
+      "trainedInLink": "Models › Instruction tuning",
       "newChat": "New chat",
       "navAria": "Adapted models sections",
       "navRegistry": "Adapted models ({{count}})",
@@ -985,7 +985,7 @@
       "chooseFormat": "Choose a format",
       "suggested": "Suggested",
       "formatHelp": {
-        "alpaca": "User = instruction (+ input); assistant = output.",
+        "alpaca": "User = instruction (+ context); assistant = response.",
         "prompt_completion": "User = prompt; assistant = completion.",
         "messages": "JSON list of turns with role (system, user, assistant) and content."
       },

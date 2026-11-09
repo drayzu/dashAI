@@ -314,14 +314,14 @@
       }
     },
     "formats": {
-      "alpaca": "Alpaca (instrucción, entrada, respuesta)",
+      "alpaca": "Alpaca (instrucción, contexto, respuesta)",
       "prompt_completion": "Prompt / completion",
-      "messages": "Mensajes (conversación)",
+      "messages": "Mensajes (conversación) · extensión",
       "none": "Sin formato"
     },
     "fields": {
       "instruction": "Instrucción",
-      "input": "Entrada (opcional)",
+      "input": "Contexto (opcional)",
       "output": "Respuesta",
       "prompt": "Prompt",
       "completion": "Completion",
@@ -475,7 +475,7 @@
     "models": "Modelos",
     "modelSubtitle": "{{params}} B parámetros · {{license}}",
     "adapted": "Mis modelos adaptados",
-    "adaptedHint": "Modelo base + adaptador LoRA/QLoRA entrenado en Fine-tuning.",
+    "adaptedHint": "Modelo base + adaptador LoRA/QLoRA entrenado en Modelos › Ajuste por instrucciones.",
     "goToFineTuning": "Ir a Fine-tuning",
     "noAdapters": "Todavía no hay adaptadores. Entrena uno en Fine-tuning.",
     "availability": {
@@ -502,7 +502,7 @@
     "infoBody": "Los modelos adaptados se usan como cualquier otro modelo: se eligen al crear la sesión. Las respuestas son simuladas.",
     "categoryBase": "Texto a Texto",
     "categoryAdapted": "Mis modelos adaptados",
-    "adapterDescription": "{{base}} + adaptador {{method}} entrenado en Fine-tuning."
+    "adapterDescription": "{{base}} + adaptador {{method}} entrenado en Modelos › Ajuste por instrucciones."
   },
   "shellA": {
     "otherPrototype": "Prototipo B (en Modelos)",
@@ -669,12 +669,12 @@
   "shellB": {
     "prototypeChip": "Prototipo {{prototype}}",
     "taskCard": {
-      "title": "Ajuste fino de LLM (SFT)",
-      "description": "Prepara un dataset para ajuste fino supervisado y compara configuraciones de modelo base, método e hiperparámetros como ejecuciones de una misma sesión."
+      "title": "Ajuste por instrucciones",
+      "description": "Adapta un modelo de lenguaje a tus propios ejemplos: una instrucción, un contexto opcional y la respuesta que debe aprender. Compara modelos base, métodos e hiperparámetros como ejecuciones de una misma sesión."
     },
     "generativeCard": {
       "title": "Modelos adaptados",
-      "description": "Usa en chat, y compara con su modelo base, los adaptadores entrenados en Modelos › Ajuste fino de LLM."
+      "description": "Usa en chat, y compara con su modelo base, los adaptadores entrenados en Modelos › Ajuste por instrucciones."
     },
     "header": {
       "back": "Volver",
@@ -682,14 +682,14 @@
       "otherPrototype": "Prototipo A (en Generative)"
     },
     "crumbs": {
-      "fineTuning": "Ajuste fino de LLM",
+      "fineTuning": "Ajuste por instrucciones",
       "generative": "Generative",
       "adapters": "Modelos adaptados",
       "chat": "Chat",
       "compare": "Comparar con base"
     },
     "leftBar": {
-      "group": "Ajuste fino de LLM (prototipo)",
+      "group": "Ajuste por instrucciones (prototipo)",
       "empty": "Aún no hay sesiones de ajuste fino.",
       "confirmDelete": "¿Eliminar la sesión «{{name}}»? Se eliminarán sus ejecuciones y adaptadores. Esta acción no se puede deshacer.",
       "itemDescription_one": "{{count}} ejecución · {{dataset}}",
@@ -862,7 +862,7 @@
     },
     "adapters": {
       "trainedIn": "Los adaptadores se entrenan en",
-      "trainedInLink": "Modelos › Ajuste fino de LLM",
+      "trainedInLink": "Modelos › Ajuste por instrucciones",
       "newChat": "Nuevo chat",
       "navAria": "Secciones de modelos adaptados",
       "navRegistry": "Modelos adaptados ({{count}})",
@@ -1006,7 +1006,7 @@
       "chooseFormat": "Elige un formato",
       "suggested": "Sugerido",
       "formatHelp": {
-        "alpaca": "Usuario = instrucción (+ entrada); asistente = respuesta.",
+        "alpaca": "Usuario = instrucción (+ contexto); asistente = respuesta.",
         "prompt_completion": "Usuario = prompt; asistente = completion.",
         "messages": "Lista JSON de turnos con role (system, user, assistant) y content."
       },

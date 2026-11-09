@@ -5,21 +5,25 @@ import { useSyncExternalStore } from "react";
  * point (development); "A" | "B" | "C" | "D" shows only that prototype's
  * cards and links in the real DashAI modules, so a demo never mixes them.
  * Persisted in localStorage; `?proto=a` in any URL also sets it.
+ *
+ * B is the default: it is the one that follows the current design, with
+ * training as a Models task and the adapters used from Generative.
  */
 
 export const PROTOTYPES = ["all", "A", "B", "C", "D", "E"];
+export const DEFAULT_PROTOTYPE = "B";
 const STORAGE_KEY = "dashai:ft-proto:active:v1";
 
 function read() {
   try {
     const value = window.localStorage.getItem(STORAGE_KEY);
-    return PROTOTYPES.includes(value) ? value : "all";
+    return PROTOTYPES.includes(value) ? value : DEFAULT_PROTOTYPE;
   } catch {
-    return "all";
+    return DEFAULT_PROTOTYPE;
   }
 }
 
-let active = typeof window !== "undefined" ? read() : "all";
+let active = typeof window !== "undefined" ? read() : DEFAULT_PROTOTYPE;
 const listeners = new Set();
 
 export function setActivePrototype(value) {
