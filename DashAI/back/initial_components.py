@@ -593,6 +593,7 @@ from DashAI.back.statistical_tests.wilcoxon_sr_test import (
 from DashAI.back.tasks.clustering_task import ClusteringTask
 from DashAI.back.tasks.controlnet_task import ControlNetTask
 from DashAI.back.tasks.image_classification_task import ImageClassificationTask
+from DashAI.back.tasks.instruction_tuning_task import InstructionTuningTask
 
 # Tasks
 from DashAI.back.tasks.RAG_task import RAGTask
@@ -701,6 +702,7 @@ def get_initial_components():
         ImageClassificationTask,
         ClusteringTask,
         SingleSeriesForecastingTask,
+        InstructionTuningTask,
         # Models
         NaiveForecaster,
         MeanForecaster,

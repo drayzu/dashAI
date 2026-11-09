@@ -27,6 +27,7 @@ ICONS = {
     "TranslationTask": "Translate",
     "ClusteringTask": "Science",
     "SingleSeriesForecastingTask": "Timeline",
+    "InstructionTuningTask": "Psychology",
 }
 
 
@@ -47,11 +48,14 @@ def test_a_task_takes_preprocessing_when_some_role_can_be_transformed(name):
     assert task.get_metadata()["takes_preprocessing"] is transformable
 
 
-def test_every_registered_task_takes_preprocessing():
+def test_every_registered_task_takes_preprocessing_but_instruction_tuning():
     # Single-series forecasting did not until its exogenous role, the first of
     # its roles the preprocessing may transform (RECONCILING_FORECASTING §7).
+    # Instruction tuning never does: a language model reads the raw text.
     takes = {
         name: task.get_metadata()["takes_preprocessing"] for name, task in TASKS.items()
     }
 
-    assert takes == dict.fromkeys(TASKS, True)
+    expected = dict.fromkeys(TASKS, True)
+    expected["InstructionTuningTask"] = False
+    assert takes == expected

@@ -52,6 +52,8 @@ def _xy_task_names(client: TestClient):
         for component in registry.get_components_by_types(select="Task")
         if issubclass(component["class"], BaseTask)
         and not issubclass(component["class"], ForecastingTask)
+        # A task with roles of its own, such as instruction tuning, is not x/y.
+        and component["class"].COLUMN_ROLES is None
     )
 
 
