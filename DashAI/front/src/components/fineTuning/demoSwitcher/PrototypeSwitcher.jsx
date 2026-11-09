@@ -29,20 +29,25 @@ const START = {
   E: "/app/generative",
 };
 
+// Grouped by design: the current one trains in Models and uses the adapter
+// from Generative; the earlier ones fine-tuned inside Generative.
 const GROUPS = [
-  { title: "Desarrollo", items: { all: "Todos" } },
   {
-    title: "Completos",
+    title: "Diseño actual",
+    subtitle: "Entrenar en Modelos, usar en Generativo",
+    items: { B: "B · Ajuste fino en Modelos" },
+  },
+  {
+    title: "Diseños anteriores",
+    subtitle: "Fine-tuning dentro de Generativo",
     items: {
-      A: "A · En Generativo",
-      B: "B · En Modelos",
+      A: "A · Completo",
       E: "E · Sesión unificada",
+      C: "C · Lineal",
+      D: "D · Sesión unificada simple",
     },
   },
-  {
-    title: "Simples",
-    items: { C: "C · Lineal", D: "D · Sesión unificada" },
-  },
+  { title: "Desarrollo", items: { all: "Todos" } },
 ];
 
 /**
@@ -100,7 +105,8 @@ export default function PrototypeSwitcher() {
         {GROUPS.map((group) => (
           <Stack key={group.title} spacing={1}>
             <Typography variant="caption" color="text.secondary">
-              {group.title}
+              <strong>{group.title}</strong>
+              {group.subtitle && ` · ${group.subtitle}`}
             </Typography>
             <ToggleButtonGroup
               exclusive
