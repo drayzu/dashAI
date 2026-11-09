@@ -11,7 +11,7 @@ import DatasetVisualization from "../DatasetVisualization";
 import SelectOptionMenu from "../threeSectionLayout/SelectOptionMenu";
 import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import { useTourContext } from "../tour/TourProvider";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { iconByName } from "./model/ModelIcon";
 import {
   FINE_TUNING_B_NEW,
@@ -19,15 +19,17 @@ import {
   buildFineTuningTaskOption,
 } from "../fineTuning/integration/entryPoints";
 import {
+  FINE_TUNING_KIND_PARAM,
   GROUPED_FINE_TUNING_OPTION,
   buildExtensionTaskOptions,
+  buildFineTuningKindOptions,
   buildGroupedFineTuningOption,
   extensionFromOptionName,
   extensionsVisible,
+  fineTuningKindFromOptionName,
   groupedFineTuning,
 } from "../fineTuning/integration/extensions";
 import ExtensionPreviewDialog from "../fineTuning/integration/ExtensionPreviewDialog";
-import FineTuningKindDialog from "../fineTuning/integration/FineTuningKindDialog";
 
 export default function ModelsCenterContent() {
   const { t } = useTranslation(["models", "datasets", "common", "fineTuning"]);
@@ -45,13 +47,23 @@ export default function ModelsCenterContent() {
   } = useModels();
   const activePrototype = useActivePrototype();
   const [extensionId, setExtensionId] = useState(null);
-  const [kindDialogOpen, setKindDialogOpen] = useState(false);
+  const [searchParams] = useSearchParams();
   const grouped = groupedFineTuning(activePrototype);
+  // Prototype G: the grouped card opens a second level of cards, one per
+  // kind of fine-tuning, on the same page (`?tipo=ajuste-fino`).
+  const choosingKind =
+    grouped && searchParams.get(FINE_TUNING_KIND_PARAM) !== null;
+
+  const chooseKind = (optionName) => {
+    const kind = fineTuningKindFromOptionName(optionName);
+    if (kind === "instructions") navigate(FINE_TUNING_B_NEW);
+    else if (kind) setExtensionId(kind);
+  };
 
   const goToNextStep = (taskName) => {
     // Prototype G: one card for every kind of fine-tuning.
     if (taskName === GROUPED_FINE_TUNING_OPTION) {
-      setKindDialogOpen(true);
+      navigate(`/app/models?${FINE_TUNING_KIND_PARAM}=ajuste-fino`);
       return;
     }
     // Preview of a candidate extension (prototype F): nothing to navigate to.
@@ -141,6 +153,15 @@ export default function ModelsCenterContent() {
           existingItems={sessions}
           newItemButtonText={t("models:button.createSession")}
         />
+      ) : step === 0 && choosingKind ? (
+        <SelectOptionMenu
+          title="Ajuste fino de LLM"
+          subtitle="¿Qué datos tienes? Cada tipo de ajuste fino recibe datos distintos: elige el que se parezca a tu dataset."
+          options={buildFineTuningKindOptions()}
+          searchBar={false}
+          goToPrevStep={() => navigate("/app/models")}
+          goToNextStep={chooseKind}
+        />
       ) : step === 0 ? (
         <SelectOptionMenu
           loading={loadingTasks}
@@ -195,15 +216,6 @@ export default function ModelsCenterContent() {
           dataTour="task-selection"
         />
       ) : null}
-      <FineTuningKindDialog
-        open={kindDialogOpen}
-        onClose={() => setKindDialogOpen(false)}
-        onChoose={(kind) => {
-          setKindDialogOpen(false);
-          if (kind === "instructions") navigate(FINE_TUNING_B_NEW);
-          else setExtensionId(kind);
-        }}
-      />
       <ExtensionPreviewDialog
         extensionId={extensionId}
         onClose={() => setExtensionId(null)}

@@ -134,6 +134,19 @@ export function groupedFineTuning(activePrototype) {
   return activePrototype === "G";
 }
 
+/** Search parameter of the second level of cards (prototype G). */
+export const FINE_TUNING_KIND_PARAM = "tipo";
+
+/** Prefix of the option names of the second level of cards. */
+const KIND_OPTION_PREFIX = "kind:";
+
+/** The kind of fine-tuning an option name chooses, or null. */
+export function fineTuningKindFromOptionName(name) {
+  return typeof name === "string" && name.startsWith(KIND_OPTION_PREFIX)
+    ? name.slice(KIND_OPTION_PREFIX.length)
+    : null;
+}
+
 /** Option name of the grouped card (prototype G). */
 export const GROUPED_FINE_TUNING_OPTION = "grouped-fine-tuning";
 
@@ -207,4 +220,16 @@ export function buildImportModelOption() {
     Icon: EXTENSIONS.importModel.Icon,
     chips: [EXTENSION_CHIP],
   };
+}
+
+/** The second level of cards: one per kind of fine-tuning (prototype G). */
+export function buildFineTuningKindOptions() {
+  return FINE_TUNING_KINDS.map((kind) => ({
+    name: `${KIND_OPTION_PREFIX}${kind.id}`,
+    display_name: kind.title,
+    description: `${kind.summary} Columnas: ${kind.columns}.`,
+    Icon: kind.Icon,
+    badge: kind.badge,
+    chips: kind.core ? [] : [EXTENSION_CHIP],
+  }));
 }
