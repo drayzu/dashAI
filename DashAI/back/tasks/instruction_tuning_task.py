@@ -54,10 +54,10 @@ class InstructionTuningTask(SupervisedTask):
     )
     ICON: str = "Psychology"
     DISPLAY_NAME: str = MultilingualString(
-        en="Instruction tuning",
-        es="Ajuste por instrucciones",
-        pt="Ajuste por instruções",
-        de="Instruktionsfeinabstimmung",
+        en="Instruction fine-tuning",
+        es="Ajuste fino por instrucciones",
+        pt="Ajuste fino por instruções",
+        de="Feinabstimmung mit Anweisungen",
         zh="指令微调",
     )
 
