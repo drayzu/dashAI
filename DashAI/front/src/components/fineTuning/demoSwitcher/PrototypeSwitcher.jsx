@@ -28,6 +28,7 @@ const START = {
   D: "/app/generative",
   E: "/app/generative",
   F: "/app/models",
+  G: "/app/models",
 };
 
 // Grouped by design: the current one trains in Models and uses the adapter
@@ -39,6 +40,7 @@ const GROUPS = [
     items: {
       B: "B · Ajuste fino en Modelos",
       F: "F · B + extensiones (vista previa)",
+      G: "G · F con tarjeta agrupada",
     },
   },
   {

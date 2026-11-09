@@ -8,6 +8,7 @@ import ThumbsUpDownOutlinedIcon from "@mui/icons-material/ThumbsUpDownOutlined";
 import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
+import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
 
 const SUPERVISED = "Supervisado";
 const UNSUPERVISED = "No supervisado";
@@ -120,10 +121,57 @@ export const EXTENSIONS = {
 /** The extensions that would be new tasks, shown as cards in Models. */
 const TASK_EXTENSIONS = ["conversations", "dpo", "continuedPretraining"];
 
-/** Extension previews show in prototype F and in the development view. */
+/**
+ * Extension previews show in prototypes F and G and in the development view.
+ * F lists each kind of fine-tuning as its own card; G groups them in one.
+ */
 export function extensionsVisible(activePrototype) {
-  return activePrototype === "F" || activePrototype === "all";
+  return ["F", "G", "all"].includes(activePrototype);
 }
+
+/** Prototype G presents the kinds of fine-tuning behind one grouped card. */
+export function groupedFineTuning(activePrototype) {
+  return activePrototype === "G";
+}
+
+/** Option name of the grouped card (prototype G). */
+export const GROUPED_FINE_TUNING_OPTION = "grouped-fine-tuning";
+
+/** The grouped card for the Models hub (prototype G). */
+export function buildGroupedFineTuningOption() {
+  return {
+    name: GROUPED_FINE_TUNING_OPTION,
+    display_name: "Ajuste fino de LLM",
+    description:
+      "Adapta un modelo de lenguaje con tus datos: instrucciones, conversaciones, preferencias o textos de un dominio. Primero eliges qué tipo de datos tienes.",
+    Icon: ModelTrainingIcon,
+    chips: ["Agrupa 4 tipos de ajuste fino"],
+    dataTour: undefined,
+  };
+}
+
+/** The kinds of fine-tuning the grouped card offers, in order. */
+export const FINE_TUNING_KINDS = [
+  {
+    id: "instructions",
+    title: "Ajuste fino por instrucciones",
+    badge: SUPERVISED,
+    Icon: ModelTrainingIcon,
+    summary:
+      "Pares de instrucción y respuesta: el modelo aprende a responder como en tus ejemplos.",
+    columns: "instrucción · contexto (opcional) · respuesta",
+    core: true,
+  },
+  ...TASK_EXTENSIONS.map((id) => ({
+    id,
+    title: EXTENSIONS[id].title,
+    badge: EXTENSIONS[id].badge,
+    Icon: EXTENSIONS[id].Icon,
+    summary: EXTENSIONS[id].summary,
+    columns: EXTENSIONS[id].example.columns.join(" · "),
+    core: false,
+  })),
+];
 
 /** Option name that opens the preview of `id`. */
 export function extensionOptionName(id) {

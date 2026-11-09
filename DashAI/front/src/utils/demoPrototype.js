@@ -10,7 +10,7 @@ import { useSyncExternalStore } from "react";
  * training as a Models task and the adapters used from Generative.
  */
 
-export const PROTOTYPES = ["all", "A", "B", "C", "D", "E", "F"];
+export const PROTOTYPES = ["all", "A", "B", "C", "D", "E", "F", "G"];
 export const DEFAULT_PROTOTYPE = "B";
 const STORAGE_KEY = "dashai:ft-proto:active:v1";
 
@@ -48,10 +48,15 @@ export function useActivePrototype() {
 
 /**
  * True when prototype `id` should show its entry points. F is prototype B
- * plus the previews of its candidate extensions, so it shows B's too.
+ * plus the previews of its candidate extensions, and G is F with the kinds
+ * of fine-tuning grouped in one card, so both show B's entry points too.
  */
 export function prototypeVisible(current, id) {
-  return current === "all" || current === id || (current === "F" && id === "B");
+  return (
+    current === "all" ||
+    current === id ||
+    (["F", "G"].includes(current) && id === "B")
+  );
 }
 
 /** Applies `?proto=x` from a URL search string, if present. */

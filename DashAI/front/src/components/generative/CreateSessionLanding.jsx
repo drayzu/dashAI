@@ -154,7 +154,7 @@ export default function CreateSessionLanding() {
       setExtensionId(extension);
       return;
     }
-    if (name === CREATE_SESSION && ["B", "F"].includes(activePrototype)) {
+    if (name === CREATE_SESSION && ["B", "F", "G"].includes(activePrototype)) {
       navigate(`${SESSIONS_B_PATH}/new`);
       return;
     }

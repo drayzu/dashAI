@@ -19,11 +19,15 @@ import {
   buildFineTuningTaskOption,
 } from "../fineTuning/integration/entryPoints";
 import {
+  GROUPED_FINE_TUNING_OPTION,
   buildExtensionTaskOptions,
+  buildGroupedFineTuningOption,
   extensionFromOptionName,
   extensionsVisible,
+  groupedFineTuning,
 } from "../fineTuning/integration/extensions";
 import ExtensionPreviewDialog from "../fineTuning/integration/ExtensionPreviewDialog";
+import FineTuningKindDialog from "../fineTuning/integration/FineTuningKindDialog";
 
 export default function ModelsCenterContent() {
   const { t } = useTranslation(["models", "datasets", "common", "fineTuning"]);
@@ -41,8 +45,15 @@ export default function ModelsCenterContent() {
   } = useModels();
   const activePrototype = useActivePrototype();
   const [extensionId, setExtensionId] = useState(null);
+  const [kindDialogOpen, setKindDialogOpen] = useState(false);
+  const grouped = groupedFineTuning(activePrototype);
 
   const goToNextStep = (taskName) => {
+    // Prototype G: one card for every kind of fine-tuning.
+    if (taskName === GROUPED_FINE_TUNING_OPTION) {
+      setKindDialogOpen(true);
+      return;
+    }
     // Preview of a candidate extension (prototype F): nothing to navigate to.
     const extension = extensionFromOptionName(taskName);
     if (extension) {
@@ -167,8 +178,12 @@ export default function ModelsCenterContent() {
             // Appended after the backend tasks so the tour keeps its target.
             ...(selectedDatasetId || !prototypeVisible(activePrototype, "B")
               ? []
-              : [buildFineTuningTaskOption(t)]),
-            ...(selectedDatasetId || !extensionsVisible(activePrototype)
+              : grouped
+                ? [buildGroupedFineTuningOption()]
+                : [buildFineTuningTaskOption(t)]),
+            ...(selectedDatasetId ||
+            grouped ||
+            !extensionsVisible(activePrototype)
               ? []
               : buildExtensionTaskOptions()),
           ]}
@@ -180,6 +195,15 @@ export default function ModelsCenterContent() {
           dataTour="task-selection"
         />
       ) : null}
+      <FineTuningKindDialog
+        open={kindDialogOpen}
+        onClose={() => setKindDialogOpen(false)}
+        onChoose={(kind) => {
+          setKindDialogOpen(false);
+          if (kind === "instructions") navigate(FINE_TUNING_B_NEW);
+          else setExtensionId(kind);
+        }}
+      />
       <ExtensionPreviewDialog
         extensionId={extensionId}
         onClose={() => setExtensionId(null)}
